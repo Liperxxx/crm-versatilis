@@ -6,14 +6,14 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn package -DskipTests
+RUN mvn package -DskipTests && mv target/crm-versatilis-*.jar target/app.jar
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
-COPY --from=build /app/target/crm-versatilis-*.jar app.jar
+COPY --from=build /app/target/app.jar app.jar
 
 EXPOSE 8080
 
