@@ -1,6 +1,7 @@
 package com.versatilis.crm.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -30,6 +32,9 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
+
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -53,34 +58,34 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Rotas públicas
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/health").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                
+
                 // Rotas administrativas - apenas ADMIN
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("ADMIN")
                 .requestMatchers("/usuarios/me/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                
+
                 // Rotas de gerenciamento - ADMIN e GERENTE
                 .requestMatchers(HttpMethod.POST, "/clientes").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.PUT, "/clientes/**").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.DELETE, "/clientes/**").hasAnyRole("ADMIN", "GERENTE")
-                
+
                 .requestMatchers(HttpMethod.POST, "/leads").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PUT, "/leads/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PATCH, "/leads/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.DELETE, "/leads/**").hasAnyRole("ADMIN", "GERENTE")
-                
+
                 .requestMatchers(HttpMethod.POST, "/produtos").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.PUT, "/produtos/**").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.PATCH, "/produtos/**").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.DELETE, "/produtos/**").hasAnyRole("ADMIN", "GERENTE")
-                
+
                 .requestMatchers(HttpMethod.POST, "/oportunidades").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PUT, "/oportunidades/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.DELETE, "/oportunidades/**").hasAnyRole("ADMIN", "GERENTE")
-                
+
                 .requestMatchers(HttpMethod.POST, "/tarefas").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PUT, "/tarefas/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PATCH, "/tarefas/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
@@ -93,10 +98,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
                 .requestMatchers("/conversoes/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
-                
+
                 // Rotas de leitura - todos autenticados
                 .requestMatchers(HttpMethod.GET, "/**").authenticated()
-                
+
                 // Qualquer outra requisição requer autenticação
                 .anyRequest().authenticated()
             )
@@ -130,7 +135,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*", "null"));
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
