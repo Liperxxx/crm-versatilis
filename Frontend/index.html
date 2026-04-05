@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Versatilis - Dashboard</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <!-- Ícones (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>Versatilis CRM</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active" data-module="dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#clientes" class="nav-link" data-module="clientes">
+                            <i class="fas fa-users"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#leads" class="nav-link" data-module="leads">
+                            <i class="fas fa-star"></i>
+                            <span>Leads</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#produtos" class="nav-link" data-module="produtos">
+                            <i class="fas fa-box"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#funil" class="nav-link" data-module="funil">
+                            <i class="fas fa-handshake"></i>
+                            <span>Oportunidades</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#orcamentos" class="nav-link" data-module="orcamentos">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Orçamentos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#tarefas" class="nav-link" data-module="tarefas">
+                            <i class="fas fa-tasks"></i>
+                            <span>Tarefas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#relatorios" class="nav-link" data-module="relatorios">
+                            <i class="fas fa-file-chart-line"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item nav-divider"></li>
+                    <li class="nav-item">
+                        <a href="#configuracoes" class="nav-link" data-module="configuracoes">
+                            <i class="fas fa-cog"></i>
+                            <span>Configurações</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <img src="https://via.placeholder.com/40" alt="Felipe">
+                    </div>
+                    <div class="user-info">
+                        <p class="user-name">Felipe</p>
+                        <p class="user-role">Gestor</p>
+                    </div>
+                </div>
+                <button class="btn-logout" title="Sair">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-wrapper">
+            
+            <!-- HEADER -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="btn-menu-mobile" id="menuMobile">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <span class="breadcrumb-item">Home</span>
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="breadcrumb-item active" id="breadcrumbModule">Dashboard</span>
+                    </nav>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                    <div class="notif-wrapper" id="notifWrapper">
+                        <button class="btn-icon" title="Notificações" id="btnNotif" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge hidden" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif-dropdown" id="notifDropdown" role="menu">
+                            <div class="notif-dropdown-header">
+                                <h4>Notificações</h4>
+                                <button class="notif-mark-all" id="notifMarkAll" title="Marcar todas como lidas">
+                                    <i class="fas fa-check-double"></i> Marcar lidas
+                                </button>
+                            </div>
+                            <div class="notif-dropdown-body" id="notifList">
+                                <!-- Preenchido pelo JS -->
+                            </div>
+                            <div class="notif-dropdown-empty hidden" id="notifEmpty">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>Nenhuma notificação</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-icon" title="Configurações" id="btnHeaderConfig">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <div class="user-menu" id="userMenu">
+                        <button class="btn-user" id="btnUserMenu" aria-haspopup="true" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="Felipe">
+                            <span>Felipe</span>
+                            <i class="fas fa-chevron-down" id="userMenuChevron"></i>
+                        </button>
+                        <div class="dropdown-menu" id="userDropdown" role="menu">
+                            <a href="#" data-user-action="perfil" role="menuitem"><i class="fas fa-user"></i> Meu Perfil</a>
+                            <a href="#" data-user-action="configuracoes" role="menuitem"><i class="fas fa-cog"></i> Configurações</a>
+                            <hr>
+                            <a href="#" data-user-action="sair" role="menuitem" class="dropdown-danger"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT AREA -->
+            <main class="content">
+                
+                <!-- DASHBOARD MODULE -->
+                <section id="dashboard-module" class="module active">
+                    <div class="module-header">
+                        <h1>Dashboard</h1>
+                        <p class="subtitle">Visão geral do seu negócio</p>
+                    </div>
+
+                    <!-- LOADING STATE -->
+                    <div id="dashLoading" class="dash-loading" style="display:none;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--color-primary);"></i>
+                        <p style="margin-top:var(--spacing-md);color:var(--color-text-muted);">Carregando dashboard...</p>
+                    </div>
+
+                    <!-- ERROR STATE -->
+                    <div id="dashError" class="dash-error" style="display:none;">
+                        <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--color-danger);"></i>
+                        <p style="margin-top:var(--spacing-md);color:var(--color-text-muted);" id="dashErrorMsg">Erro ao carregar dados.</p>
+                        <button class="btn btn-primary btn-sm" id="dashRetry" style="margin-top:var(--spacing-md);">
+                            <i class="fas fa-redo"></i> Tentar novamente
+                        </button>
+                    </div>
+
+                    <!-- DASHBOARD CONTENT (preenchido pelo JS) -->
+                    <div id="dashContent" style="display:none;">
+
+                        <!-- KPI CARDS -->
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-icon" style="background: var(--color-primary);">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <p class="kpi-label">Valor Oportunidades</p>
+                                    <h3 class="kpi-value" id="kpiValorOportunidades">—</h3>
+                                    <p class="kpi-change" id="kpiTotalOportunidades"></p>
+                                </div>
+                            </div>
+
+                            <div class="kpi-card">
+                                <div class="kpi-icon" style="background: var(--color-danger);">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <p class="kpi-label">Clientes</p>
+                                    <h3 class="kpi-value" id="kpiTotalClientes">—</h3>
+                                    <p class="kpi-change" id="kpiTotalProdutos"></p>
+                                </div>
+                            </div>
+
+                            <div class="kpi-card">
+                                <div class="kpi-icon" style="background: var(--color-info);">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <p class="kpi-label">Leads</p>
+                                    <h3 class="kpi-value" id="kpiTotalLeads">—</h3>
+                                    <p class="kpi-change" id="kpiTarefasPendentes"></p>
+                                </div>
+                            </div>
+
+                            <div class="kpi-card">
+                                <div class="kpi-icon" style="background: var(--color-success);">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <p class="kpi-label">Orçamentos</p>
+                                    <h3 class="kpi-value" id="kpiTotalOrcamentos">—</h3>
+                                    <p class="kpi-change" id="kpiValorOrcamentos"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CHARTS SECTION -->
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Oportunidades por Etapa</h3>
+                                </div>
+                                <div class="chart-placeholder">
+                                    <canvas id="chartOportunidadesEtapa"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Orçamentos por Status</h3>
+                                </div>
+                                <div class="chart-placeholder">
+                                    <canvas id="chartOrcamentosStatus"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RECENT SECTIONS (3 colunas) -->
+                        <div class="charts-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+
+                            <!-- Clientes Recentes -->
+                            <div class="activity-card">
+                                <div class="card-header">
+                                    <h3><i class="fas fa-users" style="margin-right:8px;color:var(--color-primary);"></i>Clientes Recentes</h3>
+                                </div>
+                                <div class="activity-list" id="dashClientesRecentes">
+                                    <p class="text-muted text-sm">Nenhum cliente encontrado.</p>
+                                </div>
+                            </div>
+
+                            <!-- Leads Recentes -->
+                            <div class="activity-card">
+                                <div class="card-header">
+                                    <h3><i class="fas fa-star" style="margin-right:8px;color:var(--color-info);"></i>Leads Recentes</h3>
+                                </div>
+                                <div class="activity-list" id="dashLeadsRecentes">
+                                    <p class="text-muted text-sm">Nenhum lead encontrado.</p>
+                                </div>
+                            </div>
+
+                            <!-- Tarefas Pendentes -->
+                            <div class="activity-card">
+                                <div class="card-header">
+                                    <h3><i class="fas fa-tasks" style="margin-right:8px;color:var(--color-warning);"></i>Tarefas Pendentes</h3>
+                                </div>
+                                <div class="activity-list" id="dashTarefasPendentes">
+                                    <p class="text-muted text-sm">Nenhuma tarefa pendente.</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CLIENTES MODULE -->
+                <section id="clientes-module" class="module">
+
+                    <!-- Cabeçalho do módulo -->
+                    <div class="module-header">
+                        <div>
+                            <h1>Clientes</h1>
+                            <p class="subtitle">Gerencie sua base de clientes</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnNovoCliente">
+                            <i class="fas fa-plus"></i> Novo Cliente
+                        </button>
+                    </div>
+
+                    <!-- KPIs rápidos -->
+                    <div class="module-kpis" id="clientesKpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="kpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-users" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-success module-kpi-card-success">
+                            <span class="module-kpi-value" id="kpiAtivo">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-check" style="color:var(--color-success);margin-right:4px"></i>Ativos</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-warning module-kpi-card-warning">
+                            <span class="module-kpi-value" id="kpiProspecto">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-dot" style="color:var(--color-warning);margin-right:4px"></i>Prospectos</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-danger module-kpi-card-danger">
+                            <span class="module-kpi-value" id="kpiInativo">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-xmark" style="color:var(--color-danger);margin-right:4px"></i>Inativos</span>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar de busca e filtros -->
+                    <div class="table-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="clienteSearch" placeholder="Buscar por nome, email ou telefone...">
+                            <button class="search-clear hidden" id="clienteSearchClear" title="Limpar busca">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="clienteFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="Ativo">Ativo</option>
+                                <option value="Prospecto">Prospecto</option>
+                                <option value="Inativo">Inativo</option>
+                            </select>
+                            <select class="form-control select-sm" id="clienteFilterSegmento">
+                                <option value="">Todos os segmentos</option>
+                                <option value="Indústria">Indústria</option>
+                                <option value="Varejo">Varejo</option>
+                                <option value="Serviços">Serviços</option>
+                                <option value="Tecnologia">Tecnologia</option>
+                                <option value="Agronegócio">Agronegócio</option>
+                                <option value="Construção">Construção</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Financeiro">Financeiro</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="clienteCount">0 clientes</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabela -->
+                    <div class="table-wrapper">
+                        <table class="table" id="clientesTable">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Segmento</th>
+                                    <th>Status</th>
+                                    <th>Desde</th>
+                                    <th style="width:110px; text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesTableBody">
+                                <!-- Preenchido pelo JS -->
+                            </tbody>
+                        </table>
+
+                        <!-- Estado vazio -->
+                        <div class="empty-state hidden" id="clientesEmpty">
+                            <i class="fas fa-users"></i>
+                            <h3>Nenhum cliente encontrado</h3>
+                            <p>Tente ajustar os filtros ou <button class="btn-link" id="btnEmptyNovo">adicione um novo cliente</button>.</p>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- CLIENTE FORM MODULE (página dedicada de criação/edição) -->
+                <section id="cliente-form-module" class="module">
+                    <div class="orc-form-page">
+                        <div class="orc-form-page-header">
+                            <div class="orc-form-page-nav">
+                                <button class="btn btn-secondary btn-sm" id="cliFormBack" title="Voltar para Clientes">
+                                    <i class="fas fa-arrow-left"></i> Clientes
+                                </button>
+                                <h1 class="orc-form-page-title" id="cliFormTitle">Novo Cliente</h1>
+                            </div>
+                            <div class="orc-form-page-actions">
+                                <button class="btn btn-secondary" id="cliFormCancel">Cancelar</button>
+                                <button class="btn btn-primary" id="cliFormSave">
+                                    <i class="fas fa-save"></i> Salvar Cliente
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="orc-form-page-body">
+                            <form id="clienteForm" novalidate>
+                                <input type="hidden" id="clienteId">
+
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-building"></i> Dados do Cliente</h3>
+                                    <div class="form-row">
+                                        <div class="form-group" style="flex:2">
+                                            <label class="form-label" for="clienteNome">Nome / Razão Social <span class="required">*</span></label>
+                                            <input type="text" class="form-control" id="clienteNome" placeholder="Ex.: Empresa XYZ Ltda" required>
+                                            <p class="form-error hidden" id="errNome">Nome é obrigatório.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteStatus">Status <span class="required">*</span></label>
+                                            <select class="form-control" id="clienteStatus" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="Ativo">Ativo</option>
+                                                <option value="Prospecto">Prospecto</option>
+                                                <option value="Inativo">Inativo</option>
+                                            </select>
+                                            <p class="form-error hidden" id="errStatus">Status é obrigatório.</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteCnpj">CNPJ</label>
+                                            <input type="text" class="form-control" id="clienteCnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteTelefone">Telefone</label>
+                                            <input type="tel" class="form-control" id="clienteTelefone" placeholder="(00) 00000-0000">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteEmail">Email</label>
+                                            <input type="email" class="form-control" id="clienteEmail" placeholder="contato@empresa.com">
+                                            <p class="form-error hidden" id="errEmail">Email inválido.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteSegmento">Segmento</label>
+                                            <select class="form-control" id="clienteSegmento">
+                                                <option value="">Selecione...</option>
+                                                <option value="Indústria">Indústria</option>
+                                                <option value="Varejo">Varejo</option>
+                                                <option value="Serviços">Serviços</option>
+                                                <option value="Tecnologia">Tecnologia</option>
+                                                <option value="Agronegócio">Agronegócio</option>
+                                                <option value="Construção">Construção</option>
+                                                <option value="Saúde">Saúde</option>
+                                                <option value="Educação">Educação</option>
+                                                <option value="Financeiro">Financeiro</option>
+                                                <option value="Outro">Outro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="clienteCidade">Cidade</label>
+                                        <input type="text" class="form-control" id="clienteCidade" placeholder="Ex.: São Paulo - SP">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="clienteObservacoes">Observações</label>
+                                        <textarea class="form-control" id="clienteObservacoes" rows="4" placeholder="Notas internas sobre este cliente..."></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LEADS MODULE -->
+                <section id="leads-module" class="module">
+                    <div class="module-header">
+                        <div>
+                            <h1>Leads</h1>
+                            <p class="subtitle">Gerencie seus leads e oportunidades de entrada</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnNovoLead">
+                            <i class="fas fa-plus"></i> Novo Lead
+                        </button>
+                    </div>
+
+                    <div class="module-kpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="leadKpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-users" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-total" style="border-left-color:var(--color-primary)">
+                            <span class="module-kpi-value" id="leadKpiNovo">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-dot" style="color:var(--color-primary);margin-right:4px"></i>Novos</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-success">
+                            <span class="module-kpi-value module-kpi-success" id="leadKpiQualificado">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-star" style="color:var(--color-success);margin-right:4px"></i>Qualificados</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-warning">
+                            <span class="module-kpi-value module-kpi-warning" id="leadKpiConvertido">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-check" style="color:var(--color-warning);margin-right:4px"></i>Convertidos</span>
+                        </div>
+                    </div>
+
+                    <div class="table-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="leadSearch" placeholder="Buscar por nome, empresa ou email...">
+                            <button class="search-clear hidden" id="leadSearchClear" title="Limpar busca"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="leadFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="NOVO">Novo</option>
+                                <option value="QUALIFICADO">Qualificado</option>
+                                <option value="EM_CONTATO">Em Contato</option>
+                                <option value="PROPOSTA_ENVIADA">Proposta Enviada</option>
+                                <option value="PERDIDO">Perdido</option>
+                                <option value="CONVERTIDO">Convertido</option>
+                            </select>
+                            <select class="form-control select-sm" id="leadFilterOrigem">
+                                <option value="">Todas as origens</option>
+                                <option value="SITE">Site</option>
+                                <option value="TELEFONE">Telefone</option>
+                                <option value="EMAIL">E-mail</option>
+                                <option value="EVENTO">Evento</option>
+                                <option value="INDICACAO">Indicação</option>
+                                <option value="OUTRO">Outro</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="leadCount">0 leads</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Lead</th>
+                                    <th>Empresa</th>
+                                    <th>E-mail</th>
+                                    <th>Origem</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Responsável</th>
+                                    <th style="width:140px;text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadsTableBody"></tbody>
+                        </table>
+                        <div class="empty-state hidden" id="leadsEmpty">
+                            <i class="fas fa-star"></i>
+                            <h3>Nenhum lead encontrado</h3>
+                            <p>Tente ajustar os filtros ou <button class="btn-link" id="btnLeadEmptyNovo">adicione um novo lead</button>.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PRODUTOS MODULE -->
+                <section id="produtos-module" class="module">
+                    <div class="module-header">
+                        <div>
+                            <h1>Produtos</h1>
+                            <p class="subtitle">Gerencie seu catálogo de produtos e serviços</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnNovoProduto">
+                            <i class="fas fa-plus"></i> Novo Produto
+                        </button>
+                    </div>
+
+                    <div class="module-kpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="prodKpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-box" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-success">
+                            <span class="module-kpi-value module-kpi-success" id="prodKpiDisponivel">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-check" style="color:var(--color-success);margin-right:4px"></i>Disponíveis</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-warning">
+                            <span class="module-kpi-value module-kpi-warning" id="prodKpiEmFalta">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-triangle-exclamation" style="color:var(--color-warning);margin-right:4px"></i>Em Falta</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-danger">
+                            <span class="module-kpi-value module-kpi-danger" id="prodKpiDescontinuado">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-ban" style="color:var(--color-danger);margin-right:4px"></i>Descontinuados</span>
+                        </div>
+                    </div>
+
+                    <div class="table-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="prodSearch" placeholder="Buscar por nome ou categoria...">
+                            <button class="search-clear hidden" id="prodSearchClear" title="Limpar busca"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="prodFilterCategoria">
+                                <option value="">Todas as categorias</option>
+                            </select>
+                            <select class="form-control select-sm" id="prodFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="DISPONIVEL">Disponível</option>
+                                <option value="INDISPONIVEL">Indisponível</option>
+                                <option value="EM_FALTA">Em Falta</option>
+                                <option value="DESCONTINUADO">Descontinuado</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="prodCount">0 produtos</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Categoria</th>
+                                    <th>Preço Unitário</th>
+                                    <th>Estoque</th>
+                                    <th>Status</th>
+                                    <th style="width:110px;text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="produtosTableBody"></tbody>
+                        </table>
+                        <div class="empty-state hidden" id="produtosEmpty">
+                            <i class="fas fa-box"></i>
+                            <h3>Nenhum produto encontrado</h3>
+                            <p>Tente ajustar os filtros ou <button class="btn-link" id="btnProdEmptyNovo">adicione um novo produto</button>.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- OPORTUNIDADES MODULE -->
+                <section id="funil-module" class="module">
+                    <div class="module-header">
+                        <div>
+                            <h1>Oportunidades</h1>
+                            <p class="subtitle">Gerencie o seu pipeline comercial</p>
+                        </div>
+                        <div class="module-header-actions">
+                            <button class="btn btn-secondary" id="btnIrParaOrcamentos" title="Abrir módulo de Orçamentos">
+                                <i class="fas fa-file-invoice-dollar"></i> Orçamentos
+                            </button>
+                            <button class="btn btn-primary" id="btnNovaOportunidade">
+                                <i class="fas fa-plus"></i> Nova Oportunidade
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ═══ OPORTUNIDADES ═══ -->
+                    <div id="funilPanelOportunidades" class="funil-panel">
+
+                    <div class="module-kpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="opKpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-handshake" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-total" style="border-left-color:var(--color-primary)">
+                            <span class="module-kpi-value" id="opKpiAbertas">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-dot" style="color:var(--color-primary);margin-right:4px"></i>Abertas</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-success">
+                            <span class="module-kpi-value module-kpi-success" id="opKpiGanhas">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-trophy" style="color:var(--color-success);margin-right:4px"></i>Ganhas</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-warning">
+                            <span class="module-kpi-value module-kpi-warning" id="opKpiValor">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-dollar-sign" style="color:var(--color-warning);margin-right:4px"></i>Pipeline</span>
+                        </div>
+                    </div>
+
+                    <div class="kanban-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="opSearch" placeholder="Buscar por título ou cliente...">
+                            <button class="search-clear hidden" id="opSearchClear" title="Limpar busca"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="opFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="ABERTA">Aberta</option>
+                                <option value="GANHA">Ganha</option>
+                                <option value="PERDIDA">Perdida</option>
+                                <option value="ARQUIVADA">Arquivada</option>
+                            </select>
+                        </div>
+                        <div class="view-toggle">
+                            <button class="active" id="opViewKanban" title="Kanban"><i class="fas fa-columns"></i></button>
+                            <button id="opViewTable" title="Tabela"><i class="fas fa-table"></i></button>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="opCount">0 oportunidades</span>
+                        </div>
+                    </div>
+
+                    <!-- KANBAN VIEW -->
+                    <div class="kanban-board" id="opKanbanBoard"></div>
+
+                    <!-- TABLE VIEW (hidden by default) -->
+                    <div class="table-wrapper hidden" id="opTableView">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Cliente</th>
+                                    <th>Etapa</th>
+                                    <th>Valor</th>
+                                    <th>Prob.%</th>
+                                    <th>Status</th>
+                                    <th style="width:110px;text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="oportunidadesTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state hidden" id="oportunidadesEmpty">
+                        <i class="fas fa-handshake"></i>
+                        <h3>Nenhuma oportunidade encontrada</h3>
+                        <p>Tente ajustar os filtros ou <button class="btn-link" id="btnOpEmptyNova">adicione uma nova oportunidade</button>.</p>
+                    </div>
+
+                    </div><!-- /funilPanelOportunidades -->
+                </section>
+
+                <!-- ORÇAMENTOS MODULE -->
+                <section id="orcamentos-module" class="module">
+                    <div class="module-header">
+                        <div>
+                            <h1>Orçamentos</h1>
+                            <p class="subtitle">Propostas comerciais e controle de negociações</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnNovoOrcamento">
+                            <i class="fas fa-plus"></i> Novo Orçamento
+                        </button>
+                    </div>
+
+                    <div class="module-kpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="orcKpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-file-invoice-dollar" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-total" style="border-left-color:var(--color-primary)">
+                            <span class="module-kpi-value" id="orcKpiRascunho">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-pen-to-square" style="color:var(--color-primary);margin-right:4px"></i>Rascunhos</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-success">
+                            <span class="module-kpi-value module-kpi-success" id="orcKpiAprovados">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-check" style="color:var(--color-success);margin-right:4px"></i>Aprovados</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-warning">
+                            <span class="module-kpi-value module-kpi-warning" id="orcKpiValor">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-dollar-sign" style="color:var(--color-warning);margin-right:4px"></i>Valor Aprovado</span>
+                        </div>
+                    </div>
+
+                    <div class="table-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="orcSearch" placeholder="Buscar por número ou cliente...">
+                            <button class="search-clear hidden" id="orcSearchClear" title="Limpar busca"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="orcFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="RASCUNHO">Rascunho</option>
+                                <option value="ENVIADO">Enviado</option>
+                                <option value="APROVADO">Aprovado</option>
+                                <option value="RECUSADO">Recusado</option>
+                            </select>
+                            <input type="text" class="form-control select-sm" id="orcFilterCliente" placeholder="Filtrar por cliente..." style="width:180px">
+                            <input type="date" class="form-control select-sm" id="orcFilterDataDe" title="Emissão a partir de">
+                            <input type="date" class="form-control select-sm" id="orcFilterDataAte" title="Emissão até">
+                            <button class="btn btn-secondary btn-sm" id="orcFilterLimpar" title="Limpar filtros"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="orcCount">0 orçamentos</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Oportunidade</th>
+                                    <th>Emissão</th>
+                                    <th>Validade</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th style="width:145px;text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orcamentosTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state hidden" id="orcamentosEmpty">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <h3>Nenhum orçamento encontrado</h3>
+                        <p>Crie seu primeiro orçamento para gerar propostas comerciais profissionais.<br>
+                        <button class="btn-link" id="btnOrcEmptyNovo">Novo Orçamento</button></p>
+                    </div>
+                </section>
+
+                <!-- ORÇAMENTO FORM MODULE (página dedicada de criação/edição) -->
+                <section id="orcamento-form-module" class="module">
+                    <div class="orc-form-page">
+                        <!-- Cabeçalho da página -->
+                        <div class="orc-form-page-header">
+                            <div class="orc-form-page-nav">
+                                <button class="btn btn-secondary btn-sm" id="orcFormBack" title="Voltar para Orçamentos">
+                                    <i class="fas fa-arrow-left"></i> Orçamentos
+                                </button>
+                                <h1 class="orc-form-page-title" id="orcFormTitle">Novo Orçamento</h1>
+                            </div>
+                            <div class="orc-form-page-actions">
+                                <button class="btn btn-secondary" id="orcFormCancel">Cancelar</button>
+                                <button class="btn btn-primary" id="orcFormSave">
+                                    <i class="fas fa-save"></i> Salvar Orçamento
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Corpo do formulário -->
+                        <div class="orc-form-page-body">
+                            <form id="orcForm" novalidate>
+                                <input type="hidden" id="orcId">
+                                <input type="hidden" id="orcNumero">
+                                <input type="hidden" id="orcResponsavelId">
+                                <input type="hidden" id="orcObservacoes">
+                                <input type="hidden" id="orcRodape">
+
+                                <!-- ══ BLOCO 1: CABEÇALHO ══ -->
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-file-invoice"></i> Cabeçalho do Orçamento</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcDataEmissao">Data de Emissão <span class="required">*</span></label>
+                                            <input type="date" class="form-control" id="orcDataEmissao" required>
+                                            <p class="form-error hidden" id="orcErrEmissao">Data de emissão é obrigatória.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcDataValidade">Válido até <span class="required">*</span></label>
+                                            <input type="date" class="form-control" id="orcDataValidade" required>
+                                            <p class="form-error hidden" id="orcErrValidade">Data de validade é obrigatória.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcStatus">Status</label>
+                                            <select class="form-control" id="orcStatus">
+                                                <option value="RASCUNHO">Rascunho</option>
+                                                <option value="ENVIADO">Enviado</option>
+                                                <option value="APROVADO">Aprovado</option>
+                                                <option value="RECUSADO">Recusado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ══ BLOCO 2: DADOS DO CLIENTE ══ -->
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-user-tie"></i> Dados do Cliente</h3>
+                                    <div class="form-row">
+                                        <div class="form-group" style="flex:2">
+                                            <label class="form-label" for="orcClienteId">Cliente <span class="required">*</span></label>
+                                            <select class="form-control" id="orcClienteId" required>
+                                                <option value="">Selecione um cliente...</option>
+                                            </select>
+                                            <p class="form-error hidden" id="orcErrCliente">Selecione um cliente.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcOportunidadeId">Oportunidade vinculada</label>
+                                            <input type="number" class="form-control" id="orcOportunidadeId" placeholder="ID (opcional)" min="1">
+                                        </div>
+                                    </div>
+                                    <div id="orcClienteInfo" class="orc-cliente-info hidden">
+                                        <div class="form-row">
+                                            <div class="form-group" style="flex:2">
+                                                <label class="form-label">Endereço</label>
+                                                <input type="text" class="form-control" id="orcClienteEnderecoDisplay" readonly tabindex="-1">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Telefone</label>
+                                                <input type="text" class="form-control" id="orcClienteTelefoneDisplay" readonly tabindex="-1">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Email</label>
+                                                <input type="text" class="form-control" id="orcClienteEmailDisplay" readonly tabindex="-1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ══ BLOCO 3: DESCRIÇÃO DO SERVIÇO ══ -->
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-tools"></i> Descrição dos Serviços</h3>
+                                    <div class="form-group">
+                                        <label class="form-label" for="orcDescricaoDetalhada">Descrição Detalhada dos Serviços</label>
+                                        <textarea class="form-control" id="orcDescricaoDetalhada" rows="4" placeholder="Descreva detalhadamente os serviços a serem executados..."></textarea>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcTipoSistema">Tipo de Sistema</label>
+                                            <input type="text" class="form-control" id="orcTipoSistema" placeholder="Ex.: Barravento, Blindex, Alumínio...">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcQuantidadeUnidades">Quantidade de Unidades/Bandeiras</label>
+                                            <input type="number" class="form-control" id="orcQuantidadeUnidades" placeholder="Ex.: 27" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcPrazoExecucao">Prazo de Execução</label>
+                                            <input type="text" class="form-control" id="orcPrazoExecucao" placeholder="Ex.: 4 dias úteis a partir da confirmação do pagamento">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcGarantia">Garantia</label>
+                                            <input type="text" class="form-control" id="orcGarantia" placeholder="Ex.: Garantia de 5 anos na colagem, conforme o CDC">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ══ BLOCO 4: SERVIÇOS INCLUÍDOS ══ -->
+                                <div class="orc-form-section">
+                                    <div class="orc-itens-header">
+                                        <h3 class="orc-section-title" style="margin-bottom:0"><i class="fas fa-list-check"></i> Serviços Incluídos</h3>
+                                        <button type="button" class="btn btn-sm btn-primary" id="orcAddItem"><i class="fas fa-plus"></i> Adicionar Serviço</button>
+                                    </div>
+                                    <div id="orcItensBody" class="orc-itens-list" style="margin-top:12px"></div>
+                                    <p class="text-muted text-sm" style="margin-top:6px">Liste cada serviço incluído no orçamento.</p>
+                                </div>
+
+                                <!-- ══ BLOCO 5: VALORES E PAGAMENTO ══ -->
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-dollar-sign"></i> Valores e Condições de Pagamento</h3>
+                                    <div class="form-row orc-totais">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcValorTotal">Valor Total do Orçamento (R$) <span class="required">*</span></label>
+                                            <input type="number" class="form-control orc-valor-input" id="orcValorTotal" placeholder="0,00" min="0" step="0.01" required>
+                                            <p class="form-error hidden" id="orcErrValor">Informe o valor total do orçamento.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcDesconto">Desconto (R$)</label>
+                                            <input type="number" class="form-control" id="orcDesconto" placeholder="0,00" min="0" step="0.01">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Total com Desconto</label>
+                                            <input type="text" class="form-control orc-total-display" id="orcTotal" readonly tabindex="-1">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcCondicao1">Condição de Pagamento — Opção 1</label>
+                                            <input type="text" class="form-control" id="orcCondicao1" placeholder="Ex.: 50% de entrada + 50% na entrega do serviço">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcCondicao2">Condição de Pagamento — Opção 2</label>
+                                            <input type="text" class="form-control" id="orcCondicao2" placeholder="Ex.: Cartão de crédito em 10x de R$ 687,50">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ══ BLOCO 6: ASSINATURAS E TEXTO JURÍDICO ══ -->
+                                <div class="orc-form-section">
+                                    <h3 class="orc-section-title"><i class="fas fa-signature"></i> Assinaturas e Aceite</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcEmpresaAssin">Empresa</label>
+                                            <input type="text" class="form-control" id="orcEmpresaAssin" placeholder="Nome da empresa">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="orcResponsavelComercial">Responsável Comercial</label>
+                                            <input type="text" class="form-control" id="orcResponsavelComercial" placeholder="Ex.: Raphael Ramos - Comercial">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="orcTextoJuridico">Texto de Aceite / Rodapé Jurídico</label>
+                                        <textarea class="form-control" id="orcTextoJuridico" rows="3" placeholder="Texto de aceite do orçamento..."></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAREFAS MODULE -->
+                <section id="tarefas-module" class="module">
+                    <div class="module-header">
+                        <div>
+                            <h1>Tarefas</h1>
+                            <p class="subtitle">Gerencie atividades e acompanhamentos</p>
+                        </div>
+                        <button class="btn btn-primary" id="btnNovaTarefa">
+                            <i class="fas fa-plus"></i> Nova Tarefa
+                        </button>
+                    </div>
+
+                    <div class="module-kpis">
+                        <div class="module-kpi-card module-kpi-card-total">
+                            <span class="module-kpi-value" id="tarKpiTotal">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-tasks" style="color:var(--color-info);margin-right:4px"></i>Total</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-total" style="border-left-color:var(--color-primary)">
+                            <span class="module-kpi-value" id="tarKpiPendente">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-clock" style="color:var(--color-primary);margin-right:4px"></i>Pendentes</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-warning">
+                            <span class="module-kpi-value module-kpi-warning" id="tarKpiEmProcesso">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-spinner" style="color:var(--color-warning);margin-right:4px"></i>Em Progresso</span>
+                        </div>
+                        <div class="module-kpi-card module-kpi-card-success">
+                            <span class="module-kpi-value module-kpi-success" id="tarKpiConcluida">—</span>
+                            <span class="module-kpi-label"><i class="fas fa-circle-check" style="color:var(--color-success);margin-right:4px"></i>Concluídas</span>
+                        </div>
+                    </div>
+
+                    <div class="table-toolbar">
+                        <div class="search-box table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="tarSearch" placeholder="Buscar por título, cliente, lead...">
+                            <button class="search-clear hidden" id="tarSearchClear" title="Limpar busca"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="toolbar-filters">
+                            <select class="form-control select-sm" id="tarFilterStatus">
+                                <option value="">Todos os status</option>
+                                <option value="PENDENTE">Pendente</option>
+                                <option value="EM_PROCESSO">Em Progresso</option>
+                                <option value="CONCLUIDA">Concluída</option>
+                                <option value="CANCELADA">Cancelada</option>
+                            </select>
+                            <select class="form-control select-sm" id="tarFilterPrioridade">
+                                <option value="">Todas as prioridades</option>
+                                <option value="URGENTE">Urgente</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="MEDIA">Média</option>
+                                <option value="BAIXA">Baixa</option>
+                            </select>
+                            <input type="date" class="form-control select-sm" id="tarFilterDataInicio" title="Data início">
+                            <input type="date" class="form-control select-sm" id="tarFilterDataFim" title="Data fim">
+                            <select class="form-control select-sm" id="tarFilterResponsavel">
+                                <option value="">Todos os responsáveis</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-info">
+                            <span class="text-muted text-sm" id="tarCount">0 tarefas</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Prioridade</th>
+                                    <th>Status</th>
+                                    <th>Vencimento</th>
+                                    <th>Vínculo</th>
+                                    <th>Responsável</th>
+                                    <th style="width:140px;text-align:center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tarefasTableBody"></tbody>
+                        </table>
+                        <div class="empty-state hidden" id="tarefasEmpty">
+                            <i class="fas fa-tasks"></i>
+                            <h3>Nenhuma tarefa encontrada</h3>
+                            <p>Tente ajustar os filtros ou <button class="btn-link" id="btnTarEmptyNova">adicione uma nova tarefa</button>.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RELATÓRIOS MODULE -->
+                <section id="relatorios-module" class="module">
+                    <div class="module-header">
+                        <h1>Relatórios</h1>
+                        <p class="subtitle">Análise de desempenho e resultados</p>
+                    </div>
+
+                    <!-- Toolbar: filtros + exportar -->
+                    <div class="toolbar" style="flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--color-text-muted);">Período:</label>
+                            <input type="date" id="relDataInicio" class="form-control" style="max-width: 160px;">
+                            <span style="color: var(--color-text-muted);">até</span>
+                            <input type="date" id="relDataFim" class="form-control" style="max-width: 160px;">
+                            <button class="btn btn-sm btn-outline" id="btnRelFiltrar" title="Aplicar filtro">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            <button class="btn btn-sm btn-outline" id="btnRelLimpar" title="Limpar período">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                        <div style="margin-left: auto;">
+                            <button class="btn btn-primary btn-sm" id="btnRelExportarPDF">
+                                <i class="fas fa-file-pdf"></i> Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="relLoading" style="text-align: center; padding: 60px 0; display: none;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: var(--color-primary);"></i>
+                        <p style="margin-top: 12px; color: var(--color-text-muted);">Carregando relatório...</p>
+                    </div>
+
+                    <!-- Conteúdo do relatório -->
+                    <div id="relConteudo">
+
+                        <!-- Cards de indicadores -->
+                        <div class="rel-cards-grid" id="relCardsGrid">
+                            <div class="rel-card rel-card--primary">
+                                <div class="rel-card__icon"><i class="fas fa-building"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTotalClientes">0</span>
+                                    <span class="rel-card__label">Clientes Ativos</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--info">
+                                <div class="rel-card__icon"><i class="fas fa-user-plus"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTotalLeads">0</span>
+                                    <span class="rel-card__label">Total de Leads</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--success">
+                                <div class="rel-card__icon"><i class="fas fa-user-check"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relLeadsConvertidos">0</span>
+                                    <span class="rel-card__label">Leads Convertidos</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--warning">
+                                <div class="rel-card__icon"><i class="fas fa-handshake"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relOportAbertas">0</span>
+                                    <span class="rel-card__label">Oport. Abertas</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--success-alt">
+                                <div class="rel-card__icon"><i class="fas fa-trophy"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relOportGanhas">0</span>
+                                    <span class="rel-card__label">Oport. Ganhas</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--danger">
+                                <div class="rel-card__icon"><i class="fas fa-times-circle"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relOportPerdidas">0</span>
+                                    <span class="rel-card__label">Oport. Perdidas</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--orange">
+                                <div class="rel-card__icon"><i class="fas fa-clock"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTarefasPendentes">0</span>
+                                    <span class="rel-card__label">Tarefas Pendentes</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--teal">
+                                <div class="rel-card__icon"><i class="fas fa-check-double"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTarefasConcluidas">0</span>
+                                    <span class="rel-card__label">Tarefas Concluídas</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--dark">
+                                <div class="rel-card__icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTotalOrcamentos">R$ 0</span>
+                                    <span class="rel-card__label">Total Orçamentos</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos -->
+                        <div class="rel-charts-grid">
+                            <div class="rel-chart-card">
+                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-pie"></i> Leads por Status</h3>
+                                <div class="rel-chart-card__body">
+                                    <canvas id="chartLeadsStatus"></canvas>
+                                </div>
+                            </div>
+                            <div class="rel-chart-card">
+                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-bar"></i> Funil de Oportunidades</h3>
+                                <div class="rel-chart-card__body">
+                                    <canvas id="chartOportEtapa"></canvas>
+                                </div>
+                            </div>
+                            <div class="rel-chart-card">
+                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-bar"></i> Orçamentos por Status</h3>
+                                <div class="rel-chart-card__body">
+                                    <canvas id="chartOrcStatus"></canvas>
+                                </div>
+                            </div>
+                            <div class="rel-chart-card">
+                                <h3 class="rel-chart-card__title"><i class="fas fa-tasks"></i> Tarefas por Prioridade</h3>
+                                <div class="rel-chart-card__body">
+                                    <canvas id="chartTarefasPrioridade"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabelas resumidas -->
+                        <div class="rel-tables-grid">
+                            <div class="rel-table-card">
+                                <h3 class="rel-table-card__title"><i class="fas fa-star"></i> Top Oportunidades Abertas</h3>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Título</th>
+                                                <th>Cliente</th>
+                                                <th>Etapa</th>
+                                                <th style="text-align:right">Valor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="relTblTopOport"></tbody>
+                                    </table>
+                                </div>
+                                <div class="empty-state-sm" id="relTopOportEmpty" style="display:none;">
+                                    <i class="fas fa-handshake"></i>
+                                    <p>Nenhuma oportunidade aberta</p>
+                                </div>
+                            </div>
+                            <div class="rel-table-card">
+                                <h3 class="rel-table-card__title"><i class="fas fa-exclamation-triangle"></i> Tarefas Vencidas</h3>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarefa</th>
+                                                <th>Responsável</th>
+                                                <th>Vencimento</th>
+                                                <th>Prioridade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="relTblTarefasVenc"></tbody>
+                                    </table>
+                                </div>
+                                <div class="empty-state-sm" id="relTarefasVencEmpty" style="display:none;">
+                                    <i class="fas fa-check-circle"></i>
+                                    <p>Nenhuma tarefa vencida</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /relConteudo -->
+                </section>
+
+                <!-- PERFIL MODULE -->
+                <section id="perfil-module" class="module">
+                    <div class="module-header">
+                        <h1>Meu Perfil</h1>
+                        <p class="subtitle">Gerencie suas informações pessoais</p>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="perfilLoading" class="dash-loading" style="display:none;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--color-primary);"></i>
+                        <p style="margin-top:var(--spacing-md);color:var(--color-text-muted);">Carregando perfil...</p>
+                    </div>
+
+                    <!-- Content -->
+                    <div id="perfilContent" style="display:none;">
+                        <div class="perfil-layout">
+                            <!-- Card do Perfil -->
+                            <div class="perfil-card-aside">
+                                <div class="perfil-avatar-wrapper">
+                                    <div class="perfil-avatar" id="perfilAvatar">
+                                        <span id="perfilAvatarInitial">?</span>
+                                    </div>
+                                    <h2 id="perfilNomeDisplay" class="perfil-nome-display">—</h2>
+                                    <span class="perfil-papel-badge" id="perfilPapelBadge">—</span>
+                                </div>
+                                <div class="perfil-meta">
+                                    <div class="perfil-meta-item">
+                                        <i class="fas fa-envelope"></i>
+                                        <span id="perfilEmailDisplay">—</span>
+                                    </div>
+                                    <div class="perfil-meta-item">
+                                        <i class="fas fa-phone"></i>
+                                        <span id="perfilTelDisplay">Não informado</span>
+                                    </div>
+                                    <div class="perfil-meta-item">
+                                        <i class="fas fa-briefcase"></i>
+                                        <span id="perfilCargoDisplay">Não informado</span>
+                                    </div>
+                                    <div class="perfil-meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span id="perfilDesdeDisplay">—</span>
+                                    </div>
+                                    <div class="perfil-meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span id="perfilUltimoAcessoDisplay">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Formulários -->
+                            <div class="perfil-forms">
+                                <!-- Dados Pessoais -->
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-user-edit"></i> Dados Pessoais</h3>
+                                        <button class="btn btn-secondary btn-sm" id="perfilEditBtn">
+                                            <i class="fas fa-pen"></i> Editar
+                                        </button>
+                                    </div>
+                                    <form id="perfilForm" class="perfil-form-disabled">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">Nome</label>
+                                                <input type="text" class="form-control" id="perfilNome" disabled>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">E-mail</label>
+                                                <input type="email" class="form-control" id="perfilEmail" disabled style="background:var(--bg-tertiary);cursor:not-allowed;">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">Cargo</label>
+                                                <input type="text" class="form-control" id="perfilCargo" disabled>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Telefone</label>
+                                                <input type="tel" class="form-control" id="perfilTelefone" placeholder="(00) 00000-0000" disabled>
+                                            </div>
+                                        </div>
+                                        <div class="perfil-form-actions hidden" id="perfilFormActions">
+                                            <button type="button" class="btn btn-secondary" id="perfilCancelBtn">Cancelar</button>
+                                            <button type="submit" class="btn btn-primary" id="perfilSaveBtn">
+                                                <i class="fas fa-save"></i> Salvar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Alterar Senha -->
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-lock"></i> Alterar Senha</h3>
+                                    </div>
+                                    <form id="perfilSenhaForm">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">Senha Atual</label>
+                                                <div class="input-password-wrapper">
+                                                    <input type="password" class="form-control" id="perfilSenhaAtual" placeholder="Digite a senha atual" autocomplete="current-password">
+                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Nova Senha</label>
+                                                <div class="input-password-wrapper">
+                                                    <input type="password" class="form-control" id="perfilNovaSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">Confirmar Nova Senha</label>
+                                                <div class="input-password-wrapper">
+                                                    <input type="password" class="form-control" id="perfilConfirmarSenha" placeholder="Repita a nova senha" autocomplete="new-password">
+                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="form-group" style="display:flex;align-items:flex-end;">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-key"></i> Alterar Senha
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONFIGURAÇÕES MODULE -->
+                <section id="configuracoes-module" class="module">
+                    <div class="module-header">
+                        <h1>Configurações</h1>
+                        <p class="subtitle">Gerencie as preferências do sistema</p>
+                    </div>
+
+                    <div class="config-layout">
+                        <!-- Sidebar de seções -->
+                        <nav class="config-nav" id="configNav">
+                            <a href="#" class="config-nav-item active" data-config-section="empresa">
+                                <i class="fas fa-building"></i> Dados da Empresa
+                            </a>
+                            <a href="#" class="config-nav-item" data-config-section="aparencia">
+                                <i class="fas fa-palette"></i> Aparência
+                            </a>
+                            <a href="#" class="config-nav-item" data-config-section="notificacoes">
+                                <i class="fas fa-bell"></i> Notificações
+                            </a>
+                            <a href="#" class="config-nav-item" data-config-section="seguranca">
+                                <i class="fas fa-shield-alt"></i> Segurança
+                            </a>
+                            <a href="#" class="config-nav-item" data-config-section="integracoes">
+                                <i class="fas fa-plug"></i> Integrações
+                            </a>
+                            <a href="#" class="config-nav-item" data-config-section="preferencias">
+                                <i class="fas fa-sliders-h"></i> Preferências Gerais
+                            </a>
+                        </nav>
+
+                        <!-- Conteúdo das seções -->
+                        <div class="config-content">
+
+                            <!-- Dados da Empresa -->
+                            <div class="config-section active" id="configEmpresa">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-building"></i> Dados da Empresa</h3>
+                                        <button class="btn btn-primary btn-sm" id="configEmpresaSave">
+                                            <i class="fas fa-save"></i> Salvar
+                                        </button>
+                                    </div>
+                                    <form id="configEmpresaForm">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">Nome da Empresa</label>
+                                                <input type="text" class="form-control" id="cfgEmpresaNome" value="Versatilis">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">CNPJ</label>
+                                                <input type="text" class="form-control" id="cfgEmpresaCnpj" placeholder="00.000.000/0000-00">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label class="form-label">E-mail Comercial</label>
+                                                <input type="email" class="form-control" id="cfgEmpresaEmail" placeholder="contato@empresa.com">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Telefone</label>
+                                                <input type="tel" class="form-control" id="cfgEmpresaTel" placeholder="(00) 0000-0000">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Endereço</label>
+                                            <input type="text" class="form-control" id="cfgEmpresaEndereco" placeholder="Rua, nº - Bairro - Cidade/UF">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Aparência -->
+                            <div class="config-section" id="configAparencia">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-palette"></i> Aparência</h3>
+                                    </div>
+                                    <div class="config-option-group">
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Tema</strong>
+                                                <p class="text-muted text-sm">Escolha o tema visual do sistema</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgTema" style="width:160px;">
+                                                <option value="light" selected>Claro</option>
+                                                <option value="dark">Escuro</option>
+                                                <option value="auto">Automático</option>
+                                            </select>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Sidebar Compacta</strong>
+                                                <p class="text-muted text-sm">Exibir sidebar em modo compacto por padrão</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgSidebarCompacta">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Densidade das Tabelas</strong>
+                                                <p class="text-muted text-sm">Define o espaçamento entre linhas</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgDensidade" style="width:160px;">
+                                                <option value="comfortable" selected>Confortável</option>
+                                                <option value="compact">Compacto</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notificações -->
+                            <div class="config-section" id="configNotificacoes">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-bell"></i> Notificações</h3>
+                                    </div>
+                                    <div class="config-option-group">
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Notificações no Sistema</strong>
+                                                <p class="text-muted text-sm">Exibir notificações na interface do CRM</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgNotifSistema" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Tarefas Vencendo</strong>
+                                                <p class="text-muted text-sm">Avisar sobre tarefas próximas do vencimento</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgNotifTarefas" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Novos Leads</strong>
+                                                <p class="text-muted text-sm">Notificar quando um novo lead for cadastrado</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgNotifLeads" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Orçamentos Aprovados</strong>
+                                                <p class="text-muted text-sm">Notificar quando um orçamento for aprovado</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgNotifOrcamentos" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Segurança -->
+                            <div class="config-section" id="configSeguranca">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-shield-alt"></i> Segurança</h3>
+                                    </div>
+                                    <div class="config-option-group">
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Tempo de Sessão</strong>
+                                                <p class="text-muted text-sm">Após quanto tempo inativo a sessão expira</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgSessaoTempo" style="width:160px;">
+                                                <option value="30">30 minutos</option>
+                                                <option value="60">1 hora</option>
+                                                <option value="480" selected>8 horas</option>
+                                                <option value="1440">24 horas</option>
+                                            </select>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Exigir Senha Forte</strong>
+                                                <p class="text-muted text-sm">Mínimo 8 caracteres com letras, números e símbolos</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="cfgSenhaForte" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Integrações -->
+                            <div class="config-section" id="configIntegracoes">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-plug"></i> Integrações</h3>
+                                    </div>
+                                    <div class="config-integrations-grid">
+                                        <div class="config-integration-card">
+                                            <div class="config-integration-icon" style="background:var(--color-info-bg);color:var(--color-info);">
+                                                <i class="fas fa-envelope"></i>
+                                            </div>
+                                            <div class="config-integration-info">
+                                                <strong>E-mail (SMTP)</strong>
+                                                <p class="text-muted text-sm">Enviar orçamentos e notificações por email</p>
+                                            </div>
+                                            <span class="config-integration-status config-status-active">
+                                                <i class="fas fa-check-circle"></i> Ativo
+                                            </span>
+                                        </div>
+                                        <div class="config-integration-card">
+                                            <div class="config-integration-icon" style="background:var(--color-success-bg);color:var(--color-success);">
+                                                <i class="fab fa-whatsapp"></i>
+                                            </div>
+                                            <div class="config-integration-info">
+                                                <strong>WhatsApp</strong>
+                                                <p class="text-muted text-sm">Enviar mensagens para clientes</p>
+                                            </div>
+                                            <span class="config-integration-status config-status-inactive">
+                                                <i class="fas fa-minus-circle"></i> Inativo
+                                            </span>
+                                        </div>
+                                        <div class="config-integration-card">
+                                            <div class="config-integration-icon" style="background:var(--color-warning-bg);color:var(--color-warning);">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </div>
+                                            <div class="config-integration-info">
+                                                <strong>Gerador de PDF</strong>
+                                                <p class="text-muted text-sm">Gerar orçamentos e relatórios em PDF</p>
+                                            </div>
+                                            <span class="config-integration-status config-status-active">
+                                                <i class="fas fa-check-circle"></i> Ativo
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preferências Gerais -->
+                            <div class="config-section" id="configPreferencias">
+                                <div class="perfil-section-card">
+                                    <div class="perfil-section-header">
+                                        <h3><i class="fas fa-sliders-h"></i> Preferências Gerais</h3>
+                                    </div>
+                                    <div class="config-option-group">
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Formato de Data</strong>
+                                                <p class="text-muted text-sm">Como as datas serão exibidas no sistema</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgFormatoData" style="width:160px;">
+                                                <option value="dd/MM/yyyy" selected>DD/MM/AAAA</option>
+                                                <option value="yyyy-MM-dd">AAAA-MM-DD</option>
+                                                <option value="MM/dd/yyyy">MM/DD/AAAA</option>
+                                            </select>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Moeda</strong>
+                                                <p class="text-muted text-sm">Moeda utilizada nos valores monetários</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgMoeda" style="width:160px;">
+                                                <option value="BRL" selected>R$ (Real)</option>
+                                                <option value="USD">$ (Dólar)</option>
+                                                <option value="EUR">€ (Euro)</option>
+                                            </select>
+                                        </div>
+                                        <div class="config-option">
+                                            <div class="config-option-info">
+                                                <strong>Itens por Página</strong>
+                                                <p class="text-muted text-sm">Quantidade de registros exibidos nas tabelas</p>
+                                            </div>
+                                            <select class="form-control select-sm" id="cfgItensPagina" style="width:160px;">
+                                                <option value="10">10</option>
+                                                <option value="25" selected>25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div><!-- /config-content -->
+                    </div><!-- /config-layout -->
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO ── -->
+    <div class="modal-backdrop hidden" id="deleteModalBackdrop">
+        <div class="modal modal-sm" id="deleteModal" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Cliente</h2>
+                <button class="modal-close" id="deleteModalClose" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <p class="confirm-text">Tem certeza que deseja excluir <strong id="deleteClienteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="deleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="deleteModalConfirm">
+                    <i class="fas fa-trash-alt"></i> Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL LEAD ── -->
+    <div class="modal-backdrop hidden" id="leadModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leadModalTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="leadModalTitle">Novo Lead</h2>
+                <button class="modal-close" id="leadModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="leadForm" novalidate>
+                    <input type="hidden" id="leadId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="leadNomeContato">Nome do Contato <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="leadNomeContato" placeholder="Ex.: João Silva" required>
+                            <p class="form-error hidden" id="leadErrNome">Nome é obrigatório.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="leadEmpresa">Empresa</label>
+                            <input type="text" class="form-control" id="leadEmpresa" placeholder="Ex.: Tech Corp">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="leadEmail">E-mail</label>
+                            <input type="email" class="form-control" id="leadEmail" placeholder="contato@empresa.com">
+                            <p class="form-error hidden" id="leadErrEmail">E-mail inválido.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="leadTelefone">Telefone</label>
+                            <input type="tel" class="form-control" id="leadTelefone" placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="leadOrigem">Origem <span class="required">*</span></label>
+                            <select class="form-control" id="leadOrigem" required>
+                                <option value="">Selecione...</option>
+                                <option value="SITE">Site</option>
+                                <option value="TELEFONE">Telefone</option>
+                                <option value="EMAIL">E-mail</option>
+                                <option value="EVENTO">Evento</option>
+                                <option value="INDICACAO">Indicação</option>
+                                <option value="OUTRO">Outro</option>
+                            </select>
+                            <p class="form-error hidden" id="leadErrOrigem">Origem é obrigatória.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="leadStatus">Status</label>
+                            <select class="form-control" id="leadStatus">
+                                <option value="NOVO">Novo</option>
+                                <option value="QUALIFICADO">Qualificado</option>
+                                <option value="EM_CONTATO">Em Contato</option>
+                                <option value="PROPOSTA_ENVIADA">Proposta Enviada</option>
+                                <option value="PERDIDO">Perdido</option>
+                                <option value="CONVERTIDO">Convertido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="leadScore">Score (0–100)</label>
+                            <input type="number" class="form-control" id="leadScore" placeholder="0" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="leadResponsavelId">Responsável (ID)</label>
+                            <input type="number" class="form-control" id="leadResponsavelId" placeholder="ID do usuário" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="leadObservacoes">Observações</label>
+                        <textarea class="form-control" id="leadObservacoes" rows="3" placeholder="Notas sobre este lead..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="leadModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="leadModalSave"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO LEAD ── -->
+    <div class="modal-backdrop hidden" id="leadDeleteModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Lead</h2>
+                <button class="modal-close" id="leadDeleteModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+                <p class="confirm-text">Tem certeza que deseja excluir <strong id="leadDeleteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="leadDeleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="leadDeleteModalConfirm"><i class="fas fa-trash-alt"></i> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONVERTER LEAD EM CLIENTE ── -->
+    <div class="modal-backdrop hidden" id="leadConvertModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Converter em Cliente</h2>
+                <button class="modal-close" id="leadConvertModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon" style="color:var(--color-success)"><i class="fas fa-user-check"></i></div>
+                <p class="confirm-text">Converter <strong id="leadConvertName"></strong> em cliente?</p>
+                <p class="text-muted text-sm">Os dados do lead serão copiados para um novo cliente. O status do lead será alterado para "Convertido".</p>
+                <div class="form-group" style="margin-top:1rem">
+                    <label class="form-label" for="leadConvertMotivo">Motivo da conversão (opcional)</label>
+                    <input type="text" class="form-control" id="leadConvertMotivo" placeholder="Ex.: Fechou contrato">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="leadConvertModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="leadConvertModalConfirm"><i class="fas fa-user-check"></i> Converter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL PRODUTO ── -->
+    <div class="modal-backdrop hidden" id="prodModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prodModalTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="prodModalTitle">Novo Produto</h2>
+                <button class="modal-close" id="prodModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="prodForm" novalidate>
+                    <input type="hidden" id="prodId">
+                    <div class="form-group">
+                        <label class="form-label" for="prodNome">Nome do Produto <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="prodNome" placeholder="Ex.: Consultoria Mensal" required>
+                        <p class="form-error hidden" id="prodErrNome">Nome é obrigatório.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="prodPreco">Preço Unitário (R$) <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="prodPreco" placeholder="0,00" min="0.01" step="0.01" required>
+                            <p class="form-error hidden" id="prodErrPreco">Preço deve ser maior que zero.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="prodCategoria">Categoria</label>
+                            <input type="text" class="form-control" id="prodCategoria" placeholder="Ex.: Serviços">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="prodEstoque">Estoque</label>
+                            <input type="number" class="form-control" id="prodEstoque" placeholder="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="prodStatus">Status</label>
+                            <select class="form-control" id="prodStatus">
+                                <option value="DISPONIVEL">Disponível</option>
+                                <option value="INDISPONIVEL">Indisponível</option>
+                                <option value="EM_FALTA">Em Falta</option>
+                                <option value="DESCONTINUADO">Descontinuado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="prodDescricao">Descrição</label>
+                        <textarea class="form-control" id="prodDescricao" rows="3" placeholder="Descrição do produto ou serviço..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="prodModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="prodModalSave"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO PRODUTO ── -->
+    <div class="modal-backdrop hidden" id="prodDeleteModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Produto</h2>
+                <button class="modal-close" id="prodDeleteModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+                <p class="confirm-text">Tem certeza que deseja excluir <strong id="prodDeleteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="prodDeleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="prodDeleteModalConfirm"><i class="fas fa-trash-alt"></i> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL TAREFA ── -->
+    <div class="modal-backdrop hidden" id="tarModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tarModalTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="tarModalTitle">Nova Tarefa</h2>
+                <button class="modal-close" id="tarModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="tarForm" novalidate>
+                    <input type="hidden" id="tarId">
+                    <div class="form-group">
+                        <label class="form-label" for="tarTitulo">Título <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="tarTitulo" placeholder="Ex.: Ligar para cliente" required>
+                        <p class="form-error hidden" id="tarErrTitulo">Título é obrigatório.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="tarPrioridade">Prioridade <span class="required">*</span></label>
+                            <select class="form-control" id="tarPrioridade" required>
+                                <option value="">Selecione...</option>
+                                <option value="BAIXA">Baixa</option>
+                                <option value="MEDIA">Média</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="URGENTE">Urgente</option>
+                            </select>
+                            <p class="form-error hidden" id="tarErrPrioridade">Prioridade é obrigatória.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tarStatus">Status</label>
+                            <select class="form-control" id="tarStatus">
+                                <option value="PENDENTE">Pendente</option>
+                                <option value="EM_PROCESSO">Em Progresso</option>
+                                <option value="CONCLUIDA">Concluída</option>
+                                <option value="CANCELADA">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="tarVencimento">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="tarVencimento">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tarResponsavelId">ID do Responsável <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="tarResponsavelId" placeholder="ID do usuário" min="1">
+                            <p class="form-error hidden" id="tarErrResponsavel">Responsável é obrigatório.</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vínculo <span class="text-muted text-sm">(opcional)</span></label>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <select class="form-control" id="tarVinculoTipo">
+                                    <option value="">Sem vínculo</option>
+                                    <option value="cliente">Cliente</option>
+                                    <option value="lead">Lead</option>
+                                    <option value="oportunidade">Oportunidade</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <input type="number" class="form-control" id="tarVinculoId" placeholder="ID" min="1" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tarDescricao">Descrição</label>
+                        <textarea class="form-control" id="tarDescricao" rows="2" placeholder="Detalhes da tarefa..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="tarObservacoes">Observações</label>
+                        <textarea class="form-control" id="tarObservacoes" rows="2" placeholder="Anotações internas..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="tarModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="tarModalSave"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO TAREFA ── -->
+    <div class="modal-backdrop hidden" id="tarDeleteModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Tarefa</h2>
+                <button class="modal-close" id="tarDeleteModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+                <p class="confirm-text">Tem certeza que deseja excluir <strong id="tarDeleteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="tarDeleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="tarDeleteModalConfirm"><i class="fas fa-trash-alt"></i> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL OPORTUNIDADE ── -->
+    <div class="modal-backdrop hidden" id="opModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="opModalTitle">
+            <div class="modal-header">
+                <h2 class="modal-title" id="opModalTitle">Nova Oportunidade</h2>
+                <button class="modal-close" id="opModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="opForm" novalidate>
+                    <input type="hidden" id="opId">
+                    <div class="form-group">
+                        <label class="form-label" for="opTitulo">Título <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="opTitulo" placeholder="Ex.: Fornecimento anual de consultoria" required>
+                        <p class="form-error hidden" id="opErrTitulo">Título é obrigatório.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="opClienteId">ID do Cliente <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="opClienteId" placeholder="Ex.: 1" min="1" required>
+                            <p class="form-error hidden" id="opErrCliente">Cliente é obrigatório.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="opValor">Valor Estimado (R$) <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="opValor" placeholder="0,00" min="0.01" step="0.01" required>
+                            <p class="form-error hidden" id="opErrValor">Valor deve ser maior que zero.</p>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="opEtapa">Etapa <span class="required">*</span></label>
+                            <select class="form-control" id="opEtapa" required>
+                                <option value="">Selecione...</option>
+                                <option value="QUALIFICACAO">Qualificação</option>
+                                <option value="ANALISE_NECESSIDADES">Análise de Necessidades</option>
+                                <option value="PROPOSTA">Proposta</option>
+                                <option value="NEGOCIACAO">Negociação</option>
+                                <option value="FECHAMENTO">Fechamento</option>
+                            </select>
+                            <p class="form-error hidden" id="opErrEtapa">Etapa é obrigatória.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="opStatus">Status</label>
+                            <select class="form-control" id="opStatus">
+                                <option value="ABERTA">Aberta</option>
+                                <option value="GANHA">Ganha</option>
+                                <option value="PERDIDA">Perdida</option>
+                                <option value="ARQUIVADA">Arquivada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="opProb">Probabilidade (%)</label>
+                            <input type="number" class="form-control" id="opProb" placeholder="0" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="opDataFechamento">Previsão de Fechamento</label>
+                            <input type="date" class="form-control" id="opDataFechamento">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="opResponsavelId">ID do Responsável</label>
+                        <input type="number" class="form-control" id="opResponsavelId" placeholder="ID do usuário responsável" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="opObservacoes">Observações</label>
+                        <textarea class="form-control" id="opObservacoes" rows="3" placeholder="Notas sobre esta oportunidade..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="opModalCancel">Cancelar</button>
+                <button class="btn btn-warning hidden" id="opModalOrcamento"><i class="fas fa-file-invoice-dollar"></i> Gerar Orçamento</button>
+                <button class="btn btn-primary" id="opModalSave"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO OPORTUNIDADE ── -->
+    <div class="modal-backdrop hidden" id="opDeleteModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Oportunidade</h2>
+                <button class="modal-close" id="opDeleteModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+                <p class="confirm-text">Tem certeza que deseja excluir <strong id="opDeleteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="opDeleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="opDeleteModalConfirm"><i class="fas fa-trash-alt"></i> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAR EXCLUSÃO ORÇAMENTO ── -->
+    <div class="modal-backdrop hidden" id="orcDeleteModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title">Excluir Orçamento</h2>
+                <button class="modal-close" id="orcDeleteModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+                <p class="confirm-text">Tem certeza que deseja excluir o orçamento <strong id="orcDeleteName"></strong>?</p>
+                <p class="text-muted text-sm">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="orcDeleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="orcDeleteModalConfirm"><i class="fas fa-trash-alt"></i> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL VISUALIZAÇÃO / IMPRESSÃO ORÇAMENTO ── -->
+    <div class="modal-backdrop hidden" id="orcPreviewBackdrop">
+        <div class="modal modal-print" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-eye"></i> Visualizar Orçamento</h2>
+                <div class="modal-header-actions">
+                    <button class="btn btn-sm btn-primary" id="orcPrintBtn" title="Imprimir / Salvar como PDF"><i class="fas fa-print"></i> Imprimir / PDF</button>
+                    <button class="btn btn-sm btn-secondary" id="orcDocxBtn" title="Baixar documento Word preenchido com o template oficial"><i class="fas fa-file-word"></i> Download DOCX</button>
+                    <button class="btn btn-sm btn-success" id="orcWhatsAppBtn" title="Enviar por WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                    <button class="btn btn-sm btn-info" id="orcEmailBtn" title="Enviar por Email"><i class="fas fa-envelope"></i> Email</button>
+                    <button class="modal-close" id="orcPreviewClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body orc-preview-body">
+                <div id="orcPrintArea" class="orc-document">
+                    <!-- Papel timbrado dinâmico -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL ENVIO DE EMAIL ── -->
+    <div class="modal-backdrop hidden" id="orcEmailModalBackdrop">
+        <div class="modal modal-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-envelope"></i> Enviar Orçamento por Email</h2>
+                <button class="modal-close" id="orcEmailModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="orcEmailDestinatario">Email do destinatário <span class="required">*</span></label>
+                    <input type="email" class="form-control" id="orcEmailDestinatario" placeholder="cliente@empresa.com" autocomplete="email">
+                    <p class="text-muted text-sm" id="orcEmailClienteInfo" style="margin-top:4px"></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="orcEmailMensagem">Mensagem adicional <span class="text-muted">(opcional)</span></label>
+                    <textarea class="form-control" id="orcEmailMensagem" rows="3" placeholder="Escreva uma mensagem personalizada para incluir no email..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="orcEmailModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="orcEmailModalSend"><i class="fas fa-paper-plane"></i> Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TOASTS ── -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- SCRIPTS -->
+    <script src="js/app.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/clientes.js"></script>
+    <script src="js/leads.js"></script>
+    <script src="js/produtos.js"></script>
+    <script src="js/tarefas.js"></script>
+    <script src="js/oportunidades.js"></script>
+    <script src="js/orcamentos.js"></script>
+    <script src="js/relatorios.js"></script>
+    <script src="js/perfil.js"></script>
+    <script src="js/configuracoes.js"></script>
+</body>
+</html>

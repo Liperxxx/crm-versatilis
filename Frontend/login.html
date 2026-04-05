@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login � CRM Versatilis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:      #CD5A26;
+            --primary-dark: #B84E1F;
+            --primary-50:   rgba(205, 90, 38, 0.10);
+            --danger:       #ef4444;
+            --success:      #10b981;
+            --dark:         #122749;
+            --sidebar:      #112251;
+            --text:         #1e293b;
+            --muted:        #64748b;
+            --border:       #e2e8f0;
+            --bg:           #f1f5f9;
+            --white:        #ffffff;
+            --radius:       12px;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        /* Logotipo */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+        .logo i { font-size: 28px; color: var(--primary); }
+        .logo span { font-size: 22px; font-weight: 700; color: var(--dark); }
+
+        /* Card */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 24px rgba(17,34,81,.10);
+            padding: 40px 36px 32px;
+        }
+
+        h1 { font-size: 22px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+        .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+        /* Alert */
+        .alert {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-radius: 8px;
+            font-size: 13.5px; line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .alert.hidden { display: none; }
+        .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert i { margin-top: 1px; flex-shrink: 0; }
+
+        /* Form */
+        .field { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+        .input-wrap { position: relative; }
+        .input-wrap i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--muted); font-size: 14px; pointer-events: none;
+        }
+        .input-wrap input {
+            width: 100%; padding: 10px 12px 10px 36px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 14px; color: var(--text);
+            outline: none; transition: border-color .2s, box-shadow .2s;
+            font-family: var(--font);
+        }
+        .input-wrap input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-50);
+        }
+        .input-wrap input.invalid { border-color: var(--danger); }
+
+        /* Button */
+        .btn-primary {
+            width: 100%; padding: 11px;
+            background: var(--primary); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background .2s; margin-top: 4px;
+        }
+        .btn-primary:hover  { background: var(--primary-dark); }
+        .btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+
+        /* Divider */
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            color: var(--muted); font-size: 12px;
+            margin: 24px 0 20px;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* Setup section */
+        details { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+        summary {
+            padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text);
+            cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
+            user-select: none;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary i { color: var(--muted); font-size: 13px; }
+        details[open] summary { border-bottom: 1px solid var(--border); }
+
+        .setup-body { padding: 16px; }
+        .setup-body .field { margin-bottom: 14px; }
+        .setup-body .field:last-of-type { margin-bottom: 0; }
+
+        .btn-outline {
+            width: 100%; padding: 10px;
+            background: transparent; color: var(--primary);
+            border: 1.5px solid var(--primary); border-radius: 8px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background .2s, color .2s; margin-top: 14px;
+        }
+        .btn-outline:hover { background: var(--primary); color: #fff; }
+        .btn-outline:disabled { opacity: .65; cursor: not-allowed; }
+
+        .fa-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="page">
+
+        <div class="logo">
+            <i class="fas fa-cube"></i>
+            <span>Versatilis CRM</span>
+        </div>
+
+        <div class="card">
+            <h1>Entrar</h1>
+            <p class="subtitle">Acesse com sua conta para continuar</p>
+
+            <div id="loginAlert" class="alert hidden"></div>
+
+            <form id="loginForm" novalidate>
+                <div class="field">
+                    <label for="email">E-mail</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="senha">Senha</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password" required>
+                    </div>
+                </div>
+                <button type="submit" id="btnLogin" class="btn-primary">
+                    <i id="loginSpinner" class="fas fa-spinner fa-spin hidden"></i>
+                    <span id="btnLoginText">Entrar</span>
+                </button>
+                <p style="text-align:right; margin-top:10px; font-size:13px;">
+                    <a href="recuperar-senha.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Esqueci minha senha</a>
+                </p>
+            </form>
+
+            <div class="divider">Primeiro acesso?</div>
+
+            <details>
+                <summary><i class="fas fa-user-shield"></i> Criar conta de administrador</summary>
+                <div class="setup-body">
+                    <p style="font-size:13px;color:#64748b;margin-bottom:14px">
+                        Crie o primeiro usu�rio administrador do sistema.<br>
+                        <strong>S� funciona enquanto n�o houver nenhum usu�rio cadastrado.</strong>
+                    </p>
+
+                    <div id="setupAlert" class="alert hidden"></div>
+
+                    <div class="field">
+                        <label for="setupNome">Nome completo</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="setupNome" placeholder="Administrador">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="setupEmail">E-mail</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="setupEmail" placeholder="admin@empresa.com">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="setupSenha">Senha</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="setupSenha" placeholder="M�nimo 6 caracteres">
+                        </div>
+                    </div>
+                    <button type="button" id="btnSetup" class="btn-outline">
+                        <i id="setupSpinner" class="fas fa-spinner fa-spin hidden"></i>
+                        <span id="btnSetupText">Criar administrador</span>
+                    </button>
+                </div>
+            </details>
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:8081/api';
+
+        // Se j� autenticado, redireciona direto
+        if (localStorage.getItem('crm_token')) {
+            window.location.replace('index.html');
+        }
+
+        function showAlert(id, type, msg) {
+            const el = document.getElementById(id);
+            el.className = `alert alert-${type}`;
+            const icon = type === 'danger' ? 'fa-circle-xmark' : 'fa-circle-check';
+            el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
+            el.classList.remove('hidden');
+        }
+
+        function hideAlert(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // -- Login --------------------------------------------------------------
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert('loginAlert');
+
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+
+            if (!email || !senha) {
+                showAlert('loginAlert', 'danger', 'Preencha e-mail e senha.');
+                return;
+            }
+
+            const btn     = document.getElementById('btnLogin');
+            const spinner = document.getElementById('loginSpinner');
+            const text    = document.getElementById('btnLoginText');
+            btn.disabled  = true;
+            spinner.classList.remove('hidden');
+            text.textContent = 'Entrando�';
+
+            try {
+                const res = await fetch(`${API}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const json = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    const msg = json.mensagem || (res.status === 401 ? 'E-mail ou senha inv�lidos.' : `Erro ${res.status}`);
+                    showAlert('loginAlert', 'danger', msg);
+                    return;
+                }
+
+                const token = json.dados?.token ?? json.token;
+                if (!token) { showAlert('loginAlert', 'danger', 'Resposta inesperada do servidor.'); return; }
+
+                localStorage.setItem('crm_token', token);
+                window.location.replace('index.html');
+
+            } catch (err) {
+                showAlert('loginAlert', 'danger', `N�o foi poss�vel conectar ao backend: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                text.textContent = 'Entrar';
+            }
+        });
+
+        // -- Criar primeiro admin -----------------------------------------------
+        document.getElementById('btnSetup').addEventListener('click', async () => {
+            hideAlert('setupAlert');
+
+            const nome  = document.getElementById('setupNome').value.trim();
+            const email = document.getElementById('setupEmail').value.trim();
+            const senha = document.getElementById('setupSenha').value;
+
+            if (!nome || !email || !senha) {
+                showAlert('setupAlert', 'danger', 'Preencha todos os campos.');
+                return;
+            }
+            if (senha.length < 6) {
+                showAlert('setupAlert', 'danger', 'A senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+
+            const btn     = document.getElementById('btnSetup');
+            const spinner = document.getElementById('setupSpinner');
+            const text    = document.getElementById('btnSetupText');
+            btn.disabled  = true;
+            spinner.classList.remove('hidden');
+            text.textContent = 'Criando�';
+
+            try {
+                const res = await fetch(`${API}/auth/inicializar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha })
+                });
+
+                const json = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    showAlert('setupAlert', 'danger', json.mensagem || `Erro ${res.status}`);
+                    return;
+                }
+
+                showAlert('setupAlert', 'success', 'Administrador criado! Agora fa�a login com as credenciais.');
+                document.getElementById('email').value = email;
+                document.getElementById('senha').value = '';
+                document.getElementById('senha').focus();
+
+            } catch (err) {
+                showAlert('setupAlert', 'danger', `Falha na conex�o: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                text.textContent = 'Criar administrador';
+            }
+        });
+    </script>
+</body>
+</html>

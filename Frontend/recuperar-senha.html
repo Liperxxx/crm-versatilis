@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha — CRM Versatilis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:      #CD5A26;
+            --primary-dark: #B84E1F;
+            --primary-50:   rgba(205, 90, 38, 0.10);
+            --danger:       #ef4444;
+            --success:      #10b981;
+            --dark:         #122749;
+            --sidebar:      #112251;
+            --text:         #1e293b;
+            --muted:        #64748b;
+            --border:       #e2e8f0;
+            --bg:           #f1f5f9;
+            --white:        #ffffff;
+            --radius:       12px;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        /* Logo */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+        .logo i { font-size: 28px; color: var(--primary); }
+        .logo span { font-size: 22px; font-weight: 700; color: var(--dark); }
+
+        /* Card */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 24px rgba(17,34,81,.10);
+            padding: 40px 36px 32px;
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .card-icon i { font-size: 22px; color: var(--primary); }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 28px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Alert */
+        .alert {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-radius: 8px;
+            font-size: 13.5px; line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .alert.hidden { display: none; }
+        .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert i { margin-top: 1px; flex-shrink: 0; }
+
+        /* Form */
+        .field { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+        .input-wrap { position: relative; }
+        .input-wrap i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--muted); font-size: 14px; pointer-events: none;
+        }
+        .input-wrap input {
+            width: 100%; padding: 10px 12px 10px 36px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 14px; color: var(--text);
+            outline: none; transition: border-color .2s, box-shadow .2s;
+            font-family: var(--font);
+        }
+        .input-wrap input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-50);
+        }
+        .input-wrap input.invalid { border-color: var(--danger); }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%; padding: 11px;
+            background: var(--primary); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background .2s; margin-top: 4px;
+        }
+        .btn-primary:hover  { background: var(--primary-dark); }
+        .btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+
+        /* Back link */
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .back-link a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color .2s;
+        }
+        .back-link a:hover { color: var(--primary-dark); text-decoration: underline; }
+
+        /* Success state */
+        .success-state { display: none; text-align: center; }
+        .success-state i {
+            font-size: 52px;
+            color: var(--success);
+            display: block;
+            margin-bottom: 16px;
+        }
+        .success-state h2 { font-size: 18px; color: var(--dark); margin-bottom: 8px; }
+        .success-state p  { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+        .fa-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="page">
+
+        <div class="logo">
+            <i class="fas fa-cube"></i>
+            <span>Versatilis CRM</span>
+        </div>
+
+        <div class="card">
+
+            <!-- Form state -->
+            <div id="formState">
+                <div class="card-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h1>Recuperar Senha</h1>
+                <p class="subtitle">
+                    Informe seu e-mail cadastrado e, se houver uma conta,<br>
+                    enviaremos as instruções para redefinir sua senha.
+                </p>
+
+                <div id="formAlert" class="alert hidden"></div>
+
+                <form id="recoverForm" novalidate>
+                    <div class="field">
+                        <label for="email">E-mail</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="btnRecover" class="btn-primary">
+                        <i id="recoverSpinner" class="fas fa-spinner fa-spin hidden"></i>
+                        <span id="btnRecoverText">Enviar instruções</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Success state -->
+            <div id="successState" class="success-state">
+                <i class="fas fa-circle-check"></i>
+                <h2>E-mail enviado!</h2>
+                <p>
+                    Se existir uma conta com este endereço,<br>
+                    verifique sua caixa de entrada e o spam.
+                </p>
+            </div>
+
+            <div class="back-link">
+                <i class="fas fa-arrow-left" style="font-size:11px;"></i>
+                <a href="login.html">Voltar para login</a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:8081/api';
+
+        const form        = document.getElementById('recoverForm');
+        const formState   = document.getElementById('formState');
+        const successState = document.getElementById('successState');
+        const btnRecover  = document.getElementById('btnRecover');
+        const spinner     = document.getElementById('recoverSpinner');
+        const btnText     = document.getElementById('btnRecoverText');
+        const alertEl     = document.getElementById('formAlert');
+        const emailInput  = document.getElementById('email');
+
+        function showAlert(type, msg) {
+            alertEl.className = `alert alert-${type}`;
+            const icon = type === 'danger' ? 'fa-circle-xmark' : 'fa-circle-check';
+            alertEl.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
+            alertEl.classList.remove('hidden');
+        }
+
+        function setLoading(on) {
+            btnRecover.disabled = on;
+            spinner.classList.toggle('hidden', !on);
+            btnText.textContent = on ? 'Enviando...' : 'Enviar instruções';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            alertEl.classList.add('hidden');
+            emailInput.classList.remove('invalid');
+
+            const email = emailInput.value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                emailInput.classList.add('invalid');
+                showAlert('danger', 'Informe um e-mail válido.');
+                emailInput.focus();
+                return;
+            }
+
+            setLoading(true);
+            try {
+                // Endpoint de recuperação de senha (a implementar no backend)
+                const res = await fetch(`${API}/auth/recuperar-senha`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                // Sempre mostrar sucesso para não vazar se e-mail existe
+                formState.style.display = 'none';
+                successState.style.display = 'block';
+
+            } catch (_) {
+                // Mesmo em erro de rede, mostrar mensagem genérica de sucesso
+                // para não vazar informações de enumeration de usuários
+                formState.style.display = 'none';
+                successState.style.display = 'block';
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        emailInput.addEventListener('input', () => {
+            emailInput.classList.remove('invalid');
+            alertEl.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

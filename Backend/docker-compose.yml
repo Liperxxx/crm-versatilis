@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: crm_mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD} # Senha do usuário root do MySQL
+      MYSQL_DATABASE: crm_versatilis      # Nome do banco de dados
+      MYSQL_USER: ${DB_USERNAME}          # Usuário para o banco de dados
+      MYSQL_PASSWORD: ${DB_PASSWORD}      # Senha para o usuário do banco de dados
+    ports:
+      - "3306:3306" # Mapeia a porta 3306 do host para a porta 3306 do contêiner
+    volumes:
+      - db_data:/var/lib/mysql # Persiste os dados do banco de dados em um volume
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build: . # Constrói a imagem Docker a partir do Dockerfile no diretório atual
+    container_name: crm_versatilis_backend
+    environment:
+      DB_URL: jdbc:mysql://db:3306/crm_versatilis?useSSL=false&serverTimezone=UTC # URL de conexão com o banco de dados (usando o nome do serviço 'db')
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      APP_ENVIRONMENT: production
+      APP_DEBUG: false
+      HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "8080:8080" # Mapeia a porta 8080 do host para a porta 8080 do contêiner
+    depends_on:
+      db:
+        condition: service_healthy # Garante que o banco de dados esteja saudável antes de iniciar a aplicação
+    restart: always # Reinicia o contêiner automaticamente se ele falhar
+
+volumes:
+  db_data: # Define o volume para persistência dos dados do MySQL
