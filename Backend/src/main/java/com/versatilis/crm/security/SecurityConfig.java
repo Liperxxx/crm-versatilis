@@ -33,7 +33,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://crm-versatilis.vercel.app}")
     private String allowedOrigins;
 
     @Bean
@@ -58,7 +58,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Rotas públicas
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/health").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/info").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/management/actuator/health").permitAll()
+                .requestMatchers("/management/actuator/info").permitAll()
+                .requestMatchers("/management/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
 
                 // Rotas administrativas - apenas ADMIN
