@@ -73,6 +73,10 @@ public class SecurityConfig {
                 .requestMatchers("/usuarios/me/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
 
+                // Configurações da empresa
+                .requestMatchers(HttpMethod.POST, "/config/logo").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/config/**").authenticated()
+
                 // Rotas de gerenciamento - ADMIN e GERENTE
                 .requestMatchers(HttpMethod.POST, "/clientes").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.PUT, "/clientes/**").hasAnyRole("ADMIN", "GERENTE")

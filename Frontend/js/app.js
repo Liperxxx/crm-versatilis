@@ -16,6 +16,64 @@ class App {
         this.setupEventListeners();
         this.setupUserMenu();
         this.setupResponsive();
+        this.loadCachedLogo();
+        this.loadUserProfile();
+    }
+
+    loadCachedLogo() {
+        const logoUrl = localStorage.getItem('crm_logo_url');
+        if (logoUrl) {
+            const sidebarLogo = document.getElementById('sidebarLogo');
+            const sidebarIcon = document.getElementById('sidebarLogoIcon');
+            if (sidebarLogo) {
+                sidebarLogo.src = logoUrl;
+                sidebarLogo.style.display = 'block';
+                if (sidebarIcon) sidebarIcon.style.display = 'none';
+            }
+        }
+    }
+
+    async loadUserProfile() {
+        const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const resp = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!resp.ok) return;
+            const json = await resp.json();
+            const d = json.dados;
+            if (!d) return;
+
+            // Update header and sidebar names
+            const sidebarName = document.querySelector('.sidebar-footer .user-name');
+            if (sidebarName) sidebarName.textContent = d.nome || 'Usuário';
+            const sidebarRole = document.querySelector('.sidebar-footer .user-role');
+            if (sidebarRole) sidebarRole.textContent = d.cargo || d.papel || 'Colaborador';
+            const headerSpan = document.querySelector('#btnUserMenu span');
+            if (headerSpan) headerSpan.textContent = (d.nome || 'Usuário').split(' ')[0];
+
+            // Update avatar if available
+            if (d.avatarUrl) {
+                const sidebarIcon = document.querySelector('.sidebar-avatar-icon');
+                const sidebarImg = document.querySelector('.sidebar-avatar-img');
+                if (sidebarIcon && sidebarImg) {
+                    sidebarIcon.style.display = 'none';
+                    sidebarImg.src = d.avatarUrl;
+                    sidebarImg.style.display = 'block';
+                }
+                const headerIcon = document.querySelector('.header-avatar-icon');
+                const headerImg = document.querySelector('.header-avatar-img');
+                if (headerIcon && headerImg) {
+                    headerIcon.style.display = 'none';
+                    headerImg.src = d.avatarUrl;
+                    headerImg.style.display = 'block';
+                }
+            }
+        } catch (e) {
+            console.warn('Erro ao carregar perfil do usuário:', e);
+        }
     }
 
     setupEventListeners() {

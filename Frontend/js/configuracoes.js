@@ -34,6 +34,8 @@ class ConfiguracoesManager {
         this.setupNavigation();
         this.setupEvents();
         this.setupHeaderConfigBtn();
+        this.setupLogoUpload();
+        this.loadLogo();
     }
 
     // ── Carregar / Salvar ──
@@ -177,6 +179,124 @@ class ConfiguracoesManager {
                     window.navigationManager.navigateTo('configuracoes');
                 }
             });
+        }
+    }
+
+    // ── Logo Upload ──
+
+    setupLogoUpload() {
+        const btn = document.getElementById('cfgLogoBtn');
+        const input = document.getElementById('cfgLogoInput');
+        if (btn && input) {
+            btn.addEventListener('click', () => input.click());
+            input.addEventListener('change', () => this.uploadLogo());
+        }
+    }
+
+    async loadLogo() {
+        // Try localStorage cache first
+        const cached = localStorage.getItem('crm_logo_url');
+        if (cached) this.showLogo(cached);
+
+        try {
+            const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
+            if (!token) return;
+
+            const resp = await fetch(`${API_BASE_URL}/config/logo`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!resp.ok) return;
+
+            const json = await resp.json();
+            const url = json.dados?.logoUrl;
+            if (url) {
+                localStorage.setItem('crm_logo_url', url);
+                this.showLogo(url);
+            }
+        } catch (e) {
+            console.warn('Erro ao carregar logo:', e);
+        }
+    }
+
+    showLogo(url) {
+        if (!url) return;
+
+        // Config preview
+        const img = document.getElementById('cfgLogoImg');
+        const placeholder = document.getElementById('cfgLogoPlaceholder');
+        if (img) {
+            img.src = url;
+            img.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+        }
+
+        // Sidebar logo
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        const sidebarIcon = document.getElementById('sidebarLogoIcon');
+        if (sidebarLogo) {
+            sidebarLogo.src = url;
+            sidebarLogo.style.display = 'block';
+            if (sidebarIcon) sidebarIcon.style.display = 'none';
+        }
+    }
+
+    async uploadLogo() {
+        const input = document.getElementById('cfgLogoInput');
+        const file = input?.files?.[0];
+        if (!file) return;
+
+        if (file.type !== 'image/png') {
+            this.toast('danger', 'fas fa-exclamation-circle', 'Apenas imagens PNG são aceitas.');
+            input.value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            this.toast('danger', 'fas fa-exclamation-circle', 'O arquivo deve ter no máximo 5MB.');
+            input.value = '';
+            return;
+        }
+
+        const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
+        if (!token) return;
+
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (e) => this.showLogo(e.target.result);
+        reader.readAsDataURL(file);
+
+        const btn = document.getElementById('cfgLogoBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resp = await fetch(`${API_BASE_URL}/config/logo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const json = await resp.json().catch(() => ({}));
+            if (!resp.ok) throw new Error(json.mensagem || 'Erro no upload');
+
+            const url = json.dados?.logoUrl;
+            if (url) {
+                localStorage.setItem('crm_logo_url', url);
+                this.showLogo(url);
+            }
+            this.toast('success', 'fas fa-check-circle', 'Logo atualizado com sucesso!');
+        } catch (e) {
+            this.toast('danger', 'fas fa-exclamation-circle', e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload"></i> Enviar Logo';
+            }
+            input.value = '';
         }
     }
 

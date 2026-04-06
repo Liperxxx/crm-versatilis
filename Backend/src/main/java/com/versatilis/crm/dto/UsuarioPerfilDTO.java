@@ -19,6 +19,7 @@ public class UsuarioPerfilDTO {
     private String cargo;
     private String papel;
     private String telefone;
+    private String avatarUrl;
     private LocalDateTime ultimoAcesso;
     private LocalDateTime dataCriacao;
 }

@@ -25,7 +25,8 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-cube"></i>
+                    <img id="sidebarLogo" src="" alt="Logo" style="display:none;height:28px;width:28px;object-fit:contain;">
+                    <i class="fas fa-cube" id="sidebarLogoIcon"></i>
                     <span>Versatilis CRM</span>
                 </div>
                 <button class="sidebar-toggle" id="sidebarToggle">
@@ -96,7 +97,8 @@
             <div class="sidebar-footer">
                 <div class="user-profile">
                     <div class="user-avatar">
-                        <i class="fas fa-user-circle" style="font-size:40px;color:var(--primary-color,#6366f1)"></i>
+                        <i class="fas fa-user-circle sidebar-avatar-icon" style="font-size:40px;color:var(--primary-color,#6366f1)"></i>
+                        <img class="sidebar-avatar-img" src="" alt="Avatar" style="display:none;width:40px;height:40px;object-fit:cover;border-radius:50%;">
                     </div>
                     <div class="user-info">
                         <p class="user-name">Felipe</p>
@@ -156,7 +158,8 @@
                     </button>
                     <div class="user-menu" id="userMenu">
                         <button class="btn-user" id="btnUserMenu" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle" style="font-size:32px;color:var(--primary-color,#6366f1)"></i>
+                            <i class="fas fa-user-circle header-avatar-icon" style="font-size:32px;color:var(--primary-color,#6366f1)"></i>
+                            <img class="header-avatar-img" src="" alt="Avatar" style="display:none;width:32px;height:32px;object-fit:cover;border-radius:50%;">
                             <span>Felipe</span>
                             <i class="fas fa-chevron-down" id="userMenuChevron"></i>
                         </button>
@@ -1289,9 +1292,14 @@
                             <!-- Card do Perfil -->
                             <div class="perfil-card-aside">
                                 <div class="perfil-avatar-wrapper">
-                                    <div class="perfil-avatar" id="perfilAvatar">
+                                    <div class="perfil-avatar" id="perfilAvatar" style="position:relative;cursor:pointer;" title="Clique para alterar a foto">
                                         <span id="perfilAvatarInitial">?</span>
+                                        <img id="perfilAvatarImg" src="" alt="Avatar" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;">
+                                        <div class="perfil-avatar-overlay" style="position:absolute;bottom:0;right:0;background:var(--color-primary,#CD5A26);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;cursor:pointer;">
+                                            <i class="fas fa-camera"></i>
+                                        </div>
                                     </div>
+                                    <input type="file" id="perfilAvatarInput" accept="image/png,image/jpeg" style="display:none;">
                                     <h2 id="perfilNomeDisplay" class="perfil-nome-display">—</h2>
                                     <span class="perfil-papel-badge" id="perfilPapelBadge">—</span>
                                 </div>
@@ -1444,6 +1452,25 @@
                                             <i class="fas fa-save"></i> Salvar
                                         </button>
                                     </div>
+
+                                    <!-- Logo Upload -->
+                                    <div class="form-group" style="margin-bottom:20px;">
+                                        <label class="form-label">Logo da Empresa (PNG)</label>
+                                        <div style="display:flex;align-items:center;gap:16px;">
+                                            <div id="cfgLogoPreview" style="width:80px;height:80px;border:2px dashed var(--color-border,#e2e8f0);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fafc;">
+                                                <i class="fas fa-image" style="font-size:24px;color:#94a3b8;" id="cfgLogoPlaceholder"></i>
+                                                <img id="cfgLogoImg" src="" alt="Logo" style="display:none;width:100%;height:100%;object-fit:contain;">
+                                            </div>
+                                            <div>
+                                                <input type="file" id="cfgLogoInput" accept="image/png" style="display:none;">
+                                                <button type="button" class="btn btn-secondary btn-sm" id="cfgLogoBtn">
+                                                    <i class="fas fa-upload"></i> Enviar Logo
+                                                </button>
+                                                <p style="font-size:11px;color:#94a3b8;margin-top:4px;">Apenas PNG, máx. 5MB</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <form id="configEmpresaForm">
                                         <div class="form-row">
                                             <div class="form-group">

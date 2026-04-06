@@ -37,6 +37,9 @@ public class Usuario extends BaseEntity {
     @Column(name = "ultimo_acesso")
     private LocalDateTime ultimoAcesso;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     public enum PapelUsuario {
         ADMIN,
         GERENTE,

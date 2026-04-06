@@ -18,10 +18,12 @@ class PerfilManager {
         this.cancelBtn   = document.getElementById('perfilCancelBtn');
         this.saveBtn     = document.getElementById('perfilSaveBtn');
         this.formActions = document.getElementById('perfilFormActions');
+        this.avatarInput = document.getElementById('perfilAvatarInput');
         if (!this.form) return;
 
         this.setupEvents();
         this.setupPasswordToggles();
+        this.setupAvatarUpload();
     }
 
     setupEvents() {
@@ -65,6 +67,75 @@ class PerfilManager {
                 }
             });
         });
+    }
+
+    setupAvatarUpload() {
+        const avatar = document.getElementById('perfilAvatar');
+        if (avatar && this.avatarInput) {
+            avatar.addEventListener('click', () => this.avatarInput.click());
+            this.avatarInput.addEventListener('change', () => this.uploadAvatar());
+        }
+    }
+
+    async uploadAvatar() {
+        const file = this.avatarInput?.files?.[0];
+        if (!file) return;
+
+        if (!['image/png', 'image/jpeg'].includes(file.type)) {
+            this.toast('danger', 'fas fa-exclamation-circle', 'Apenas imagens PNG e JPEG são aceitas.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            this.toast('danger', 'fas fa-exclamation-circle', 'A imagem deve ter no máximo 5MB.');
+            return;
+        }
+
+        const token = this.getToken();
+        if (!token) return;
+
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.getElementById('perfilAvatarImg');
+            if (img) {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                document.getElementById('perfilAvatarInitial').style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+
+        this.toast('info', 'fas fa-spinner fa-spin', 'Enviando foto...', 10000);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resp = await fetch(`${API_BASE_URL}/usuarios/me/avatar`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const json = await resp.json().catch(() => ({}));
+            if (!resp.ok) throw new Error(json.mensagem || 'Erro no upload');
+
+            const d = json.dados;
+            this.originalData = { ...d };
+            this.fillProfile(d);
+            this.updateUIWithUserData(d);
+            this.toast('success', 'fas fa-check-circle', 'Foto de perfil atualizada!');
+        } catch (e) {
+            this.toast('danger', 'fas fa-exclamation-circle', e.message);
+            // Revert preview
+            const img = document.getElementById('perfilAvatarImg');
+            if (img && !this.originalData.avatarUrl) {
+                img.style.display = 'none';
+                document.getElementById('perfilAvatarInitial').style.display = '';
+            }
+        } finally {
+            this.avatarInput.value = '';
+        }
     }
 
     async loadPerfil() {
@@ -111,6 +182,30 @@ class PerfilManager {
         el('perfilDesdeDisplay').textContent    = d.dataCriacao ? this.formatDate(d.dataCriacao) : '—';
         el('perfilUltimoAcessoDisplay').textContent = d.ultimoAcesso ? this.formatDate(d.ultimoAcesso) : '—';
 
+        // Avatar image
+        const avatarImg = el('perfilAvatarImg');
+        const avatarInitial = el('perfilAvatarInitial');
+        if (d.avatarUrl) {
+            avatarImg.src = d.avatarUrl;
+            avatarImg.style.display = 'block';
+            avatarInitial.style.display = 'none';
+        } else {
+            avatarImg.style.display = 'none';
+            avatarInitial.style.display = '';
+        }
+
+        // Avatar image
+        const avatarImg = el('perfilAvatarImg');
+        const avatarInitial = el('perfilAvatarInitial');
+        if (d.avatarUrl) {
+            avatarImg.src = d.avatarUrl;
+            avatarImg.style.display = 'block';
+            avatarInitial.style.display = 'none';
+        } else {
+            avatarImg.style.display = 'none';
+            avatarInitial.style.display = '';
+        }
+
         // Form fields
         el('perfilNome').value     = d.nome || '';
         el('perfilEmail').value    = d.email || '';
@@ -133,14 +228,25 @@ class PerfilManager {
         const headerUserSpan = document.querySelector('#btnUserMenu span');
         if (headerUserSpan) headerUserSpan.textContent = (d.nome || 'Usuário').split(' ')[0];
 
-        // Update avatar images with initial
-        const avatarImgs = document.querySelectorAll('.user-avatar img, .btn-user img');
-        avatarImgs.forEach(img => {
-            const initial = (d.nome || '?').charAt(0).toUpperCase();
-            const svg = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" rx="20" fill="%23CD5A26"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="18" font-family="Segoe UI,sans-serif" font-weight="600">${initial}</text></svg>`)}`;
-            img.src = svg;
-            img.alt = d.nome || 'Usuário';
-        });
+        // Update avatar images in sidebar and header
+        if (d.avatarUrl) {
+            // Sidebar avatar
+            const sidebarIcon = document.querySelector('.sidebar-avatar-icon');
+            const sidebarImg = document.querySelector('.sidebar-avatar-img');
+            if (sidebarIcon && sidebarImg) {
+                sidebarIcon.style.display = 'none';
+                sidebarImg.src = d.avatarUrl;
+                sidebarImg.style.display = 'block';
+            }
+            // Header avatar
+            const headerIcon = document.querySelector('.header-avatar-icon');
+            const headerImg = document.querySelector('.header-avatar-img');
+            if (headerIcon && headerImg) {
+                headerIcon.style.display = 'none';
+                headerImg.src = d.avatarUrl;
+                headerImg.style.display = 'block';
+            }
+        }
     }
 
     enableEdit() {
