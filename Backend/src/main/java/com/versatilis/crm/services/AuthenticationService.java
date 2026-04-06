@@ -86,4 +86,30 @@ public class AuthenticationService {
         usuarioRepository.save(admin);
         log.info("Usuário administrador inicializado: {}", email);
     }
+
+    public void registrarColaborador(String nome, String email, String senha, String cargo) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome é obrigatório.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("E-mail é obrigatório.");
+        }
+        if (senha == null || senha.length() < 6) {
+            throw new IllegalArgumentException("A senha deve ter pelo menos 6 caracteres.");
+        }
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Já existe um usuário cadastrado com este e-mail.");
+        }
+
+        Usuario colaborador = Usuario.builder()
+            .nome(nome)
+            .email(email)
+            .senha(passwordEncoder.encode(senha))
+            .papel(Usuario.PapelUsuario.OPERADOR)
+            .cargo(cargo != null && !cargo.isBlank() ? cargo : "Colaborador")
+            .build();
+
+        usuarioRepository.save(colaborador);
+        log.info("Colaborador registrado: {}", email);
+    }
 }

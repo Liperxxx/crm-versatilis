@@ -24,6 +24,9 @@ public class AuthenticationController {
     /** Corpo do pedido de inicialização (nested record — evita arquivo .class separado). */
     record InicializarRequest(String nome, String email, String senha) {}
 
+    /** Corpo do pedido de registro de colaborador. */
+    record RegistrarRequest(String nome, String email, String senha, String cargo) {}
+
     @PostMapping("/login")
     public ResponseEntity<ResponseDTO<TokenDTO>> login(@Valid @RequestBody LoginDTO loginDTO) {
         log.info("POST /api/auth/login - Tentativa de login para: {}", loginDTO.getEmail());
@@ -58,6 +61,19 @@ public class AuthenticationController {
             authenticationService.inicializarAdmin(req.nome(), req.email(), req.senha());
             return ResponseEntity.ok(ResponseDTO.sucesso("Usuário administrador criado com sucesso", req.email()));
         } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                .body(ResponseDTO.erro(e.getMessage(), 400));
+        }
+    }
+
+    @PostMapping("/registrar")
+    public ResponseEntity<ResponseDTO<String>> registrar(@RequestBody RegistrarRequest req) {
+        log.info("POST /api/auth/registrar - Registro de colaborador: {}", req.email());
+
+        try {
+            authenticationService.registrarColaborador(req.nome(), req.email(), req.senha(), req.cargo());
+            return ResponseEntity.ok(ResponseDTO.sucesso("Conta criada com sucesso! Faça login para continuar.", req.email()));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                 .body(ResponseDTO.erro(e.getMessage(), 400));
         }

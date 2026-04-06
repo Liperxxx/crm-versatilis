@@ -187,7 +187,60 @@
                 </p>
             </form>
 
-            <div class="divider">Primeiro acesso?</div>
+            <div class="divider">Não tem conta?</div>
+
+            <details id="registerDetails">
+                <summary><i class="fas fa-user-plus"></i> Criar conta de colaborador</summary>
+                <div class="setup-body">
+                    <p style="font-size:13px;color:#64748b;margin-bottom:14px">
+                        Crie sua conta para acessar o sistema CRM.
+                    </p>
+
+                    <div id="registerAlert" class="alert hidden"></div>
+
+                    <div class="field">
+                        <label for="regNome">Nome completo</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="regNome" placeholder="Seu nome completo">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="regEmail">E-mail</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="regEmail" placeholder="seu@email.com">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="regCargo">Cargo</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-briefcase"></i>
+                            <input type="text" id="regCargo" placeholder="Ex: Vendedor, Atendente (opcional)">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="regSenha">Senha</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="regSenha" placeholder="Mínimo 6 caracteres">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="regSenhaConfirm">Confirmar senha</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="regSenhaConfirm" placeholder="Repita a senha">
+                        </div>
+                    </div>
+                    <button type="button" id="btnRegister" class="btn-outline">
+                        <i id="registerSpinner" class="fas fa-spinner fa-spin hidden"></i>
+                        <span id="btnRegisterText">Criar conta</span>
+                    </button>
+                </div>
+            </details>
+
+            <div class="divider" style="margin-top:20px">Configuração inicial</div>
 
             <details>
                 <summary><i class="fas fa-user-shield"></i> Criar conta de administrador</summary>
@@ -351,6 +404,65 @@
                 btn.disabled = false;
                 spinner.classList.add('hidden');
                 text.textContent = 'Criar administrador';
+            }
+        });
+
+        // -- Registrar colaborador -----------------------------------------------
+        document.getElementById('btnRegister').addEventListener('click', async () => {
+            hideAlert('registerAlert');
+
+            const nome  = document.getElementById('regNome').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const cargo = document.getElementById('regCargo').value.trim();
+            const senha = document.getElementById('regSenha').value;
+            const senhaConfirm = document.getElementById('regSenhaConfirm').value;
+
+            if (!nome || !email || !senha) {
+                showAlert('registerAlert', 'danger', 'Preencha nome, e-mail e senha.');
+                return;
+            }
+            if (senha.length < 6) {
+                showAlert('registerAlert', 'danger', 'A senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+            if (senha !== senhaConfirm) {
+                showAlert('registerAlert', 'danger', 'As senhas não coincidem.');
+                return;
+            }
+
+            const btn     = document.getElementById('btnRegister');
+            const spinner = document.getElementById('registerSpinner');
+            const text    = document.getElementById('btnRegisterText');
+            btn.disabled  = true;
+            spinner.classList.remove('hidden');
+            text.textContent = 'Criando...';
+
+            try {
+                const res = await fetch(`${API}/auth/registrar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha, cargo })
+                });
+
+                const json = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    showAlert('registerAlert', 'danger', json.mensagem || `Erro ${res.status}`);
+                    return;
+                }
+
+                showAlert('registerAlert', 'success', 'Conta criada com sucesso! Agora faça login.');
+                document.getElementById('email').value = email;
+                document.getElementById('senha').value = '';
+                document.getElementById('senha').focus();
+                document.getElementById('registerDetails').removeAttribute('open');
+
+            } catch (err) {
+                showAlert('registerAlert', 'danger', `Falha na conexão: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                text.textContent = 'Criar conta';
             }
         });
     </script>
