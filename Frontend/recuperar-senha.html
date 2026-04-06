@@ -224,7 +224,9 @@
     </div>
 
     <script>
-        const API = 'http://localhost:8081/api';
+        const API = window.location.hostname === 'localhost'
+            ? 'http://localhost:8081/api'
+            : 'https://crm-versatilis-production.up.railway.app/api';
 
         const form        = document.getElementById('recoverForm');
         const formState   = document.getElementById('formState');
