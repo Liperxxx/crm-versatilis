@@ -1,6 +1,4 @@
 {
-  "outputDirectory": "Frontend",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
+  "buildCommand": "",
+  "outputDirectory": "Frontend"
 }
