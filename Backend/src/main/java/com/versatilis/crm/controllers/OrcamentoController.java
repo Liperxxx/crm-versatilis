@@ -72,7 +72,7 @@ public class OrcamentoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
     public ResponseEntity<ResponseDTO<Void>> deletar(@PathVariable Long id) {
         log.info("DELETE /api/orcamentos/{} - Deletando orçamento", id);
         orcamentoService.deletar(id);

@@ -99,7 +99,7 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.POST, "/orcamentos").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PUT, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
-                .requestMatchers(HttpMethod.DELETE, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE")
+                .requestMatchers(HttpMethod.DELETE, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
                 .requestMatchers(HttpMethod.GET, "/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
