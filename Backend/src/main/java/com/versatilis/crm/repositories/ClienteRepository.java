@@ -14,6 +14,10 @@ import java.util.Optional;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
+    long countByAtivoTrue();
+
+    Page<Cliente> findByAtivoTrue(Pageable pageable);
+
     Optional<Cliente> findByCnpj(String cnpj);
 
     List<Cliente> findByStatus(Cliente.StatusCliente status);

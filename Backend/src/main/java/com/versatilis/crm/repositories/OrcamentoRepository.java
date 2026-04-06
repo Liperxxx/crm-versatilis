@@ -8,10 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
+
+    long countByAtivoTrue();
+
+    List<Orcamento> findByAtivoTrue();
 
     @Query("SELECT o FROM Orcamento o LEFT JOIN FETCH o.itens WHERE o.id = :id AND o.ativo = true")
     Optional<Orcamento> findByIdWithItens(@Param("id") Long id);

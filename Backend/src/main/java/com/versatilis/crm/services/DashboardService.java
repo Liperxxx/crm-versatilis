@@ -33,12 +33,12 @@ public class DashboardService {
 
         try {
             return DashboardDTO.builder()
-                    .totalClientes(clienteRepository.count())
-                    .totalLeads(leadRepository.count())
-                    .totalProdutos(produtoRepository.count())
+                    .totalClientes(clienteRepository.countByAtivoTrue())
+                    .totalLeads(leadRepository.countByAtivoTrue())
+                    .totalProdutos(produtoRepository.countByAtivoTrue())
                     .totalOportunidadesAbertas(countOportunidadesAbertas())
                     .totalTarefasPendentes(countTarefasPendentes())
-                    .totalOrcamentos(orcamentoRepository.count())
+                    .totalOrcamentos(orcamentoRepository.countByAtivoTrue())
                     .valorOportunidadesAbertas(getValorOportunidadesAbertas())
                     .valorOrcamentos(getValorOrcamentos())
                     .clientesRecentes(getClientesRecentes())
@@ -54,13 +54,14 @@ public class DashboardService {
     }
 
     private long countOportunidadesAbertas() {
-        return oportunidadeRepository.findByStatus(Oportunidade.StatusOportunidade.ABERTA).size();
+        return oportunidadeRepository.findByStatusAndAtivoTrue(Oportunidade.StatusOportunidade.ABERTA).size();
     }
 
     private long countTarefasPendentes() {
-        return tarefaRepository.findAll().stream()
-                .filter(t -> Boolean.TRUE.equals(t.getAtivo()) && t.getStatus() == Tarefa.StatusTarefa.PENDENTE)
-                .count();
+        return tarefaRepository.findByAtivoTrueAndStatus(
+                Tarefa.StatusTarefa.PENDENTE,
+                PageRequest.of(0, Integer.MAX_VALUE)
+        ).getTotalElements();
     }
 
     private BigDecimal getValorOportunidadesAbertas() {
@@ -69,14 +70,13 @@ public class DashboardService {
     }
 
     private BigDecimal getValorOrcamentos() {
-        return orcamentoRepository.findAll().stream()
-                .filter(o -> Boolean.TRUE.equals(o.getAtivo()))
+        return orcamentoRepository.findByAtivoTrue().stream()
                 .map(o -> o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private List<DashboardDTO.ItemRecente> getClientesRecentes() {
-        return clienteRepository.findAll(
+        return clienteRepository.findByAtivoTrue(
                 PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "dataCriacao"))
         ).getContent().stream()
                 .map(c -> DashboardDTO.ItemRecente.builder()
@@ -89,7 +89,7 @@ public class DashboardService {
     }
 
     private List<DashboardDTO.ItemRecente> getLeadsRecentes() {
-        return leadRepository.findAll(
+        return leadRepository.findByAtivoTrue(
                 PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "dataCriacao"))
         ).getContent().stream()
                 .map(l -> DashboardDTO.ItemRecente.builder()
@@ -102,11 +102,10 @@ public class DashboardService {
     }
 
     private List<DashboardDTO.TarefaPendenteDTO> getTarefasPendentes() {
-        return tarefaRepository.findAll(
-                PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "dataVencimento"))
+        return tarefaRepository.findByAtivoTrueAndStatus(
+                Tarefa.StatusTarefa.PENDENTE,
+                PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "dataVencimento"))
         ).getContent().stream()
-                .filter(t -> Boolean.TRUE.equals(t.getAtivo()) && t.getStatus() == Tarefa.StatusTarefa.PENDENTE)
-                .limit(5)
                 .map(t -> {
                     String vinculo = resolverVinculo(t);
                     return DashboardDTO.TarefaPendenteDTO.builder()
@@ -138,7 +137,7 @@ public class DashboardService {
     }
 
     private Map<String, Long> getOportunidadesPorEtapa() {
-        List<Oportunidade> abertas = oportunidadeRepository.findByStatus(Oportunidade.StatusOportunidade.ABERTA);
+        List<Oportunidade> abertas = oportunidadeRepository.findByStatusAndAtivoTrue(Oportunidade.StatusOportunidade.ABERTA);
         Map<String, Long> mapa = new LinkedHashMap<>();
         for (Oportunidade.EtapaOportunidade etapa : Oportunidade.EtapaOportunidade.values()) {
             long count = abertas.stream()
@@ -150,11 +149,11 @@ public class DashboardService {
     }
 
     private Map<String, Long> getOrcamentosPorStatus() {
-        List<Orcamento> todos = orcamentoRepository.findAll();
+        List<Orcamento> todos = orcamentoRepository.findByAtivoTrue();
         Map<String, Long> mapa = new LinkedHashMap<>();
         for (Orcamento.StatusOrcamento status : Orcamento.StatusOrcamento.values()) {
             long count = todos.stream()
-                    .filter(o -> Boolean.TRUE.equals(o.getAtivo()) && o.getStatus() == status)
+                    .filter(o -> o.getStatus() == status)
                     .count();
             mapa.put(status.name(), count);
         }

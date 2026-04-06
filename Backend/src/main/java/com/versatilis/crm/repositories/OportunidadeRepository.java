@@ -14,6 +14,10 @@ import java.util.List;
 @Repository
 public interface OportunidadeRepository extends JpaRepository<Oportunidade, Long> {
 
+    long countByAtivoTrue();
+
+    List<Oportunidade> findByStatusAndAtivoTrue(Oportunidade.StatusOportunidade status);
+
     List<Oportunidade> findByStatus(Oportunidade.StatusOportunidade status);
 
     @Query("SELECT o FROM Oportunidade o WHERE " +

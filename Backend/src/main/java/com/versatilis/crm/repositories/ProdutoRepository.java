@@ -13,6 +13,9 @@ import java.util.Optional;
 
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
+
+    long countByAtivoTrue();
+
     Optional<Produto> findByNome(String nome);
 
     @Query("SELECT p FROM Produto p WHERE " +
@@ -21,10 +24,11 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
            "(:status IS NULL OR p.status = :status) AND " +
            "p.ativo = true")
     Page<Produto> findByFilters(
-        @Param("nome") String nome,
-        @Param("categoria") String categoria,
-        @Param("status") Produto.StatusProduto status,
-        Pageable pageable);
+            @Param("nome") String nome,
+            @Param("categoria") String categoria,
+            @Param("status") Produto.StatusProduto status,
+            Pageable pageable
+    );
 
     List<Produto> findByEstoqueLessThan(Integer quantidadeMinima);
 }

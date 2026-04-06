@@ -14,6 +14,10 @@ import java.util.Optional;
 @Repository
 public interface LeadRepository extends JpaRepository<Lead, Long> {
 
+    long countByAtivoTrue();
+
+    Page<Lead> findByAtivoTrue(Pageable pageable);
+
     Optional<Lead> findByEmail(String email);
 
     List<Lead> findByStatus(Lead.StatusLead status);
