@@ -70,23 +70,6 @@ public class AuthenticationService {
         return jwtTokenProvider.extrairEmail(token);
     }
 
-    public void inicializarAdmin(String nome, String email, String senha) {
-        if (usuarioRepository.count() > 0) {
-            throw new IllegalStateException("Sistema já possui usuários cadastrados. Operação não permitida.");
-        }
-
-        Usuario admin = Usuario.builder()
-            .nome(nome)
-            .email(email)
-            .senha(passwordEncoder.encode(senha))
-            .papel(Usuario.PapelUsuario.ADMIN)
-            .cargo("Administrador")
-            .build();
-
-        usuarioRepository.save(admin);
-        log.info("Usuário administrador inicializado: {}", email);
-    }
-
     public void registrarColaborador(String nome, String email, String senha, String cargo) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome é obrigatório.");

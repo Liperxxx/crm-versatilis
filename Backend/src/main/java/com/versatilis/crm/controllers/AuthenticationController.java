@@ -21,9 +21,6 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    /** Corpo do pedido de inicialização (nested record — evita arquivo .class separado). */
-    record InicializarRequest(String nome, String email, String senha) {}
-
     /** Corpo do pedido de registro de colaborador. */
     record RegistrarRequest(String nome, String email, String senha, String cargo) {}
 
@@ -51,19 +48,6 @@ public class AuthenticationController {
         log.info("POST /api/auth/logout - Logout realizado");
 
         return ResponseEntity.ok(ResponseDTO.sucesso("Logout realizado com sucesso", null));
-    }
-
-    @PostMapping("/inicializar")
-    public ResponseEntity<ResponseDTO<String>> inicializar(@RequestBody InicializarRequest req) {
-        log.info("POST /api/auth/inicializar - Solicitando criação do primeiro admin: {}", req.email());
-
-        try {
-            authenticationService.inicializarAdmin(req.nome(), req.email(), req.senha());
-            return ResponseEntity.ok(ResponseDTO.sucesso("Usuário administrador criado com sucesso", req.email()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest()
-                .body(ResponseDTO.erro(e.getMessage(), 400));
-        }
     }
 
     @PostMapping("/registrar")

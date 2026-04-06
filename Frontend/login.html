@@ -239,46 +239,6 @@
                     </button>
                 </div>
             </details>
-
-            <div class="divider" style="margin-top:20px">Configuração inicial</div>
-
-            <details>
-                <summary><i class="fas fa-user-shield"></i> Criar conta de administrador</summary>
-                <div class="setup-body">
-                    <p style="font-size:13px;color:#64748b;margin-bottom:14px">
-                        Crie o primeiro usu�rio administrador do sistema.<br>
-                        <strong>S� funciona enquanto n�o houver nenhum usu�rio cadastrado.</strong>
-                    </p>
-
-                    <div id="setupAlert" class="alert hidden"></div>
-
-                    <div class="field">
-                        <label for="setupNome">Nome completo</label>
-                        <div class="input-wrap">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="setupNome" placeholder="Administrador">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label for="setupEmail">E-mail</label>
-                        <div class="input-wrap">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="setupEmail" placeholder="admin@empresa.com">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label for="setupSenha">Senha</label>
-                        <div class="input-wrap">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="setupSenha" placeholder="M�nimo 6 caracteres">
-                        </div>
-                    </div>
-                    <button type="button" id="btnSetup" class="btn-outline">
-                        <i id="setupSpinner" class="fas fa-spinner fa-spin hidden"></i>
-                        <span id="btnSetupText">Criar administrador</span>
-                    </button>
-                </div>
-            </details>
         </div>
 
     </div>
@@ -352,58 +312,6 @@
                 btn.disabled = false;
                 spinner.classList.add('hidden');
                 text.textContent = 'Entrar';
-            }
-        });
-
-        // -- Criar primeiro admin -----------------------------------------------
-        document.getElementById('btnSetup').addEventListener('click', async () => {
-            hideAlert('setupAlert');
-
-            const nome  = document.getElementById('setupNome').value.trim();
-            const email = document.getElementById('setupEmail').value.trim();
-            const senha = document.getElementById('setupSenha').value;
-
-            if (!nome || !email || !senha) {
-                showAlert('setupAlert', 'danger', 'Preencha todos os campos.');
-                return;
-            }
-            if (senha.length < 6) {
-                showAlert('setupAlert', 'danger', 'A senha deve ter pelo menos 6 caracteres.');
-                return;
-            }
-
-            const btn     = document.getElementById('btnSetup');
-            const spinner = document.getElementById('setupSpinner');
-            const text    = document.getElementById('btnSetupText');
-            btn.disabled  = true;
-            spinner.classList.remove('hidden');
-            text.textContent = 'Criando�';
-
-            try {
-                const res = await fetch(`${API}/auth/inicializar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, email, senha })
-                });
-
-                const json = await res.json().catch(() => ({}));
-
-                if (!res.ok) {
-                    showAlert('setupAlert', 'danger', json.mensagem || `Erro ${res.status}`);
-                    return;
-                }
-
-                showAlert('setupAlert', 'success', 'Administrador criado! Agora fa�a login com as credenciais.');
-                document.getElementById('email').value = email;
-                document.getElementById('senha').value = '';
-                document.getElementById('senha').focus();
-
-            } catch (err) {
-                showAlert('setupAlert', 'danger', `Falha na conex�o: ${err.message}`);
-            } finally {
-                btn.disabled = false;
-                spinner.classList.add('hidden');
-                text.textContent = 'Criar administrador';
             }
         });
 
