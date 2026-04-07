@@ -169,7 +169,9 @@ class ClientesModule {
         this.$fSegmento     = document.getElementById('clienteSegmento');
         this.$fCidade       = document.getElementById('clienteCidade');
         this.$fObs          = document.getElementById('clienteObservacoes');
-        this.$fCnpj         = document.getElementById('clienteCnpj');
+        this.$fTipoDoc      = document.getElementById('clienteTipoDoc');
+        this.$fDocumento    = document.getElementById('clienteDocumento');
+        this.$fCnpj         = document.getElementById('clienteCnpj'); // campo legado (hidden)
 
         // Modal exclusão
         this.$deleteModal   = document.getElementById('deleteModalBackdrop');
@@ -231,7 +233,20 @@ class ClientesModule {
             this.$fTelefone.value = this.maskPhone(this.$fTelefone.value);
         });
 
-        // Máscara simples de CNPJ
+        // Troca de tipo de documento (CNPJ ↔ CPF)
+        this.$fTipoDoc?.addEventListener('change', () => {
+            this.updateDocumentField();
+        });
+
+        // Máscara dinâmica do campo de documento
+        this.$fDocumento?.addEventListener('input', () => {
+            const tipo = this.$fTipoDoc?.value || 'cnpj';
+            this.$fDocumento.value = tipo === 'cpf'
+                ? this.maskCpf(this.$fDocumento.value)
+                : this.maskCnpj(this.$fDocumento.value);
+        });
+
+        // Máscara simples de CNPJ (campo legado hidden — mantido para compatibilidade)
         this.$fCnpj?.addEventListener('input', () => {
             this.$fCnpj.value = this.maskCnpj(this.$fCnpj.value);
         });
@@ -246,6 +261,7 @@ class ClientesModule {
                 || (c.email         || '').toLowerCase().includes(this.searchTerm)
                 || (c.telefone      || '').toLowerCase().includes(this.searchTerm)
                 || (c.cnpj         || '').toLowerCase().includes(this.searchTerm)
+                || (c.cpf          || '').toLowerCase().includes(this.searchTerm)
                 || (c.cidade       || '').toLowerCase().includes(this.searchTerm);
 
             const matchStatus   = !this.filterStatus   || c.status   === this.filterStatus;
@@ -349,13 +365,21 @@ class ClientesModule {
             this.$fStatus.value     = c.status;
             this.$fEmail.value      = c.email        || '';
             this.$fTelefone.value   = c.telefone     || '';
-            this.$fCnpj.value       = c.cnpj         || '';
+            if (c.cpf) {
+                if (this.$fTipoDoc) this.$fTipoDoc.value = 'cpf';
+                if (this.$fDocumento) this.$fDocumento.value = c.cpf;
+            } else {
+                if (this.$fTipoDoc) this.$fTipoDoc.value = 'cnpj';
+                if (this.$fDocumento) this.$fDocumento.value = c.cnpj || '';
+            }
+            this.updateDocumentField();
             this.$fSegmento.value   = c.segmento     || '';
             this.$fCidade.value     = c.cidade       || '';
             this.$fObs.value        = c.observacoes  || '';
         } else {
             this.$form.reset();
             this.$fId.value = '';
+            this.updateDocumentField();
         }
 
         if (window.navigationManager) window.navigationManager.navigateTo('cliente-form');
@@ -370,12 +394,15 @@ class ClientesModule {
     async saveCliente() {
         if (!this.validateForm()) return;
 
+        const tipoDoc = this.$fTipoDoc?.value || 'cnpj';
+        const docVal  = this.$fDocumento?.value?.trim() || null;
         const data = {
             nome:         this.$fNome.value.trim(),
             status:       this.$fStatus.value,
             email:        this.$fEmail.value.trim(),
             telefone:     this.$fTelefone.value.trim(),
-            cnpj:         this.$fCnpj?.value?.trim()  || null,
+            cnpj:         tipoDoc === 'cnpj' ? docVal : null,
+            cpf:          tipoDoc === 'cpf'  ? docVal : null,
             segmento:     this.$fSegmento.value,
             cidade:       this.$fCidade.value.trim(),
             observacoes:  this.$fObs.value.trim(),
@@ -525,6 +552,27 @@ class ClientesModule {
         if (v.length > 5)  return v.replace(/^(\d{2})(\d{3})(\d*)$/, '$1.$2.$3');
         if (v.length > 2)  return v.replace(/^(\d{2})(\d*)$/, '$1.$2');
         return v;
+    }
+
+    maskCpf(v) {
+        v = v.replace(/\D/g, '').slice(0, 11);
+        if (v.length > 9) return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, '$1.$2.$3-$4');
+        if (v.length > 6) return v.replace(/^(\d{3})(\d{3})(\d*)$/, '$1.$2.$3');
+        if (v.length > 3) return v.replace(/^(\d{3})(\d*)$/, '$1.$2');
+        return v;
+    }
+
+    updateDocumentField() {
+        if (!this.$fTipoDoc || !this.$fDocumento) return;
+        const isCpf = this.$fTipoDoc.value === 'cpf';
+        this.$fDocumento.placeholder = isCpf ? '000.000.000-00' : '00.000.000/0000-00';
+        this.$fDocumento.maxLength   = isCpf ? 14 : 18;
+        // re-apply mask to current value when switching types
+        if (this.$fDocumento.value) {
+            this.$fDocumento.value = isCpf
+                ? this.maskCpf(this.$fDocumento.value)
+                : this.maskCnpj(this.$fDocumento.value);
+        }
     }
 
     esc(str) {

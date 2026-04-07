@@ -447,9 +447,19 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
-                                            <label class="form-label" for="clienteCnpj">CNPJ</label>
-                                            <input type="text" class="form-control" id="clienteCnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                                            <label class="form-label" for="clienteTipoDoc">Tipo de Documento</label>
+                                            <select class="form-control" id="clienteTipoDoc">
+                                                <option value="cnpj">CNPJ</option>
+                                                <option value="cpf">CPF</option>
+                                            </select>
                                         </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="clienteDocumento">Número do Documento</label>
+                                            <input type="text" class="form-control" id="clienteDocumento" placeholder="00.000.000/0000-00" maxlength="18">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <input type="hidden" id="clienteCnpj">
                                         <div class="form-group">
                                             <label class="form-label" for="clienteTelefone">Telefone</label>
                                             <input type="tel" class="form-control" id="clienteTelefone" placeholder="(00) 00000-0000">
