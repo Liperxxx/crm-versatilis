@@ -5,45 +5,59 @@ import com.versatilis.crm.dto.OrcamentoItemDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.core.io.ByteArrayResource;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
     private final PdfService pdfService;
 
-    @Value("${spring.mail.username:contato@versatilis.ind.br}")
+    @Value("${resend.api.key:}")
+    private String resendApiKey;
+
+    @Value("${mail.from:contato@versatilis.ind.br}")
     private String mailFrom;
+
+    private static final String RESEND_URL = "https://api.resend.com/emails";
 
     public void enviarOrcamento(OrcamentoDTO orcamento, String destinatario, String mensagemAdicional) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(mailFrom, "Versatilis CRM");
-            helper.setTo(destinatario);
-            helper.setSubject("Orçamento " + orcamento.getNumero() + " — " + orcamento.getClienteNome());
-            helper.setText(buildHtml(orcamento, mensagemAdicional), true);
-
-            // PDF em anexo
             byte[] pdfBytes = pdfService.gerarPdf(orcamento);
+            String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
             String pdfNome = "orcamento-" + (orcamento.getNumero() != null ? orcamento.getNumero() : orcamento.getId()) + ".pdf";
-            helper.addAttachment(pdfNome, new ByteArrayResource(pdfBytes), "application/pdf");
 
-            mailSender.send(message);
-            log.info("Email do orçamento {} enviado para {}", orcamento.getNumero(), destinatario);
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("from", "Versatilis CRM <" + mailFrom + ">");
+            body.put("to", List.of(destinatario));
+            body.put("subject", "Orçamento " + orcamento.getNumero() + " — " + orcamento.getClienteNome());
+            body.put("html", buildHtml(orcamento, mensagemAdicional));
+            body.put("attachments", List.of(Map.of(
+                "filename", pdfNome,
+                "content", pdfBase64
+            )));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(resendApiKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            ResponseEntity<String> response = new RestTemplate().postForEntity(
+                RESEND_URL, new HttpEntity<>(body, headers), String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Resend retornou " + response.getStatusCode() + ": " + response.getBody());
+            }
+
+            log.info("Email do orçamento {} enviado para {} via Resend", orcamento.getNumero(), destinatario);
         } catch (Exception e) {
             log.error("Erro ao enviar email do orçamento {}: {}", orcamento.getNumero(), e.getMessage());
             throw new RuntimeException("Erro ao enviar email: " + e.getMessage(), e);

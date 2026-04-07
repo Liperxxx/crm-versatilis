@@ -102,11 +102,7 @@
             <version>3.2.0</version>
         </dependency>
 
-        <!-- MAIL -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
+        <!-- HTTP client para Resend email API (usa spring-web já incluso) -->
 
         <!-- DOCX TEMPLATE (Apache POI) -->
         <dependency>
