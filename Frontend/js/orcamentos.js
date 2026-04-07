@@ -291,14 +291,32 @@ class OrcamentosModule {
             const json = await res.json();
             const clientes = json.dados?.content ?? json.dados ?? [];
             this.clientesCache = clientes;
-            clientes.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.nome || `Cliente #${c.id}`;
-                this.$fClienteId.appendChild(opt);
-            });
+            this.populateClienteDropdown();
         } catch (e) {
             console.warn('[Orcamentos] Não foi possível carregar lista de clientes:', e.message);
+        }
+    }
+
+    populateClienteDropdown() {
+        if (!this.$fClienteId) return;
+        const currentVal = this.$fClienteId.value;
+        // Limpa opções existentes, mantendo apenas o placeholder
+        while (this.$fClienteId.options.length > 1) {
+            this.$fClienteId.remove(1);
+        }
+        this.clientesCache.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nome || `Cliente #${c.id}`;
+            this.$fClienteId.appendChild(opt);
+        });
+        // Restaura seleção anterior se existia
+        if (currentVal) this.$fClienteId.value = currentVal;
+    }
+
+    async ensureClientesLoaded() {
+        if (this.clientesCache.length === 0) {
+            await this.loadClientes();
         }
     }
 
@@ -419,6 +437,9 @@ class OrcamentosModule {
         this.itemSeq = 0;
         if (this.$clienteInfo) this.$clienteInfo.classList.add('hidden');
 
+        // Garante que a lista de clientes esteja carregada antes de popular o form
+        await this.ensureClientesLoaded();
+
         const pageLabel = id !== null ? 'Editar Orçamento' : 'Novo Orçamento';
         if (this.$formTitle) this.$formTitle.textContent = pageLabel;
         // Atualiza o sub-item do breadcrumb se já estiver visível
@@ -502,13 +523,16 @@ class OrcamentosModule {
         if (window.navigationManager) window.navigationManager.navigateTo('orcamentos');
     }
 
-    openModalFromOportunidade(oportunidade) {
+    async openModalFromOportunidade(oportunidade) {
         try {
             this.editingId = null;
             this.clearFormErrors();
             if (this.$itensBody) this.$itensBody.innerHTML = '';
             this.itemSeq = 0;
             if (this.$clienteInfo) this.$clienteInfo.classList.add('hidden');
+
+            await this.ensureClientesLoaded();
+
             const pageLabel = 'Novo Orçamento';
             if (this.$formTitle) this.$formTitle.textContent = pageLabel;
             if (this.$form) this.$form.reset();
