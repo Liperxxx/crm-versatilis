@@ -99,30 +99,30 @@ class OrcamentosModule {
     // ══ API ═════════════════════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await apiFetch(API_ORCAMENTOS, { method: 'POST', body: JSON.stringify(data) });
+        const res = await fetch(API_ORCAMENTOS, { method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await apiFetch(`${API_ORCAMENTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+        const res = await fetch(`${API_ORCAMENTOS}/${id}`, { method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await apiFetch(`${API_ORCAMENTOS}/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API_ORCAMENTOS}/${id}`, { method: 'DELETE', headers: this.authHeaders() });
         if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
     }
 
     async apiGetById(id) {
-        const res = await apiFetch(`${API_ORCAMENTOS}/${id}`);
+        const res = await fetch(`${API_ORCAMENTOS}/${id}`, { headers: this.authHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return (await res.json()).dados;
     }
 
     async apiGetProduto(id) {
-        const res = await apiFetch(`${API_PRODUTOS}/${id}`);
+        const res = await fetch(`${API_PRODUTOS}/${id}`, { headers: this.authHeaders() });
         if (!res.ok) return null;
         return (await res.json()).dados;
     }
@@ -286,14 +286,13 @@ class OrcamentosModule {
 
     async loadClientes() {
         try {
-            const res = await apiFetch(`${API_BASE_URL}/clientes?size=500&sort=nomeEmpresa,asc`);
+            const res = await fetch(`${API_BASE_URL}/clientes?size=500&sort=nomeEmpresa,asc`, { headers: this.authHeaders() });
             if (!res.ok) return;
             const json = await res.json();
             const clientes = json.dados?.content ?? json.dados ?? [];
             this.clientesCache = clientes;
             this.populateClienteDropdown();
         } catch (e) {
-            if (e.isAuthError) return;
             console.warn('[Orcamentos] Não foi possível carregar lista de clientes:', e.message);
         }
     }
@@ -652,7 +651,6 @@ class OrcamentosModule {
             this.closeModal();
             this.render();
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -706,7 +704,6 @@ class OrcamentosModule {
             this.toast('success', 'fas fa-check-circle', `Orçamento <strong>${this.esc(o.numero || '')}</strong> excluído.`);
             await this.loadData();
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
@@ -723,7 +720,6 @@ class OrcamentosModule {
             this.renderDocument(o);
             this.$previewModal.classList.remove('hidden');
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao carregar orçamento: ${this.esc(e.message)}`);
         }
     }
@@ -740,7 +736,10 @@ class OrcamentosModule {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {
-            const res = await apiFetch(`${API_ORCAMENTOS}/${o.id}/docx`);
+            const token = this.getToken();
+            const res = await fetch(`${API_ORCAMENTOS}/${o.id}/docx`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.mensagem || `HTTP ${res.status}`);
@@ -756,7 +755,6 @@ class OrcamentosModule {
             URL.revokeObjectURL(url);
             this.toast('success', 'fas fa-file-word', `Documento <strong>${this.esc(o.numero || '')}</strong> baixado.`);
         } catch (e) {
-            if (e.isAuthError) return;
             const isTemplateMissing = e.message && e.message.includes('não encontrado');
             this.toast('danger', 'fas fa-exclamation-circle',
                 isTemplateMissing
@@ -861,7 +859,6 @@ class OrcamentosModule {
             // Atualizar lista local para refletir novo status
             await this.loadData();
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao enviar: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -870,8 +867,9 @@ class OrcamentosModule {
     }
 
     async apiEnviarEmail(id, destinatario, mensagemAdicional) {
-        const res = await apiFetch(`${API_ORCAMENTOS}/${id}/enviar-email`, {
+        const res = await fetch(`${API_ORCAMENTOS}/${id}/enviar-email`, {
             method: 'POST',
+            headers: this.authHeaders(),
             body: JSON.stringify({ destinatario, mensagemAdicional: mensagemAdicional || null }),
         });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }

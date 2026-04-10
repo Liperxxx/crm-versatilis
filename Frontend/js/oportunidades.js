@@ -54,17 +54,37 @@ class OportunidadesModule {
         this.loadData();
     }
 
+    // ══ AUTH ════════════════════════════════════════════════════════════
+
+    getToken() {
+        return localStorage.getItem('crm_token') || localStorage.getItem('token') || null;
+    }
+
+    authHeaders() {
+        const t = this.getToken();
+        return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' }
+                 : { 'Content-Type': 'application/json' };
+    }
+
     // ══ CARREGAMENTO ════════════════════════════════════════════════════
 
     async loadData() {
         this.showLoading();
         try {
-            const res = await apiFetch(`${API_OPORTUNIDADES}?size=500&sort=id,desc`);
+            const res = await fetch(`${API_OPORTUNIDADES}?size=500&sort=id,desc`, {
+                headers: this.authHeaders()
+            });
+            if (res.status === 401 || res.status === 403) {
+                this.oportunidades = [];
+                this.toast('danger', 'fas fa-lock',
+                    'Sessão expirada. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.',
+                    10000);
+                return;
+            }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             this.oportunidades = json.dados?.content ?? json.dados ?? [];
         } catch (e) {
-            if (e.isAuthError) return;
             console.error('[Oportunidades] Erro ao carregar:', e.message);
             this.oportunidades = [];
             this.toast('danger', 'fas fa-server', `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
@@ -85,19 +105,25 @@ class OportunidadesModule {
     // ══ API ═════════════════════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await apiFetch(API_OPORTUNIDADES, { method: 'POST', body: JSON.stringify(data) });
+        const res = await fetch(API_OPORTUNIDADES, {
+            method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data)
+        });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await apiFetch(`${API_OPORTUNIDADES}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+        const res = await fetch(`${API_OPORTUNIDADES}/${id}`, {
+            method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data)
+        });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await apiFetch(`${API_OPORTUNIDADES}/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API_OPORTUNIDADES}/${id}`, {
+            method: 'DELETE', headers: this.authHeaders()
+        });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
     }
 
@@ -354,7 +380,6 @@ class OportunidadesModule {
                 `<strong>${this.esc(o.titulo)}</strong> movida para ${OportunidadesModule.ETAPA_LABELS[newEtapa]}.`);
             this.render();
         } catch (e) {
-            if (e.isAuthError) return;
             // Rollback
             o.etapa = oldEtapa;
             this.render();
@@ -486,7 +511,6 @@ class OportunidadesModule {
             this.closeModal();
             this.render();
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -540,7 +564,6 @@ class OportunidadesModule {
             this.toast('success', 'fas fa-check-circle', `Oportunidade <strong>${this.esc(o.titulo)}</strong> excluída.`);
             await this.loadData();
         } catch (e) {
-            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
