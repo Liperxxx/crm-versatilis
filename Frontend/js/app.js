@@ -1,235 +1,153 @@
-//
-// APP.JS — Inicialização da aplicação CRM Versatilis
-//
+// 
+// APP.JS - Inicialização da aplicação
+// 
 
-// ─── URL base da API ────────────────────────────────────────────────────────
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8081/api'
     : 'https://crm-versatilis-production.up.railway.app/api';
 
-// ─── Helpers de sessão ──────────────────────────────────────────────────────
-
-/**
- * Retorna o JWT armazenado no localStorage (qualquer chave conhecida).
- */
-function getAuthToken() {
-    return localStorage.getItem('crm_token')
-        || localStorage.getItem('token')
-        || localStorage.getItem('jwtToken')
-        || null;
-}
-
-/**
- * Limpa todos os dados de sessão e redireciona para login.
- * Evita loop se já estiver na página de login.
- */
-function logout(force = false) {
-    const onLogin = window.location.pathname.includes('login');
-    if (onLogin && !force) return;
-
-    localStorage.removeItem('crm_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('jwtToken');
-    localStorage.removeItem('crm_user');
-    localStorage.removeItem('crm_logo');
-
-    window.location.href = 'login.html';
-}
-
-// Expõe globalmente para os módulos
-window.logout = logout;
-
-// ─── apiFetch — wrapper centralizado de fetch ───────────────────────────────
-/**
- * Wrapper de fetch que:
- *  - injeta automaticamente o header Authorization com o JWT
- *  - intercepta respostas 401/403 e redireciona para login (sem toast de erro)
- *  - permite distinguir erro de autenticação de erro real de backend
- *
- * Uso:  const res = await apiFetch(url, { method, body, headers, ... })
- * Lança AuthError (instanceof AuthError === true) em caso de 401/403.
- */
-class AuthError extends Error {
-    constructor(status) {
-        super(`Sessão inválida (HTTP ${status})`);
-        this.status = status;
-        this.isAuthError = true;
-    }
-}
-
-window.AuthError = AuthError;
-
-// Flag para evitar múltiplos redirecionamentos simultâneos
-let _redirectingToLogin = false;
-
-async function apiFetch(url, options = {}) {
-    const token = getAuthToken();
-
-    // Mescla headers: Authorization + Content-Type padrão
-    const headers = Object.assign(
-        token ? { 'Authorization': `Bearer ${token}` } : {},
-        options.headers || {}
-    );
-
-    // Se não há Content-Type explícito e não é FormData → usa JSON
-    if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    // Intercepta sessão inválida
-    if (response.status === 401 || response.status === 403) {
-        if (!_redirectingToLogin && !window.location.pathname.includes('login')) {
-            _redirectingToLogin = true;
-            console.warn(`[apiFetch] Sessão expirada (${response.status}). Redirecionando...`);
-            logout(true);
-        }
-        throw new AuthError(response.status);
-    }
-
-    return response;
-}
-
-window.apiFetch = apiFetch;
-
-// ─── App principal ───────────────────────────────────────────────────────────
 class App {
     constructor() {
-        this.bootstrap();
+        this.init();
     }
 
-    async bootstrap() {
+    init() {
         console.log('🚀 CRM Versatilis iniciando...');
-        window.appReady = false;
-        window.appSessionValid = false;
-
         this.setupEventListeners();
         this.setupUserMenu();
         this.setupResponsive();
         this.loadCachedLogo();
+        this.loadUserProfile();
+    }
 
-        // 1. Verificar token — se ausente, redirecionar para login
-        const token = getAuthToken();
-        if (!token) {
-            if (!window.location.pathname.includes('login')) {
-                window.location.href = 'login.html';
+    loadCachedLogo() {
+        const logoUrl = localStorage.getItem('crm_logo_url');
+        if (logoUrl) {
+            const sidebarLogo = document.getElementById('sidebarLogo');
+            const sidebarIcon = document.getElementById('sidebarLogoIcon');
+            if (sidebarLogo) {
+                sidebarLogo.src = logoUrl;
+                sidebarLogo.style.display = 'block';
+                if (sidebarIcon) sidebarIcon.style.display = 'none';
             }
-            return;
         }
+    }
 
-        // 2. Validar sessão no backend
-        let sessionValid = false;
+    async loadUserProfile() {
+        const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
+        if (!token) return;
+
         try {
             const resp = await fetch(`${API_BASE_URL}/usuarios/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (resp.ok) {
-                const json = await resp.json();
-                const d = json.dados;
-                if (d) {
-                    sessionValid = true;
-                    this.updateUserUI(d);
+            if (!resp.ok) return;
+            const json = await resp.json();
+            const d = json.dados;
+            if (!d) return;
+
+            // Update header and sidebar names
+            const sidebarName = document.querySelector('.sidebar-footer .user-name');
+            if (sidebarName) sidebarName.textContent = d.nome || 'Usuário';
+            const sidebarRole = document.querySelector('.sidebar-footer .user-role');
+            if (sidebarRole) sidebarRole.textContent = d.cargo || d.papel || 'Colaborador';
+            const headerSpan = document.querySelector('#btnUserMenu span');
+            if (headerSpan) headerSpan.textContent = (d.nome || 'Usuário').split(' ')[0];
+
+            // Update avatar if available
+            if (d.avatarUrl) {
+                const sidebarIcon = document.querySelector('.sidebar-avatar-icon');
+                const sidebarImg = document.querySelector('.sidebar-avatar-img');
+                if (sidebarIcon && sidebarImg) {
+                    sidebarIcon.style.display = 'none';
+                    sidebarImg.src = d.avatarUrl;
+                    sidebarImg.style.display = 'block';
                 }
-            } else if (resp.status === 401 || resp.status === 403) {
-                // Token expirado → redirecionar
-                logout(true);
-                return;
+                const headerIcon = document.querySelector('.header-avatar-icon');
+                const headerImg = document.querySelector('.header-avatar-img');
+                if (headerIcon && headerImg) {
+                    headerIcon.style.display = 'none';
+                    headerImg.src = d.avatarUrl;
+                    headerImg.style.display = 'block';
+                }
             }
         } catch (e) {
-            // Backend offline — continua sem forçar logout
-            console.warn('[App] Erro ao validar sessão (backend offline?):', e);
-        }
-
-        // 3. Sinalizar app pronto
-        window.appReady = true;
-        window.appSessionValid = sessionValid;
-        window.dispatchEvent(new Event('app:ready'));
-    }
-
-    updateUserUI(d) {
-        const sidebarName = document.querySelector('.sidebar-footer .user-name');
-        if (sidebarName) sidebarName.textContent = d.nome || 'Usuário';
-        const sidebarRole = document.querySelector('.sidebar-footer .user-role');
-        if (sidebarRole) sidebarRole.textContent = d.cargo || d.papel || 'Colaborador';
-        const headerSpan = document.querySelector('#btnUserMenu span');
-        if (headerSpan) headerSpan.textContent = (d.nome || 'Usuário').split(' ')[0];
-
-        if (d.avatarUrl) {
-            ['sidebar', 'header'].forEach(prefix => {
-                const icon = document.querySelector(`.${prefix}-avatar-icon`);
-                const img  = document.querySelector(`.${prefix}-avatar-img`);
-                if (icon && img) {
-                    icon.style.display = 'none';
-                    img.src = d.avatarUrl;
-                    img.style.display = 'block';
-                }
-            });
-        }
-    }
-
-    loadCachedLogo() {
-        const logo = localStorage.getItem('crm_logo');
-        if (!logo) return;
-        const sidebarLogo = document.getElementById('sidebarLogo');
-        const sidebarIcon = document.querySelector('.sidebar-header .logo i');
-        if (sidebarLogo) {
-            sidebarLogo.src = logo;
-            sidebarLogo.style.display = 'block';
-            if (sidebarIcon) sidebarIcon.style.display = 'none';
+            console.warn('Erro ao carregar perfil do usuário:', e);
         }
     }
 
     setupEventListeners() {
+        // Sidebar toggle
         const sidebarToggle = document.getElementById('sidebarToggle');
-        if (sidebarToggle) sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                this.toggleSidebar();
+            });
+        }
 
+        // Menu mobile
         const menuMobile = document.getElementById('menuMobile');
-        if (menuMobile) menuMobile.addEventListener('click', () => this.toggleMobileSidebar());
+        if (menuMobile) {
+            menuMobile.addEventListener('click', () => {
+                this.toggleMobileSidebar();
+            });
+        }
 
+        // Logout
         const btnLogout = document.querySelector('.btn-logout');
-        if (btnLogout) btnLogout.addEventListener('click', () => this.confirmLogout());
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                this.logout();
+            });
+        }
 
+        // Fechar sidebar ao clicar em um link (mobile)
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) this.closeMobileSidebar();
+                if (window.innerWidth <= 768) {
+                    this.closeMobileSidebar();
+                }
             });
         });
     }
 
     toggleSidebar() {
-        document.querySelector('.sidebar')?.classList.toggle('collapsed');
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('collapsed');
     }
 
     toggleMobileSidebar() {
-        document.querySelector('.sidebar')?.classList.toggle('active');
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('active');
     }
 
     closeMobileSidebar() {
-        document.querySelector('.sidebar')?.classList.remove('active');
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.remove('active');
     }
 
-    confirmLogout() {
+    logout() {
         if (confirm('Tem certeza que deseja sair?')) {
             console.log('👋 Saindo do sistema...');
-            logout(true);
+            localStorage.removeItem('crm_token');
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
         }
     }
-
-    // Alias para compatibilidade
-    logout() { this.confirmLogout(); }
 
     setupUserMenu() {
         const userMenu = document.getElementById('userMenu');
         const btnUser  = document.getElementById('btnUserMenu');
         if (!userMenu || !btnUser) return;
 
+        // Abrir / fechar ao clicar no botão
         btnUser.addEventListener('click', (e) => {
             e.stopPropagation();
             const isOpen = userMenu.classList.toggle('open');
             btnUser.setAttribute('aria-expanded', isOpen);
         });
 
+        // Fechar ao clicar fora
         document.addEventListener('click', (e) => {
             if (!userMenu.contains(e.target)) {
                 userMenu.classList.remove('open');
@@ -237,6 +155,7 @@ class App {
             }
         });
 
+        // Fechar com Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 userMenu.classList.remove('open');
@@ -245,6 +164,7 @@ class App {
             }
         });
 
+        // Ações dos itens do menu
         userMenu.querySelectorAll('[data-user-action]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -253,11 +173,15 @@ class App {
                 btnUser.setAttribute('aria-expanded', 'false');
 
                 if (action === 'sair') {
-                    this.confirmLogout();
+                    this.logout();
                 } else if (action === 'perfil') {
-                    window.navigationManager?.navigateTo('perfil');
+                    if (window.navigationManager) {
+                        window.navigationManager.navigateTo('perfil');
+                    }
                 } else if (action === 'configuracoes') {
-                    window.navigationManager?.navigateTo('configuracoes');
+                    if (window.navigationManager) {
+                        window.navigationManager.navigateTo('configuracoes');
+                    }
                 }
             });
         });
@@ -265,12 +189,14 @@ class App {
 
     setupResponsive() {
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) this.closeMobileSidebar();
+            if (window.innerWidth > 768) {
+                this.closeMobileSidebar();
+            }
         });
     }
 }
 
-// Inicializar quando o DOM estiver pronto
+// Inicializar app quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });

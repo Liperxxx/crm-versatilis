@@ -18,12 +18,8 @@ public class Cliente extends BaseEntity {
     @Column(name = "nome_empresa", nullable = false, length = 255)
     private String nomeEmpresa;
 
-
     @Column(name = "cnpj", unique = true, length = 18)
     private String cnpj;
-
-    @Column(name = "cpf", unique = true, length = 14)
-    private String cpf;
 
     @Column(name = "contato_principal", length = 100)
     private String contatoPrincipal;

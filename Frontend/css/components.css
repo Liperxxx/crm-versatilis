@@ -105,12 +105,11 @@
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
     box-shadow: var(--shadow-sm);
-    transition: all var(--transition-base);
+    transition: box-shadow var(--transition-base);
 }
 
 .card:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--border-color-strong);
 }
 
 .card-header {
@@ -181,7 +180,6 @@
     border-radius: var(--radius-xl);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
-    background: var(--bg-primary);
 }
 
 table,
@@ -225,7 +223,7 @@ table tbody tr:last-child td,
 
 table tbody tr:hover td,
 .table tbody tr:hover td {
-    background: var(--bg-hover);
+    background: var(--bg-secondary);
 }
 
 /* Coluna de ações */
@@ -263,7 +261,7 @@ table .actions,
     font-size: var(--font-size-sm);
     font-family: var(--font-family);
     color: var(--color-text);
-    background: var(--bg-tertiary);
+    background: var(--bg-primary);
     transition: all var(--transition-fast);
     width: 100%;
 }
@@ -532,8 +530,8 @@ table .actions,
 .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(5, 10, 20, 0.72);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
     z-index: var(--z-modal-backdrop);
     display: flex;
     align-items: center;
@@ -557,7 +555,7 @@ table .actions,
     display: flex;
     flex-direction: column;
     animation: modalIn 0.2s ease;
-    border: 1px solid var(--border-color-strong);
+    border: 1px solid var(--border-color);
 }
 
 .modal-sm { max-width: 420px; }
@@ -701,14 +699,14 @@ table .actions,
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    background: var(--toast-bg);
-    color: var(--color-white);
+    background: var(--color-text);
+    color: white;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     min-width: 280px;
     pointer-events: all;
     animation: toastIn 0.3s ease;
-    border-left: 4px solid rgba(255,255,255,0.2);
+    border-left: 4px solid rgba(255,255,255,0.3);
 }
 
 .toast.toast-success { background: #064e3b; border-left-color: var(--color-success); }
@@ -1047,8 +1045,8 @@ table .actions,
 }
 .orc-servico-row .btn-remove-item:hover { background: var(--color-danger-bg); }
 .orc-cliente-info {
-    background: var(--color-info-bg);
-    border: 1px solid rgba(76, 142, 204, 0.25);
+    background: var(--color-info-bg, #eef4ff);
+    border: 1px solid var(--color-info-border, #b8d4ff);
     border-radius: var(--radius-md);
     padding: 12px 14px;
     margin-top: 10px;
@@ -1542,7 +1540,7 @@ table .actions,
 }
 .notif-item-time {
     font-size: 10px;
-    color: var(--color-text-muted);
+    color: var(--color-gray-light);
 }
 
 .notif-item-dot {
@@ -1726,133 +1724,6 @@ table .actions,
     color: var(--color-text);
 }
 
-/* ── Perfil Tab Navigation ──────────────────────────────── */
-.perfil-forms-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.perfil-tab-nav {
-    display: flex;
-    gap: 4px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    padding: 10px 16px 0;
-    box-shadow: var(--shadow-sm);
-    border-bottom: none;
-}
-
-.perfil-tab-btn {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 18px;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-muted);
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    cursor: pointer;
-    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-    margin-bottom: -1px;
-}
-.perfil-tab-btn:hover {
-    color: var(--color-text);
-    background: var(--bg-tertiary);
-}
-.perfil-tab-btn.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-    background: transparent;
-}
-.perfil-tab-btn i {
-    font-size: 13px;
-}
-
-.perfil-tab-panel {
-    display: none;
-}
-.perfil-tab-panel.active {
-    display: block;
-}
-.perfil-tab-panel > .perfil-section-card {
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-    box-shadow: var(--shadow-sm);
-}
-
-/* ── Avatar Upload Area ─────────────────────────────────── */
-.avatar-upload-area {
-    display: flex;
-    align-items: center;
-    gap: 32px;
-    flex-wrap: wrap;
-}
-
-.avatar-upload-preview {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    font-weight: var(--font-weight-bold);
-    color: white;
-    border: 3px solid var(--border-color);
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.avatar-upload-dropzone {
-    flex: 1;
-    min-width: 200px;
-    border: 2px dashed var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 28px 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
-}
-.avatar-upload-dropzone:hover,
-.avatar-upload-dropzone.drag-over {
-    border-color: var(--color-primary);
-    background: rgba(var(--color-primary-rgb, 205, 90, 38), 0.04);
-}
-.avatar-upload-dropzone i {
-    font-size: 32px;
-    color: var(--color-text-muted);
-}
-.avatar-upload-label {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
-    margin: 0;
-}
-.avatar-upload-hint {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-    margin: 0;
-}
-
-.avatar-upload-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
-    justify-content: flex-end;
-}
-
 /* ══════════════════════════════════════════════════════════
    CONFIGURAÇÕES MODULE
    ══════════════════════════════════════════════════════════ */
@@ -2023,20 +1894,6 @@ table .actions,
 @media (max-width: 768px) {
     .perfil-layout {
         grid-template-columns: 1fr;
-    }
-    .perfil-tab-nav {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-    }
-    .perfil-tab-btn {
-        white-space: nowrap;
-    }
-    .avatar-upload-area {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .avatar-upload-dropzone {
-        width: 100%;
     }
     .config-layout {
         grid-template-columns: 1fr;

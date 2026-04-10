@@ -31,15 +31,9 @@ public class ClienteService {
     public ClienteDTO criar(ClienteDTO clienteDTO) {
         log.info("Criando novo cliente: {}", clienteDTO.getNomeEmpresa());
 
-
         if (clienteDTO.getCnpj() != null && !clienteDTO.getCnpj().isBlank()
                 && clienteRepository.findByCnpj(clienteDTO.getCnpj()).isPresent()) {
             throw new BadRequestException("Já existe um cliente com o CNPJ informado.");
-        }
-
-        if (clienteDTO.getCpf() != null && !clienteDTO.getCpf().isBlank()
-                && clienteRepository.findByCpf(clienteDTO.getCpf()).isPresent()) {
-            throw new BadRequestException("Já existe um cliente com o CPF informado.");
         }
 
         Cliente cliente = modelMapper.map(clienteDTO, Cliente.class);
