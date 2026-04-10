@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
     
+    <!-- Tipografia Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Ícones (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -80,7 +85,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="#relatorios" class="nav-link" data-module="relatorios">
-                            <i class="fas fa-file-chart-line"></i>
+                            <i class="fas fa-chart-bar"></i>
                             <span>Relatórios</span>
                         </a>
                     </li>
@@ -97,7 +102,7 @@
             <div class="sidebar-footer">
                 <div class="user-profile">
                     <div class="user-avatar">
-                        <i class="fas fa-user-circle sidebar-avatar-icon" style="font-size:40px;color:var(--primary-color,#6366f1)"></i>
+                        <i class="fas fa-user-circle sidebar-avatar-icon" style="font-size:40px;color:var(--color-text-muted)"></i>
                         <img class="sidebar-avatar-img" src="" alt="Avatar" style="display:none;width:40px;height:40px;object-fit:cover;border-radius:50%;">
                     </div>
                     <div class="user-info">
@@ -106,7 +111,7 @@
                     </div>
                 </div>
                 <button class="btn-logout" title="Sair">
-                    <i class="fas fa-sign-out-alt"></i>
+                    <i class="fas fa-right-from-bracket"></i>
                 </button>
             </div>
         </aside>
@@ -158,7 +163,7 @@
                     </button>
                     <div class="user-menu" id="userMenu">
                         <button class="btn-user" id="btnUserMenu" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle header-avatar-icon" style="font-size:32px;color:var(--primary-color,#6366f1)"></i>
+                            <i class="fas fa-user-circle header-avatar-icon" style="font-size:32px;color:var(--color-text-muted)"></i>
                             <img class="header-avatar-img" src="" alt="Avatar" style="display:none;width:32px;height:32px;object-fit:cover;border-radius:50%;">
                             <span>Felipe</span>
                             <i class="fas fa-chevron-down" id="userMenuChevron"></i>
@@ -167,7 +172,7 @@
                             <a href="#" data-user-action="perfil" role="menuitem"><i class="fas fa-user"></i> Meu Perfil</a>
                             <a href="#" data-user-action="configuracoes" role="menuitem"><i class="fas fa-cog"></i> Configurações</a>
                             <hr>
-                            <a href="#" data-user-action="sair" role="menuitem" class="dropdown-danger"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            <a href="#" data-user-action="sair" role="menuitem" class="dropdown-danger"><i class="fas fa-right-from-bracket"></i> Sair</a>
                         </div>
                     </div>
                 </div>
@@ -447,19 +452,13 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
-                                            <label class="form-label" for="clienteTipoDoc">Tipo de Documento</label>
-                                            <select class="form-control" id="clienteTipoDoc">
-                                                <option value="cnpj">CNPJ</option>
-                                                <option value="cpf">CPF</option>
-                                            </select>
+                                            <label class="form-label" for="clienteCnpj">CNPJ</label>
+                                            <input type="text" class="form-control" id="clienteCnpj" placeholder="00.000.000/0000-00" maxlength="18">
                                         </div>
                                         <div class="form-group">
-                                            <label class="form-label" for="clienteDocumento">Número do Documento</label>
-                                            <input type="text" class="form-control" id="clienteDocumento" placeholder="00.000.000/0000-00" maxlength="18">
+                                            <label class="form-label" for="clienteCpf">CPF</label>
+                                            <input type="text" class="form-control" id="clienteCpf" placeholder="000.000.000-00" maxlength="14">
                                         </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <input type="hidden" id="clienteCnpj">
                                         <div class="form-group">
                                             <label class="form-label" for="clienteTelefone">Telefone</label>
                                             <input type="tel" class="form-control" id="clienteTelefone" placeholder="(00) 00000-0000">
@@ -1337,84 +1336,138 @@
                                 </div>
                             </div>
 
-                            <!-- Formulários -->
-                            <div class="perfil-forms">
-                                <!-- Dados Pessoais -->
-                                <div class="perfil-section-card">
-                                    <div class="perfil-section-header">
-                                        <h3><i class="fas fa-user-edit"></i> Dados Pessoais</h3>
-                                        <button class="btn btn-secondary btn-sm" id="perfilEditBtn">
-                                            <i class="fas fa-pen"></i> Editar
-                                        </button>
-                                    </div>
-                                    <form id="perfilForm" class="perfil-form-disabled">
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label class="form-label">Nome</label>
-                                                <input type="text" class="form-control" id="perfilNome" disabled>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="form-label">E-mail</label>
-                                                <input type="email" class="form-control" id="perfilEmail" disabled style="background:var(--bg-tertiary);cursor:not-allowed;">
-                                            </div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label class="form-label">Cargo</label>
-                                                <input type="text" class="form-control" id="perfilCargo" disabled>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="form-label">Telefone</label>
-                                                <input type="tel" class="form-control" id="perfilTelefone" placeholder="(00) 00000-0000" disabled>
-                                            </div>
-                                        </div>
-                                        <div class="perfil-form-actions hidden" id="perfilFormActions">
-                                            <button type="button" class="btn btn-secondary" id="perfilCancelBtn">Cancelar</button>
-                                            <button type="submit" class="btn btn-primary" id="perfilSaveBtn">
-                                                <i class="fas fa-save"></i> Salvar
-                                            </button>
-                                        </div>
-                                    </form>
+                            <!-- Formulários com abas -->
+                            <div class="perfil-forms-container">
+
+                                <!-- Navegação das abas -->
+                                <div class="perfil-tab-nav">
+                                    <button class="perfil-tab-btn active" data-tab="dados">
+                                        <i class="fas fa-user-edit"></i> Dados Pessoais
+                                    </button>
+                                    <button class="perfil-tab-btn" data-tab="avatar">
+                                        <i class="fas fa-camera"></i> Foto de Perfil
+                                    </button>
+                                    <button class="perfil-tab-btn" data-tab="senha">
+                                        <i class="fas fa-lock"></i> Segurança
+                                    </button>
                                 </div>
 
-                                <!-- Alterar Senha -->
-                                <div class="perfil-section-card">
-                                    <div class="perfil-section-header">
-                                        <h3><i class="fas fa-lock"></i> Alterar Senha</h3>
-                                    </div>
-                                    <form id="perfilSenhaForm">
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label class="form-label">Senha Atual</label>
-                                                <div class="input-password-wrapper">
-                                                    <input type="password" class="form-control" id="perfilSenhaAtual" placeholder="Digite a senha atual" autocomplete="current-password">
-                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="form-label">Nova Senha</label>
-                                                <div class="input-password-wrapper">
-                                                    <input type="password" class="form-control" id="perfilNovaSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
-                                                </div>
-                                            </div>
+                                <!-- Aba: Dados Pessoais -->
+                                <div class="perfil-tab-panel active" id="perfilTabDados">
+                                    <div class="perfil-section-card">
+                                        <div class="perfil-section-header">
+                                            <h3><i class="fas fa-user-edit"></i> Dados Pessoais</h3>
+                                            <button class="btn btn-secondary btn-sm" id="perfilEditBtn">
+                                                <i class="fas fa-pen"></i> Editar
+                                            </button>
                                         </div>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label class="form-label">Confirmar Nova Senha</label>
-                                                <div class="input-password-wrapper">
-                                                    <input type="password" class="form-control" id="perfilConfirmarSenha" placeholder="Repita a nova senha" autocomplete="new-password">
-                                                    <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                        <form id="perfilForm" class="perfil-form-disabled">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">Nome</label>
+                                                    <input type="text" class="form-control" id="perfilNome" disabled>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">E-mail</label>
+                                                    <input type="email" class="form-control" id="perfilEmail" disabled style="background:var(--bg-tertiary);cursor:not-allowed;">
                                                 </div>
                                             </div>
-                                            <div class="form-group" style="display:flex;align-items:flex-end;">
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class="fas fa-key"></i> Alterar Senha
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">Cargo</label>
+                                                    <input type="text" class="form-control" id="perfilCargo" disabled>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Telefone</label>
+                                                    <input type="tel" class="form-control" id="perfilTelefone" placeholder="(00) 00000-0000" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="perfil-form-actions hidden" id="perfilFormActions">
+                                                <button type="button" class="btn btn-secondary" id="perfilCancelBtn">Cancelar</button>
+                                                <button type="submit" class="btn btn-primary" id="perfilSaveBtn">
+                                                    <i class="fas fa-save"></i> Salvar
                                                 </button>
                                             </div>
-                                        </div>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
+
+                                <!-- Aba: Foto de Perfil -->
+                                <div class="perfil-tab-panel" id="perfilTabAvatar">
+                                    <div class="perfil-section-card">
+                                        <div class="perfil-section-header">
+                                            <h3><i class="fas fa-camera"></i> Foto de Perfil</h3>
+                                        </div>
+                                        <div class="avatar-upload-area">
+                                            <!-- Preview da foto atual -->
+                                            <div class="avatar-upload-preview" id="avatarTabPreview">
+                                                <img id="avatarTabImg" src="" alt="Foto de perfil"
+                                                     style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;">
+                                                <span id="avatarTabInitial">?</span>
+                                            </div>
+                                            <!-- Zona de upload -->
+                                            <div class="avatar-upload-dropzone" id="avatarDropzone">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <p class="avatar-upload-label">Arraste uma imagem aqui ou</p>
+                                                <button type="button" class="btn btn-secondary" id="avatarSelectBtn">
+                                                    <i class="fas fa-folder-open"></i> Escolher Arquivo
+                                                </button>
+                                                <p class="avatar-upload-hint">PNG ou JPEG · máx. 5 MB</p>
+                                                <input type="file" id="avatarTabInput" accept="image/png,image/jpeg" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="avatar-upload-actions" id="avatarUploadActions" style="display:none;">
+                                            <button type="button" class="btn btn-primary" id="avatarConfirmBtn">
+                                                <i class="fas fa-check"></i> Confirmar
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" id="avatarCancelUploadBtn">
+                                                <i class="fas fa-times"></i> Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Aba: Segurança -->
+                                <div class="perfil-tab-panel" id="perfilTabSenha">
+                                    <div class="perfil-section-card">
+                                        <div class="perfil-section-header">
+                                            <h3><i class="fas fa-lock"></i> Segurança</h3>
+                                        </div>
+                                        <form id="perfilSenhaForm">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">Senha Atual</label>
+                                                    <div class="input-password-wrapper">
+                                                        <input type="password" class="form-control" id="perfilSenhaAtual" placeholder="Digite a senha atual" autocomplete="current-password">
+                                                        <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Nova Senha</label>
+                                                    <div class="input-password-wrapper">
+                                                        <input type="password" class="form-control" id="perfilNovaSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                                                        <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label class="form-label">Confirmar Nova Senha</label>
+                                                    <div class="input-password-wrapper">
+                                                        <input type="password" class="form-control" id="perfilConfirmarSenha" placeholder="Repita a nova senha" autocomplete="new-password">
+                                                        <button type="button" class="input-password-toggle" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group" style="display:flex;align-items:flex-end;">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-key"></i> Alterar Senha
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>

@@ -11,7 +11,7 @@ class DashboardManager {
         this.chartStatus = null;
         this.bindElements();
         this.bindEvents();
-        this.load();
+        // this.load(); // REMOVIDO: inicialização só via app:ready
     }
 
     // ══ ELEMENTOS ═════════════════════════════════════════════════════════
@@ -30,21 +30,6 @@ class DashboardManager {
         }
     }
 
-    // ══ TOKEN ═════════════════════════════════════════════════════════════
-
-    getToken() {
-        return localStorage.getItem('crm_token')
-            || localStorage.getItem('token')
-            || localStorage.getItem('jwtToken')
-            || null;
-    }
-
-    authHeaders() {
-        const token = this.getToken();
-        return token
-            ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-            : { 'Content-Type': 'application/json' };
-    }
 
     // ══ ESTADOS VISUAIS ══════════════════════════════════════════════════
 
@@ -72,19 +57,14 @@ class DashboardManager {
     async load() {
         this.showLoading();
         try {
-            const res = await fetch(`${API_DASHBOARD}/resumo`, {
-                headers: this.authHeaders()
-            });
-            if (res.status === 401 || res.status === 403) {
-                this.showError('Sessão expirada. Faça login novamente.');
-                return;
-            }
+            const res = await apiFetch(`${API_DASHBOARD}/resumo`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             this.data = json.dados || json;
             this.render();
             this.showContent();
         } catch (e) {
+            if (e.isAuthError) return;
             console.error('[Dashboard] Erro ao carregar:', e);
             this.showError(`Não foi possível conectar ao backend: ${e.message}`);
         }
@@ -342,6 +322,12 @@ class DashboardManager {
 
 // ══ INICIALIZAÇÃO ════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.dashboardManager = new DashboardManager();
+// Inicialização condicional: só inicia dashboard após autenticação pronta
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.dashboardManager = new DashboardManager();
+    } else {
+        // Se não autenticado, redireciona para login
+        window.location.href = 'login.html';
+    }
 });

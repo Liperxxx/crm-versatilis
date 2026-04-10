@@ -33,40 +33,22 @@ class ProdutosModule {
         this.loadData();
     }
 
-    // ══ AUTH ════════════════════════════════════════════════════════════
-
-    getToken() {
-        return localStorage.getItem('crm_token') || localStorage.getItem('token') || null;
-    }
-
-    authHeaders() {
-        const t = this.getToken();
-        return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' }
-                 : { 'Content-Type': 'application/json' };
-    }
-
     // ══ CARREGAMENTO ════════════════════════════════════════════════════
 
     async loadData() {
         this.showLoading();
         try {
-            const res = await fetch(`${API_PRODUTOS}?size=500&sort=id,desc`, {
-                headers: this.authHeaders()
-            });
-            if (res.status === 401 || res.status === 403) {
-                this.produtos = [];
-                this.toast('danger', 'fas fa-lock',
-                    'Sessão expirada. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.',
-                    10000);
-                return;
-            }
+            const res = await apiFetch(`${API_PRODUTOS}?size=500&sort=id,desc`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
+            // ResponseDTO<Page<ProdutoDTO>> → dados.content
             this.produtos = json.dados?.content ?? json.dados ?? [];
         } catch (e) {
+            if (e.isAuthError) return;
             console.error('[Produtos] Erro ao carregar:', e.message);
             this.produtos = [];
-            this.toast('danger', 'fas fa-server', `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
+            this.toast('danger', 'fas fa-server',
+                `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
         } finally {
             this.render();
         }
@@ -77,7 +59,7 @@ class ProdutosModule {
         this.$empty?.classList.add('hidden');
         this.$tbody.innerHTML = `
             <tr class="loading-row">
-                <td colspan="6">
+                <td colspan="7">
                     <div class="table-loading">
                         <i class="fas fa-spinner"></i>
                         <span>Carregando produtos...</span>
@@ -89,25 +71,19 @@ class ProdutosModule {
     // ══ API ═════════════════════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await fetch(API_PRODUTOS, {
-            method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(API_PRODUTOS, { method: 'POST', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await fetch(`${API_PRODUTOS}/${id}`, {
-            method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(`${API_PRODUTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await fetch(`${API_PRODUTOS}/${id}`, {
-            method: 'DELETE', headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_PRODUTOS}/${id}`, { method: 'DELETE' });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
     }
 
@@ -320,6 +296,7 @@ class ProdutosModule {
             this.closeModal();
             this.render();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -370,6 +347,7 @@ class ProdutosModule {
             this.toast('success', 'fas fa-check-circle', `Produto <strong>${this.esc(p.nome)}</strong> excluído.`);
             await this.loadData();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
@@ -422,6 +400,8 @@ class ProdutosModule {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.produtosModule = new ProdutosModule();
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.produtosModule = new ProdutosModule();
+    }
 });

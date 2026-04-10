@@ -12,6 +12,7 @@ html {
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
 }
 
 body {
@@ -86,7 +87,7 @@ table {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--border-color-strong);
     border-radius: 4px;
 }
 

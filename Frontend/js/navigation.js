@@ -128,12 +128,16 @@ class NavigationManager {
 }
 
 // Inicializar gerenciador de navegação
-document.addEventListener('DOMContentLoaded', () => {
-    window.navigationManager = new NavigationManager();
-    
-    // Navegar para módulo da URL se houver
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-        window.navigationManager.navigateTo(hash);
+// Inicialização condicional: só inicia navegação após autenticação pronta
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.navigationManager = new NavigationManager();
+        // Navegar para módulo da URL se houver
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            window.navigationManager.navigateTo(hash);
+        }
+    } else {
+        window.location.href = 'login.html';
     }
 });

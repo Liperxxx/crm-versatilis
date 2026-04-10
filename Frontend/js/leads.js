@@ -38,40 +38,22 @@ class LeadsModule {
         this.loadData();
     }
 
-    // ══ AUTH ════════════════════════════════════════════════════════════
-
-    getToken() {
-        return localStorage.getItem('crm_token') || localStorage.getItem('token') || null;
-    }
-
-    authHeaders() {
-        const t = this.getToken();
-        return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' }
-                 : { 'Content-Type': 'application/json' };
-    }
-
     // ══ CARREGAMENTO ════════════════════════════════════════════════════
 
     async loadData() {
         this.showLoading();
         try {
-            const res = await fetch(`${API_LEADS}?size=500&sort=id,desc`, {
-                headers: this.authHeaders()
-            });
-            if (res.status === 401 || res.status === 403) {
-                this.leads = [];
-                this.toast('danger', 'fas fa-lock',
-                    'Sessão expirada. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.',
-                    10000);
-                return;
-            }
+            const res = await apiFetch(`${API_LEADS}?size=500&sort=id,desc`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
+            // ResponseDTO<Page<LeadDTO>> → dados.content
             this.leads = json.dados?.content ?? json.dados ?? [];
         } catch (e) {
+            if (e.isAuthError) return;
             console.error('[Leads] Erro ao carregar:', e.message);
             this.leads = [];
-            this.toast('danger', 'fas fa-server', `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
+            this.toast('danger', 'fas fa-server',
+                `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
         } finally {
             this.render();
         }
@@ -94,34 +76,26 @@ class LeadsModule {
     // ══ API ═════════════════════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await fetch(API_LEADS, {
-            method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(API_LEADS, { method: 'POST', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await fetch(`${API_LEADS}/${id}`, {
-            method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(`${API_LEADS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await fetch(`${API_LEADS}/${id}`, {
-            method: 'DELETE', headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_LEADS}/${id}`, { method: 'DELETE' });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
     }
 
     async apiConvert(leadId, usuarioId, motivoConversao) {
         const params = new URLSearchParams({ leadId, usuarioId });
         if (motivoConversao) params.append('motivoConversao', motivoConversao);
-        const res = await fetch(`${API_CONVERSOES}/lead-cliente?${params}`, {
-            method: 'POST', headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_CONVERSOES}/lead-cliente?${params}`, { method: 'POST' });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
@@ -368,6 +342,7 @@ class LeadsModule {
             this.closeModal();
             this.render();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -419,6 +394,7 @@ class LeadsModule {
             this.toast('success', 'fas fa-check-circle', `Lead <strong>${this.esc(l.nomeContato)}</strong> excluído.`);
             await this.loadData();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
@@ -457,6 +433,7 @@ class LeadsModule {
                 `Lead <strong>${this.esc(l.nomeContato)}</strong> convertido em cliente <strong>#${clienteCriado.id}</strong>.`, 6000);
             await this.loadData();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao converter: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -513,6 +490,8 @@ class LeadsModule {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.leadsModule = new LeadsModule();
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.leadsModule = new LeadsModule();
+    }
 });

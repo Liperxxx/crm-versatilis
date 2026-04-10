@@ -33,7 +33,7 @@ class TarefasModule {
         this.filterDataInicio = '';
         this.filterDataFim    = '';
         this.filterResponsavel = '';
-        this.init();
+        // this.init(); // REMOVIDO: inicialização só via app:ready
     }
 
     init() {
@@ -42,89 +42,48 @@ class TarefasModule {
         this.loadData();
     }
 
-    // ══ AUTH ════════════════════════════════════════════════════════════
-
-    getToken() {
-        return localStorage.getItem('crm_token') || localStorage.getItem('token') || null;
-    }
-
-    authHeaders() {
-        const t = this.getToken();
-        return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' }
-                 : { 'Content-Type': 'application/json' };
-    }
-
     // ══ CARREGAMENTO ════════════════════════════════════════════════════
 
     async loadData() {
         this.showLoading();
         try {
-            const res = await fetch(`${API_TAREFAS}?size=500&sort=id,desc`, {
-                headers: this.authHeaders()
-            });
-            if (res.status === 401 || res.status === 403) {
-                this.tarefas = [];
-                this.toast('danger', 'fas fa-lock',
-                    'Sessão expirada. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.',
-                    10000);
-                return;
-            }
+            const res = await apiFetch(`${API_TAREFAS}?size=500&sort=id,desc`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
+            // ResponseDTO<Page<TarefaDTO>> → dados.content
             this.tarefas = json.dados?.content ?? json.dados ?? [];
         } catch (e) {
+            if (e.isAuthError) return;
             console.error('[Tarefas] Erro ao carregar:', e.message);
             this.tarefas = [];
-            this.toast('danger', 'fas fa-server', `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
+            this.toast('danger', 'fas fa-server',
+                `Não foi possível conectar ao backend: ${this.esc(e.message)}`, 10000);
         } finally {
-            this.buildResponsavelFilter();
             this.render();
         }
-    }
-
-    showLoading() {
-        if (!this.$tbody) return;
-        this.$empty?.classList.add('hidden');
-        this.$tbody.innerHTML = `
-            <tr class="loading-row">
-                <td colspan="7">
-                    <div class="table-loading">
-                        <i class="fas fa-spinner"></i>
-                        <span>Carregando tarefas...</span>
-                    </div>
-                </td>
-            </tr>`;
     }
 
     // ══ API ═════════════════════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await fetch(API_TAREFAS, {
-            method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(API_TAREFAS, { method: 'POST', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await fetch(`${API_TAREFAS}/${id}`, {
-            method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data)
-        });
+        const res = await apiFetch(`${API_TAREFAS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await fetch(`${API_TAREFAS}/${id}`, {
-            method: 'DELETE', headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_TAREFAS}/${id}`, { method: 'DELETE' });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
     }
 
     async apiConcluir(id) {
-        const res = await fetch(`${API_TAREFAS}/${id}/concluir`, {
-            method: 'PATCH', headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_TAREFAS}/${id}/concluir`, { method: 'PATCH' });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
         return (await res.json()).dados;
     }
@@ -366,8 +325,7 @@ class TarefasModule {
             if (idx > -1) this.tarefas[idx] = updated;
             this.toast('success', 'fas fa-circle-check', `Tarefa <strong>${this.esc(t.titulo)}</strong> concluída!`);
             this.render();
-        } catch (e) {
-            this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
+        } catch (e) {            if (e.isAuthError) return;            this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         }
     }
 
@@ -459,6 +417,7 @@ class TarefasModule {
             this.buildResponsavelFilter();
             this.render();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -508,6 +467,7 @@ class TarefasModule {
             this.toast('success', 'fas fa-check-circle', `Tarefa <strong>${this.esc(t.titulo)}</strong> excluída.`);
             await this.loadData();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
@@ -573,6 +533,8 @@ class TarefasModule {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    window.tarefasModule = new TarefasModule();
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.tarefasModule = new TarefasModule();
+    }
 });

@@ -199,12 +199,7 @@ class ConfiguracoesManager {
         if (cached) this.showLogo(cached);
 
         try {
-            const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
-            if (!token) return;
-
-            const resp = await fetch(`${API_BASE_URL}/config/logo`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const resp = await apiFetch(`${API_BASE_URL}/config/logo`);
             if (!resp.ok) return;
 
             const json = await resp.json();
@@ -214,6 +209,7 @@ class ConfiguracoesManager {
                 this.showLogo(url);
             }
         } catch (e) {
+            if (e.isAuthError) return;
             console.warn('Erro ao carregar logo:', e);
         }
     }
@@ -256,9 +252,6 @@ class ConfiguracoesManager {
             return;
         }
 
-        const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
-        if (!token) return;
-
         // Preview
         const reader = new FileReader();
         reader.onload = (e) => this.showLogo(e.target.result);
@@ -274,9 +267,8 @@ class ConfiguracoesManager {
             const formData = new FormData();
             formData.append('file', file);
 
-            const resp = await fetch(`${API_BASE_URL}/config/logo`, {
+            const resp = await apiFetch(`${API_BASE_URL}/config/logo`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
@@ -290,6 +282,7 @@ class ConfiguracoesManager {
             }
             this.toast('success', 'fas fa-check-circle', 'Logo atualizado com sucesso!');
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', e.message);
         } finally {
             if (btn) {

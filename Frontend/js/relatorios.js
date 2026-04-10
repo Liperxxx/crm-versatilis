@@ -42,10 +42,7 @@ class RelatoriosModule {
             const qs  = params.toString();
             const url = qs ? `${API_RELATORIOS}?${qs}` : API_RELATORIOS;
 
-            const token = localStorage.getItem('crm_token') || localStorage.getItem('token') || null;
-            const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-                                  : { 'Content-Type': 'application/json' };
-            const resp  = await fetch(url, { headers });
+            const resp  = await apiFetch(url);
 
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const json = await resp.json();
@@ -57,6 +54,7 @@ class RelatoriosModule {
                 this.showToast('Erro ao carregar relatório', 'danger');
             }
         } catch (err) {
+            if (err.isAuthError) return;
             console.error('Erro relatório:', err);
             this.showToast('Erro de conexão com o servidor', 'danger');
         } finally {

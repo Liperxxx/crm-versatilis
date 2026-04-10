@@ -72,13 +72,8 @@ class NotificationsManager {
 
     // ── Geração de notificações baseadas nos dados do sistema ──
     async loadNotifications() {
-        const token = this.getToken();
-        if (!token) return;
-
         try {
-            const resp = await fetch(`${API_BASE_URL}/dashboard/resumo`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const resp = await apiFetch(`${API_BASE_URL}/dashboard/resumo`);
             if (!resp.ok) return;
             const json = await resp.json();
             const d = json.dados;
@@ -162,6 +157,7 @@ class NotificationsManager {
 
             this.render();
         } catch (e) {
+            if (e.isAuthError) return;
             console.warn('Notificações: falha ao carregar', e);
         }
     }
@@ -236,13 +232,6 @@ class NotificationsManager {
         if (diff < 3600)  return `há ${Math.floor(diff / 60)} min`;
         if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
         return `há ${Math.floor(diff / 86400)} dia(s)`;
-    }
-
-    getToken() {
-        return localStorage.getItem('crm_token')
-            || localStorage.getItem('token')
-            || localStorage.getItem('jwtToken')
-            || null;
     }
 
     esc(str) {

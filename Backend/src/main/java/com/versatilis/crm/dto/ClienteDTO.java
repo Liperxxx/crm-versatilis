@@ -22,8 +22,12 @@ public class ClienteDTO {
     @NotBlank(message = "Nome da empresa é obrigatório")
     private String nomeEmpresa;
 
+
     // CNPJ é opcional — frontend não coleta
     private String cnpj;
+
+    // CPF é opcional — frontend não coleta
+    private String cpf;
 
     // Contato principal é opcional no fluxo do frontend
     private String contatoPrincipal;

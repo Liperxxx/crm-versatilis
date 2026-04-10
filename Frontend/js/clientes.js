@@ -41,41 +41,18 @@ class ClientesModule {
         this.loadData(); // carrega da API ou mock
     }
 
-    // ══ TOKEN ══════════════════════════════════════════════════════════════
-
-    getToken() {
-        return localStorage.getItem('crm_token')
-            || localStorage.getItem('token')
-            || localStorage.getItem('jwtToken')
-            || null;
-    }
-
-    authHeaders() {
-        const token = this.getToken();
-        return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-                     : { 'Content-Type': 'application/json' };
-    }
-
     // ══ CARREGAMENTO DE DADOS (sempre via API) ════════════════════════════
 
     async loadData() {
         this.showLoading();
         try {
-            const res = await fetch(`${API_CLIENTES}?size=500&sort=id,desc`, {
-                headers: this.authHeaders()
-            });
-            if (res.status === 401 || res.status === 403) {
-                this.clientes = [];
-                this.toast('danger', 'fas fa-lock',
-                    'Sessão expirada ou não autenticado. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.',
-                    10000);
-                return;
-            }
+            const res = await apiFetch(`${API_CLIENTES}?size=500&sort=id,desc`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             // ResponseDTO<Page<ClienteDTO>> → dados.content
             this.clientes = json.dados?.content ?? json.dados ?? [];
         } catch (e) {
+            if (e.isAuthError) return;
             console.error('[Clientes] Erro ao carregar:', e.message);
             this.clientes = [];
             this.toast('danger', 'fas fa-server',
@@ -102,38 +79,25 @@ class ClientesModule {
     // ══ CRUD ASSÍNCRONO (API) ══════════════════════════════════════════════
 
     async apiCreate(data) {
-        const res = await fetch(API_CLIENTES, {
-            method: 'POST',
-            headers: this.authHeaders(),
-            body: JSON.stringify(data)
-        });
+        const res = await apiFetch(API_CLIENTES, { method: 'POST', body: JSON.stringify(data) });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.mensagem || `HTTP ${res.status}`);
         }
-        const json = await res.json();
-        return json.dados;
+        return (await res.json()).dados;
     }
 
     async apiUpdate(id, data) {
-        const res = await fetch(`${API_CLIENTES}/${id}`, {
-            method: 'PUT',
-            headers: this.authHeaders(),
-            body: JSON.stringify(data)
-        });
+        const res = await apiFetch(`${API_CLIENTES}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.mensagem || `HTTP ${res.status}`);
         }
-        const json = await res.json();
-        return json.dados;
+        return (await res.json()).dados;
     }
 
     async apiDelete(id) {
-        const res = await fetch(`${API_CLIENTES}/${id}`, {
-            method: 'DELETE',
-            headers: this.authHeaders()
-        });
+        const res = await apiFetch(`${API_CLIENTES}/${id}`, { method: 'DELETE' });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.mensagem || `HTTP ${res.status}`);
@@ -169,9 +133,8 @@ class ClientesModule {
         this.$fSegmento     = document.getElementById('clienteSegmento');
         this.$fCidade       = document.getElementById('clienteCidade');
         this.$fObs          = document.getElementById('clienteObservacoes');
-        this.$fTipoDoc      = document.getElementById('clienteTipoDoc');
-        this.$fDocumento    = document.getElementById('clienteDocumento');
-        this.$fCnpj         = document.getElementById('clienteCnpj'); // campo legado (hidden)
+        this.$fCnpj         = document.getElementById('clienteCnpj');
+        this.$fCpf          = document.getElementById('clienteCpf');
 
         // Modal exclusão
         this.$deleteModal   = document.getElementById('deleteModalBackdrop');
@@ -233,20 +196,7 @@ class ClientesModule {
             this.$fTelefone.value = this.maskPhone(this.$fTelefone.value);
         });
 
-        // Troca de tipo de documento (CNPJ ↔ CPF)
-        this.$fTipoDoc?.addEventListener('change', () => {
-            this.updateDocumentField();
-        });
-
-        // Máscara dinâmica do campo de documento
-        this.$fDocumento?.addEventListener('input', () => {
-            const tipo = this.$fTipoDoc?.value || 'cnpj';
-            this.$fDocumento.value = tipo === 'cpf'
-                ? this.maskCpf(this.$fDocumento.value)
-                : this.maskCnpj(this.$fDocumento.value);
-        });
-
-        // Máscara simples de CNPJ (campo legado hidden — mantido para compatibilidade)
+        // Máscara simples de CNPJ
         this.$fCnpj?.addEventListener('input', () => {
             this.$fCnpj.value = this.maskCnpj(this.$fCnpj.value);
         });
@@ -261,7 +211,6 @@ class ClientesModule {
                 || (c.email         || '').toLowerCase().includes(this.searchTerm)
                 || (c.telefone      || '').toLowerCase().includes(this.searchTerm)
                 || (c.cnpj         || '').toLowerCase().includes(this.searchTerm)
-                || (c.cpf          || '').toLowerCase().includes(this.searchTerm)
                 || (c.cidade       || '').toLowerCase().includes(this.searchTerm);
 
             const matchStatus   = !this.filterStatus   || c.status   === this.filterStatus;
@@ -365,21 +314,14 @@ class ClientesModule {
             this.$fStatus.value     = c.status;
             this.$fEmail.value      = c.email        || '';
             this.$fTelefone.value   = c.telefone     || '';
-            if (c.cpf) {
-                if (this.$fTipoDoc) this.$fTipoDoc.value = 'cpf';
-                if (this.$fDocumento) this.$fDocumento.value = c.cpf;
-            } else {
-                if (this.$fTipoDoc) this.$fTipoDoc.value = 'cnpj';
-                if (this.$fDocumento) this.$fDocumento.value = c.cnpj || '';
-            }
-            this.updateDocumentField();
+            this.$fCnpj.value       = c.cnpj         || '';
+            this.$fCpf.value        = c.cpf          || '';
             this.$fSegmento.value   = c.segmento     || '';
             this.$fCidade.value     = c.cidade       || '';
             this.$fObs.value        = c.observacoes  || '';
         } else {
             this.$form.reset();
             this.$fId.value = '';
-            this.updateDocumentField();
         }
 
         if (window.navigationManager) window.navigationManager.navigateTo('cliente-form');
@@ -394,15 +336,13 @@ class ClientesModule {
     async saveCliente() {
         if (!this.validateForm()) return;
 
-        const tipoDoc = this.$fTipoDoc?.value || 'cnpj';
-        const docVal  = this.$fDocumento?.value?.trim() || null;
         const data = {
             nome:         this.$fNome.value.trim(),
             status:       this.$fStatus.value,
             email:        this.$fEmail.value.trim(),
             telefone:     this.$fTelefone.value.trim(),
-            cnpj:         tipoDoc === 'cnpj' ? docVal : null,
-            cpf:          tipoDoc === 'cpf'  ? docVal : null,
+            cnpj:         this.$fCnpj?.value?.trim()  || null,
+            cpf:          this.$fCpf?.value?.trim()   || null,
             segmento:     this.$fSegmento.value,
             cidade:       this.$fCidade.value.trim(),
             observacoes:  this.$fObs.value.trim(),
@@ -424,6 +364,7 @@ class ClientesModule {
             this.closeModal();
             this.render();
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro: ${this.esc(e.message)}`);
         } finally {
             btn.disabled = false;
@@ -490,6 +431,7 @@ class ClientesModule {
             this.toast('success', 'fas fa-check-circle', `Cliente <strong>${this.esc(c.nome)}</strong> excluído com sucesso.`);
             await this.loadData(); // ressincronia com o servidor
         } catch (e) {
+            if (e.isAuthError) return;
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
         } finally {
@@ -554,27 +496,6 @@ class ClientesModule {
         return v;
     }
 
-    maskCpf(v) {
-        v = v.replace(/\D/g, '').slice(0, 11);
-        if (v.length > 9) return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, '$1.$2.$3-$4');
-        if (v.length > 6) return v.replace(/^(\d{3})(\d{3})(\d*)$/, '$1.$2.$3');
-        if (v.length > 3) return v.replace(/^(\d{3})(\d*)$/, '$1.$2');
-        return v;
-    }
-
-    updateDocumentField() {
-        if (!this.$fTipoDoc || !this.$fDocumento) return;
-        const isCpf = this.$fTipoDoc.value === 'cpf';
-        this.$fDocumento.placeholder = isCpf ? '000.000.000-00' : '00.000.000/0000-00';
-        this.$fDocumento.maxLength   = isCpf ? 14 : 18;
-        // re-apply mask to current value when switching types
-        if (this.$fDocumento.value) {
-            this.$fDocumento.value = isCpf
-                ? this.maskCpf(this.$fDocumento.value)
-                : this.maskCnpj(this.$fDocumento.value);
-        }
-    }
-
     esc(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -585,6 +506,8 @@ class ClientesModule {
 }
 
 // Inicializa quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
-    window.clientesModule = new ClientesModule();
+window.addEventListener('app:ready', () => {
+    if (window.appSessionValid) {
+        window.clientesModule = new ClientesModule();
+    }
 });

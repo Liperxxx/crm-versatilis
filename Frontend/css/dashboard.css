@@ -43,7 +43,7 @@
 .kpi-card:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-3px);
-    border-color: var(--color-primary-light);
+    border-color: var(--border-color-strong);
 }
 
 .kpi-card:hover::before {
@@ -182,7 +182,8 @@
 }
 
 .activity-item:hover {
-    background: var(--border-color);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
 }
 
 .activity-icon {
