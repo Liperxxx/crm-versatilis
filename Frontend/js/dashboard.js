@@ -164,8 +164,16 @@ class DashboardManager {
 
         if (this.chartStatus) this.chartStatus.destroy();
 
-        const labels = Object.keys(mapa).map(k => this.formatLabel(k));
+        const keys   = Object.keys(mapa);
         const values = Object.values(mapa);
+        const total  = values.reduce((a, b) => a + b, 0);
+
+        // Labels com porcentagem: "Aprovado (35%)"
+        const labels = keys.map((k, i) => {
+            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
+            return `${this.formatLabel(k)} (${pct}%)`;
+        });
+
         const colors = ['#94a3b8', '#306EB4', '#10b981', '#ef4444'];
 
         this.chartStatus = new Chart(canvas, {
@@ -183,10 +191,55 @@ class DashboardManager {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { padding: 16 } }
+                    legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.parsed || 0;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                                return ` ${ctx.label.split(' (')[0]}: ${val} (${pct}%)`;
+                            }
+                        }
+                    }
                 }
             }
         });
+
+        // ── Taxa de Conversão Comercial ──
+        this.renderTaxaConversao(mapa, total);
+    }
+
+    renderTaxaConversao(mapa, total) {
+        const container = document.getElementById('conversaoComercial');
+        const valorEl   = document.getElementById('taxaConversaoValor');
+        const detalheEl = document.getElementById('conversaoDetalhe');
+        if (!container || !valorEl) return;
+
+        // Normalizar chaves para uppercase
+        const norm = {};
+        Object.keys(mapa).forEach(k => { norm[k.toUpperCase()] = mapa[k] || 0; });
+
+        const aprovados = norm['APROVADO'] || 0;
+        const enviados  = norm['ENVIADO']  || 0;
+        const recusados = norm['RECUSADO'] || 0;
+
+        // Base de cálculo: orçamentos que passaram por decisão (enviados + aprovados + recusados)
+        const base = aprovados + enviados + recusados;
+        const taxa = base > 0 ? ((aprovados / base) * 100).toFixed(1) : '0.0';
+
+        valorEl.textContent = `${taxa}%`;
+
+        // Cor condicional
+        const num = parseFloat(taxa);
+        if (num >= 50)      valorEl.style.color = '#10b981'; // verde
+        else if (num >= 25) valorEl.style.color = '#f59e0b'; // amarelo
+        else                valorEl.style.color = '#ef4444'; // vermelho
+
+        if (detalheEl) {
+            detalheEl.textContent = `${aprovados} aprovado(s) de ${base} proposta(s) em negociação — Rascunhos não contabilizados`;
+        }
+
+        container.style.display = 'block';
     }
 
     // ── Clientes Recentes ───────────────────────────────────────────────
