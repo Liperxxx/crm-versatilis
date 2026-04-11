@@ -47,6 +47,10 @@ class RelatoriosModule {
                                   : { 'Content-Type': 'application/json' };
             const resp  = await fetch(url, { headers });
 
+            if (resp.status === 401 || resp.status === 403) {
+                this.showToast('Sessão expirada. <a href="login.html" style="color:inherit;text-decoration:underline;font-weight:600">Faça login</a>.', 'danger');
+                return;
+            }
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const json = await resp.json();
 
