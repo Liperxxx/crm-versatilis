@@ -19,6 +19,7 @@
                     return;
                 }
             } catch (e) {
+                // Token mal-formado - remover e redirecionar
                 localStorage.removeItem('crm_token');
                 window.location.replace('login.html');
             }

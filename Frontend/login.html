@@ -73,6 +73,7 @@
         .alert.hidden { display: none; }
         .alert-danger  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
         .alert i { margin-top: 1px; flex-shrink: 0; }
 
         /* Form */
@@ -249,7 +250,7 @@
             ? 'http://localhost:8081/api'
             : 'https://crm-versatilis-production.up.railway.app/api';
 
-        // Se j� autenticado, redireciona direto
+        // Se já autenticado, redireciona direto
         if (localStorage.getItem('crm_token')) {
             window.location.replace('index.html');
         }
@@ -257,7 +258,7 @@
         function showAlert(id, type, msg) {
             const el = document.getElementById(id);
             el.className = `alert alert-${type}`;
-            const icon = type === 'danger' ? 'fa-circle-xmark' : 'fa-circle-check';
+            const icon = type === 'danger' ? 'fa-circle-xmark' : type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
             el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
             el.classList.remove('hidden');
         }
@@ -266,7 +267,44 @@
             document.getElementById(id).classList.add('hidden');
         }
 
-        // -- Login --------------------------------------------------------------
+        // -- Login com retry automático para erros transitórios ----------------
+        const MAX_LOGIN_RETRIES = 4;
+        const RETRY_DELAY_BASE = 2000; // 2s base
+
+        async function attemptLogin(email, senha, attempt) {
+            const res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+
+            const json = await res.json().catch(() => ({}));
+
+            // Sucesso
+            if (res.ok) {
+                return json;
+            }
+
+            // Credenciais inválidas - não retry
+            if (res.status === 401) {
+                const msg = json.mensagem || 'E-mail ou senha inválidos.';
+                throw { type: 'auth', message: msg };
+            }
+
+            // Erros transitórios (500, 503) - retry
+            if ((res.status === 500 || res.status === 503) && attempt < MAX_LOGIN_RETRIES) {
+                const delay = RETRY_DELAY_BASE * attempt;
+                showAlert('loginAlert', 'warning',
+                    `Servidor iniciando... tentativa ${attempt}/${MAX_LOGIN_RETRIES}. Aguarde...`);
+                await new Promise(r => setTimeout(r, delay));
+                return attemptLogin(email, senha, attempt + 1);
+            }
+
+            // Erros finais
+            const msg = json.mensagem || `Erro ${res.status} - Servidor temporariamente indisponível.`;
+            throw { type: 'server', message: msg };
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideAlert('loginAlert');
@@ -284,22 +322,10 @@
             const text    = document.getElementById('btnLoginText');
             btn.disabled  = true;
             spinner.classList.remove('hidden');
-            text.textContent = 'Entrando�';
+            text.textContent = 'Entrando...';
 
             try {
-                const res = await fetch(`${API}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, senha })
-                });
-
-                const json = await res.json().catch(() => ({}));
-
-                if (!res.ok) {
-                    const msg = json.mensagem || (res.status === 401 ? 'E-mail ou senha inv�lidos.' : `Erro ${res.status}`);
-                    showAlert('loginAlert', 'danger', msg);
-                    return;
-                }
+                const json = await attemptLogin(email, senha, 1);
 
                 const token = json.dados?.token ?? json.token;
                 if (!token) { showAlert('loginAlert', 'danger', 'Resposta inesperada do servidor.'); return; }
@@ -308,7 +334,12 @@
                 window.location.replace('index.html');
 
             } catch (err) {
-                showAlert('loginAlert', 'danger', `N�o foi poss�vel conectar ao backend: ${err.message}`);
+                if (err.type === 'auth' || err.type === 'server') {
+                    showAlert('loginAlert', 'danger', err.message);
+                } else {
+                    showAlert('loginAlert', 'danger',
+                        `Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.`);
+                }
             } finally {
                 btn.disabled = false;
                 spinner.classList.add('hidden');

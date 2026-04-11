@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,8 +69,37 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDTO<Void>> handleGenericException(Exception ex) {
+        // Verificar se é erro de conexão com banco de dados
+        if (isDatabaseConnectionError(ex)) {
+            log.error("Erro de conexão com banco de dados: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ResponseDTO.erro(
+                    "Servidor temporariamente indisponível. Tente novamente em alguns segundos.",
+                    HttpStatus.SERVICE_UNAVAILABLE.value()));
+        }
+
         log.error("Erro interno do servidor", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ResponseDTO.erro("Erro interno do servidor", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    private boolean isDatabaseConnectionError(Exception ex) {
+        Throwable cause = ex;
+        while (cause != null) {
+            String name = cause.getClass().getName().toLowerCase();
+            String msg = cause.getMessage() != null ? cause.getMessage().toLowerCase() : "";
+            if (cause instanceof SQLException
+                || name.contains("hikari") || name.contains("jdbc")
+                || name.contains("connection") || name.contains("pool")
+                || msg.contains("connection is not available")
+                || msg.contains("cannot acquire")
+                || msg.contains("connection timeout")
+                || msg.contains("pool") || msg.contains("timed out")
+                || msg.contains("temporariamente indisponível")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 }
