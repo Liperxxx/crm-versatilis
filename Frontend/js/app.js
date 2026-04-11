@@ -10,19 +10,37 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 (function() {
     const _fetch = window.fetch;
     let redirecting = false;
+    let consecutiveFailures = 0;
+    const MAX_FAILURES_BEFORE_REDIRECT = 3;
+
     window.fetch = function(...args) {
         return _fetch.apply(this, args).then(function(response) {
+            if (response.ok) {
+                consecutiveFailures = 0;
+            }
+
             if (response.status === 401 && !redirecting) {
                 const input = args[0];
                 const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
-                // Não redirecionar em chamadas de login/registro
+                // Não redirecionar em chamadas de login/registro/validação
                 if (url.indexOf('/auth/') === -1) {
-                    redirecting = true;
-                    localStorage.removeItem('crm_token');
-                    window.location.replace('login.html');
+                    consecutiveFailures++;
+                    // Só redireciona depois de múltiplas falhas consecutivas
+                    // para evitar redirect em erros transitórios
+                    if (consecutiveFailures >= MAX_FAILURES_BEFORE_REDIRECT) {
+                        redirecting = true;
+                        localStorage.removeItem('crm_token');
+                        window.location.replace('login.html');
+                    }
                 }
             }
+
+            // Não redirecionar em erros 500/503 - são transitórios
+            // O usuário deve poder tentar novamente
             return response;
+        }).catch(function(error) {
+            // Erros de rede não devem causar redirect
+            return Promise.reject(error);
         });
     };
 })();
