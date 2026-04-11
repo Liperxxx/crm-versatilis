@@ -194,18 +194,6 @@ class PerfilManager {
             avatarInitial.style.display = '';
         }
 
-        // Avatar image
-        const avatarImg = el('perfilAvatarImg');
-        const avatarInitial = el('perfilAvatarInitial');
-        if (d.avatarUrl) {
-            avatarImg.src = d.avatarUrl;
-            avatarImg.style.display = 'block';
-            avatarInitial.style.display = 'none';
-        } else {
-            avatarImg.style.display = 'none';
-            avatarInitial.style.display = '';
-        }
-
         // Form fields
         el('perfilNome').value     = d.nome || '';
         el('perfilEmail').value    = d.email || '';

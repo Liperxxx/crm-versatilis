@@ -6,6 +6,27 @@ const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8081/api'
     : 'https://crm-versatilis-production.up.railway.app/api';
 
+// ── Interceptor global: redireciona para login ao receber 401 ──────────
+(function() {
+    const _fetch = window.fetch;
+    let redirecting = false;
+    window.fetch = function(...args) {
+        return _fetch.apply(this, args).then(function(response) {
+            if (response.status === 401 && !redirecting) {
+                const input = args[0];
+                const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+                // Não redirecionar em chamadas de login/registro
+                if (url.indexOf('/auth/') === -1) {
+                    redirecting = true;
+                    localStorage.removeItem('crm_token');
+                    window.location.replace('login.html');
+                }
+            }
+            return response;
+        });
+    };
+})();
+
 class App {
     constructor() {
         this.init();
