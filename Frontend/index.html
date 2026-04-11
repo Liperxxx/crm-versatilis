@@ -6,11 +6,23 @@
     <title>CRM Versatilis - Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
     
-    <!-- Auth guard: redireciona para login se não autenticado -->
+    <!-- Auth guard: redireciona para login se não autenticado ou token expirado -->
     <script>
-        if (!localStorage.getItem('crm_token')) {
-            window.location.replace('login.html');
-        }
+        (function() {
+            var token = localStorage.getItem('crm_token');
+            if (!token) { window.location.replace('login.html'); return; }
+            try {
+                var payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('crm_token');
+                    window.location.replace('login.html');
+                    return;
+                }
+            } catch (e) {
+                localStorage.removeItem('crm_token');
+                window.location.replace('login.html');
+            }
+        })();
     </script>
 
     <!-- CSS -->
