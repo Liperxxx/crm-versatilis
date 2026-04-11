@@ -47,7 +47,9 @@ public class ConversaoLeadService {
 
         // 1. Criar Cliente a partir do Lead
         Cliente cliente = Cliente.builder()
-            .nomeEmpresa(lead.getEmpresa() != null && !lead.getEmpresa().isEmpty() ? lead.getEmpresa() : lead.getNomeContato())
+            .nomeEmpresa(lead.getEmpresa() != null && !lead.getEmpresa().isEmpty()
+                ? lead.getEmpresa()
+                : (lead.getNomeContato() != null ? lead.getNomeContato() : "Cliente sem nome"))
             .contatoPrincipal(lead.getNomeContato())
             .email(lead.getEmail())
             .telefone(lead.getTelefone())

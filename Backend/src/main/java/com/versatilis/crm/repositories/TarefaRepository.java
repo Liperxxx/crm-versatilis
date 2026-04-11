@@ -16,6 +16,8 @@ public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 
     Page<Tarefa> findByAtivoTrueAndStatus(Tarefa.StatusTarefa status, Pageable pageable);
 
+    long countByAtivoTrueAndStatus(Tarefa.StatusTarefa status);
+
     List<Tarefa> findByResponsavelIdAndStatus(Long responsavelId, Tarefa.StatusTarefa status);
 
     List<Tarefa> findByDataVencimentoBeforeAndStatusNot(LocalDate data, Tarefa.StatusTarefa status);

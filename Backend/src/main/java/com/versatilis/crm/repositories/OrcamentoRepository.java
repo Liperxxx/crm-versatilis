@@ -18,7 +18,12 @@ public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
 
     List<Orcamento> findByAtivoTrue();
 
-    @Query("SELECT o FROM Orcamento o LEFT JOIN FETCH o.itens WHERE o.id = :id AND o.ativo = true")
+    @Query("SELECT o FROM Orcamento o " +
+           "LEFT JOIN FETCH o.itens " +
+           "LEFT JOIN FETCH o.cliente " +
+           "LEFT JOIN FETCH o.oportunidade " +
+           "LEFT JOIN FETCH o.responsavel " +
+           "WHERE o.id = :id AND o.ativo = true")
     Optional<Orcamento> findByIdWithItens(@Param("id") Long id);
 
     @Query("SELECT o FROM Orcamento o WHERE " +
@@ -35,4 +40,7 @@ public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
 
     @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(o.numero, 5) AS int)), 0) FROM Orcamento o WHERE o.numero LIKE :prefix%")
     int findMaxNumeroByPrefix(@Param("prefix") String prefix);
+
+    @Query("SELECT COALESCE(SUM(o.total), 0) FROM Orcamento o WHERE o.ativo = true")
+    BigDecimal sumTotalByAtivoTrue();
 }

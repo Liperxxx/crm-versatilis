@@ -54,14 +54,11 @@ public class DashboardService {
     }
 
     private long countOportunidadesAbertas() {
-        return oportunidadeRepository.findByStatusAndAtivoTrue(Oportunidade.StatusOportunidade.ABERTA).size();
+        return oportunidadeRepository.countByStatusAndAtivoTrue(Oportunidade.StatusOportunidade.ABERTA);
     }
 
     private long countTarefasPendentes() {
-        return tarefaRepository.findByAtivoTrueAndStatus(
-                Tarefa.StatusTarefa.PENDENTE,
-                PageRequest.of(0, Integer.MAX_VALUE)
-        ).getTotalElements();
+        return tarefaRepository.countByAtivoTrueAndStatus(Tarefa.StatusTarefa.PENDENTE);
     }
 
     private BigDecimal getValorOportunidadesAbertas() {
@@ -70,9 +67,7 @@ public class DashboardService {
     }
 
     private BigDecimal getValorOrcamentos() {
-        return orcamentoRepository.findByAtivoTrue().stream()
-                .map(o -> o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return orcamentoRepository.sumTotalByAtivoTrue();
     }
 
     private List<DashboardDTO.ItemRecente> getClientesRecentes() {
@@ -130,8 +125,8 @@ public class DashboardService {
             if (t.getLead() != null) {
                 return "Lead: " + t.getLead().getNomeContato();
             }
-        } catch (Exception e) {
-            log.debug("Não foi possível resolver vínculo da tarefa {}: {}", t.getId(), e.getMessage());
+        } catch (org.hibernate.LazyInitializationException e) {
+            log.debug("Vínculo lazy não inicializado para tarefa {}: {}", t.getId(), e.getMessage());
         }
         return null;
     }

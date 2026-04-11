@@ -41,4 +41,6 @@ public interface OportunidadeRepository extends JpaRepository<Oportunidade, Long
 
     @Query("SELECT SUM(o.valorEstimado) FROM Oportunidade o WHERE o.status = 'ABERTA' AND o.ativo = true")
     BigDecimal sumValorEstimadoOportunidadesAbertas();
+
+    long countByStatusAndAtivoTrue(Oportunidade.StatusOportunidade status);
 }

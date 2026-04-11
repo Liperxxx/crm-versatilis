@@ -146,7 +146,7 @@ public class OrcamentoService {
 
     // ── Helpers ─────────────────────────────────────────────────────
 
-    private String gerarNumero() {
+    private synchronized String gerarNumero() {
         String prefix = "ORC-";
         int maxNum = orcamentoRepository.findMaxNumeroByPrefix(prefix);
         return prefix + String.format("%04d", maxNum + 1);

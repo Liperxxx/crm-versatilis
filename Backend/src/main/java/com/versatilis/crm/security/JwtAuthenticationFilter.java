@@ -32,6 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && tokenProvider.validarToken(jwt)) {
                 String email = tokenProvider.extrairEmail(jwt);
 
+                if (email == null || email.isBlank()) {
+                    log.warn("Token JWT válido mas sem email extraível");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
                 UsernamePasswordAuthenticationToken authentication =
