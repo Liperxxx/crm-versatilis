@@ -54,7 +54,6 @@ public class AuthenticationService {
     }
 
     private Authentication authenticateWithRetry(LoginDTO loginDTO) {
-        AuthenticationException lastAuthException = null;
         Exception lastException = null;
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -73,7 +72,7 @@ public class AuthenticationService {
                     log.warn("Erro transitório de BD na tentativa {}/{} para {}: {}",
                         attempt, MAX_RETRIES, loginDTO.getEmail(), msg);
                     if (attempt < MAX_RETRIES) {
-                        sleep(RETRY_DELAY_MS * attempt);
+                        sleep(RETRY_DELAY_MS * (long) Math.pow(2, attempt - 1));
                     }
                 } else {
                     log.error("Falha na autenticação para usuário: {}", loginDTO.getEmail());
@@ -84,7 +83,7 @@ public class AuthenticationService {
                 log.warn("Erro inesperado na tentativa {}/{} para {}: {}",
                     attempt, MAX_RETRIES, loginDTO.getEmail(), ex.getMessage());
                 if (attempt < MAX_RETRIES) {
-                    sleep(RETRY_DELAY_MS * attempt);
+                    sleep(RETRY_DELAY_MS * (long) Math.pow(2, attempt - 1));
                 }
             }
         }

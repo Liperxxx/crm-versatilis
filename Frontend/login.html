@@ -258,7 +258,8 @@
         function showAlert(id, type, msg) {
             const el = document.getElementById(id);
             el.className = `alert alert-${type}`;
-            const icon = type === 'danger' ? 'fa-circle-xmark' : type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
+            const icons = { danger: 'fa-circle-xmark', success: 'fa-circle-check', warning: 'fa-circle-info' };
+            const icon = icons[type] || 'fa-circle-info';
             el.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
             el.classList.remove('hidden');
         }
@@ -291,9 +292,9 @@
                 throw { type: 'auth', message: msg };
             }
 
-            // Erros transitórios (500, 503) - retry
+            // Erros transitórios (500, 503) - retry com backoff exponencial
             if ((res.status === 500 || res.status === 503) && attempt < MAX_LOGIN_RETRIES) {
-                const delay = RETRY_DELAY_BASE * attempt;
+                const delay = RETRY_DELAY_BASE * Math.pow(2, attempt - 1);
                 showAlert('loginAlert', 'warning',
                     `Servidor iniciando... tentativa ${attempt}/${MAX_LOGIN_RETRIES}. Aguarde...`);
                 await new Promise(r => setTimeout(r, delay));
