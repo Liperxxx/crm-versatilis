@@ -69,7 +69,18 @@ public class ClienteService {
         Cliente clienteExistente = clienteRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com ID: " + id));
 
-        modelMapper.map(clienteDTO, clienteExistente);
+        // Mapeamento manual — evita ModelMapper sobrescrever ID, coleções lazy e campos nulos
+        if (clienteDTO.getNomeEmpresa() != null) clienteExistente.setNomeEmpresa(clienteDTO.getNomeEmpresa());
+        if (clienteDTO.getCnpj() != null) clienteExistente.setCnpj(clienteDTO.getCnpj());
+        clienteExistente.setContatoPrincipal(clienteDTO.getContatoPrincipal());
+        clienteExistente.setEmail(clienteDTO.getEmail());
+        clienteExistente.setTelefone(clienteDTO.getTelefone());
+        clienteExistente.setSegmento(clienteDTO.getSegmento());
+        clienteExistente.setObservacoes(clienteDTO.getObservacoes());
+        clienteExistente.setEndereco(clienteDTO.getEndereco());
+        clienteExistente.setCidade(clienteDTO.getCidade());
+        clienteExistente.setEstado(clienteDTO.getEstado());
+        if (clienteDTO.getStatus() != null) clienteExistente.setStatus(clienteDTO.getStatus());
 
         if (clienteDTO.getResponsavelId() != null) {
             Usuario responsavel = usuarioRepository.findById(clienteDTO.getResponsavelId())
