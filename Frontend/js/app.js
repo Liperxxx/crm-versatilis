@@ -10,10 +10,11 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 (function() {
     const _fetch = window.fetch;
     let redirecting = false;
-    window.fetch = function(input, init) {
-        return _fetch.apply(this, arguments).then(function(response) {
+    window.fetch = function(...args) {
+        return _fetch.apply(this, args).then(function(response) {
             if (response.status === 401 && !redirecting) {
-                var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+                const input = args[0];
+                const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
                 // Não redirecionar em chamadas de login/registro
                 if (url.indexOf('/auth/') === -1) {
                     redirecting = true;
