@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Gera PDF de orçamento de forma independente (sem DOCX template).
+ * Gera PDF de orcamento de forma independente (sem DOCX template).
  * Usado como anexo no email de envio.
  */
 @Service
 public class PdfService {
 
-    // ── Paleta ──────────────────────────────────────────────────────────
+    // -- Paleta --
     private static final Color C_PRIMARY = new Color(30, 58, 95);   // #1E3A5F
     private static final Color C_ACCENT  = new Color(232, 125, 34); // laranja validade
     private static final Color C_LIGHT   = new Color(248, 249, 250);
@@ -34,20 +34,20 @@ public class PdfService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // ══ Entry point ═════════════════════════════════════════════════════
+    // == Entry point ==
 
     public byte[] gerarPdf(OrcamentoDTO o) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // Margens ABNT NBR 14724 (1 cm ≈ 28,35 pt):
-            //   Esquerda 3 cm ≈ 85 pt | Direita 2 cm ≈ 57 pt
-            //   Superior 3 cm ≈ 85 pt → complementado para 120 pt por causa da imagem
-            //   de cabeçalho (banner full-bleed). Inferior 2 cm ≈ 57 pt → 90 pt para
-            //   acomodar imagem de rodapé full-bleed. O conteúdo textual permanece
-            //   dentro da área útil ABNT.
+            // Margens ABNT NBR 14724 (1 cm = 28,35 pt):
+            //   Esquerda 3 cm = 85 pt | Direita 2 cm = 57 pt
+            //   Superior 3 cm = 85 pt, complementado para 120 pt por causa da imagem
+            //   de cabecalho (banner full-bleed). Inferior 2 cm = 57 pt, 90 pt para
+            //   acomodar imagem de rodape full-bleed. O conteudo textual permanece
+            //   dentro da area util ABNT.
             Document doc = new Document(PageSize.A4, 85f, 57f, 120f, 90f);
             PdfWriter writer = PdfWriter.getInstance(doc, baos);
 
-            // Carrega imagens de cabeçalho e rodapé do classpath
+            // Carrega imagens de cabecalho e rodape do classpath
             Image imgHeader = loadImage("images/cabeçalho.png");
             Image imgFooter = loadImage("images/rodape.png");
             writer.setPageEvent(new HeaderFooterImageEvent(imgHeader, imgFooter));
@@ -68,20 +68,20 @@ public class PdfService {
             return baos.toByteArray();
 
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao gerar PDF do orçamento: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao gerar PDF do orcamento: " + e.getMessage(), e);
         }
     }
 
-    // ══ Sections ════════════════════════════════════════════════════════
+    // == Sections ==
 
     private void buildHeader(Document doc, OrcamentoDTO o) throws DocumentException {
-        // Cabeçalho com imagem é adicionado pelo HeaderFooterImageEvent.
-        // Aqui só o bloco de número + datas do orçamento.
+        // Cabecalho com imagem e adicionado pelo HeaderFooterImageEvent.
+        // Aqui so o bloco de numero + datas do orcamento.
         PdfPTable t = new PdfPTable(new float[]{3f, 2f});
         t.setWidthPercentage(100);
         t.setSpacingAfter(20);
 
-        // Left — "Proposta Comercial"
+        // Left - "Proposta Comercial"
         PdfPCell left = noCell();
         left.addElement(new Paragraph("Proposta Comercial", font(14, Font.BOLD, C_PRIMARY)));
         left.setBorderWidthBottom(2f);
@@ -90,15 +90,15 @@ public class PdfService {
         left.setPaddingBottom(10);
         t.addCell(left);
 
-        // Right — numero + datas
-        String emissao  = o.getDataEmissao()  != null ? DATE_FMT.format(o.getDataEmissao())  : "—";
-        String validade = o.getDataValidade() != null ? DATE_FMT.format(o.getDataValidade()) : "—";
+        // Right - numero + datas
+        String emissao  = o.getDataEmissao()  != null ? DATE_FMT.format(o.getDataEmissao())  : "-";
+        String validade = o.getDataValidade() != null ? DATE_FMT.format(o.getDataValidade()) : "-";
 
         PdfPCell right = noCell();
         right.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        right.addElement(rightParagraph(o.getNumero() != null ? o.getNumero() : "—", font(16, Font.BOLD, C_PRIMARY)));
-        right.addElement(rightParagraph("Emissão: " + emissao, font(9, Font.NORMAL, C_MUTED)));
-        right.addElement(rightParagraph("Válido até: " + validade, font(9, Font.BOLD, C_ACCENT)));
+        right.addElement(rightParagraph(o.getNumero() != null ? o.getNumero() : "-", font(16, Font.BOLD, C_PRIMARY)));
+        right.addElement(rightParagraph("Emissao: " + emissao, font(9, Font.NORMAL, C_MUTED)));
+        right.addElement(rightParagraph("Valido ate: " + validade, font(9, Font.BOLD, C_ACCENT)));
         right.setBorderWidthBottom(2f);
         right.setBorderColorBottom(C_PRIMARY);
         right.setBorder(Rectangle.BOTTOM);
@@ -123,12 +123,12 @@ public class PdfService {
         addLabelValue(t, "Telefone",          safe(o.getClienteTelefone()), false);
 
         String cidEst = joinNonBlank(", ", o.getClienteCidade(), o.getClienteEstado());
-        addLabelValue(t, "Cidade / Estado", cidEst.isBlank() ? "—" : cidEst, true);
-        addLabelValue(t, "Endereço",        safe(o.getClienteEndereco()), false);
+        addLabelValue(t, "Cidade / Estado", cidEst.isBlank() ? "-" : cidEst, true);
+        addLabelValue(t, "Endereco",        safe(o.getClienteEndereco()), false);
 
         if (o.getOportunidadeTitulo() != null) {
             addLabelValue(t, "Oportunidade", o.getOportunidadeTitulo(), true);
-            addLabelValue(t, "Responsável",  safe(o.getResponsavelNome()), false);
+            addLabelValue(t, "Responsavel",  safe(o.getResponsavelNome()), false);
         }
 
         doc.add(t);
@@ -144,11 +144,11 @@ public class PdfService {
         t.setSpacingAfter(6);
 
         // Header row
-        for (String h : new String[]{"#", "Descrição", "Qtd", "Val. Unit.", "Subtotal"}) {
+        for (String h : new String[]{"#", "Descricao", "Qtd", "Val. Unit.", "Subtotal"}) {
             PdfPCell c = new PdfPCell(new Phrase(h, font(9, Font.BOLD, C_WHITE)));
             c.setBackgroundColor(C_PRIMARY);
             c.setPadding(7);
-            c.setHorizontalAlignment(h.equals("#") || h.equals("Descrição") ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
+            c.setHorizontalAlignment(h.equals("#") || h.equals("Descricao") ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
             c.setBorder(Rectangle.NO_BORDER);
             t.addCell(c);
         }
@@ -171,7 +171,7 @@ public class PdfService {
                 alt = !alt;
 
                 addItemCell(t, String.valueOf(i + 1), bg, Element.ALIGN_LEFT);
-                addItemCell(t, item.getDescricao() != null ? item.getDescricao() : "—", bg, Element.ALIGN_LEFT);
+                addItemCell(t, item.getDescricao() != null ? item.getDescricao() : "-", bg, Element.ALIGN_LEFT);
                 addItemCell(t, String.valueOf(item.getQuantidade()), bg, Element.ALIGN_RIGHT);
                 addItemCell(t, nf.format(item.getValorUnitario() != null ? item.getValorUnitario() : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
                 addItemCell(t, nf.format(item.getValorTotal()    != null ? item.getValorTotal()    : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
@@ -208,7 +208,7 @@ public class PdfService {
     }
 
     private void buildObservacoes(Document doc, OrcamentoDTO o) throws DocumentException {
-        Paragraph title = new Paragraph("Observações Comerciais", font(10, Font.BOLD, C_PRIMARY));
+        Paragraph title = new Paragraph("Observacoes Comerciais", font(10, Font.BOLD, C_PRIMARY));
         title.setSpacingAfter(4);
         doc.add(title);
 
@@ -228,7 +228,7 @@ public class PdfService {
         doc.add(t);
     }
 
-    // ══ Cell helpers ═════════════════════════════════════════════════════
+    // == Cell helpers ==
 
     private PdfPCell noCell() {
         PdfPCell c = new PdfPCell();
@@ -300,7 +300,7 @@ public class PdfService {
         t.addCell(vc);
     }
 
-    // ══ Font / layout helpers ════════════════════════════════════════════
+    // == Font / layout helpers ==
 
     private Font font(float size, int style, Color color) {
         return FontFactory.getFont(FontFactory.HELVETICA, size, style, color);
@@ -313,7 +313,7 @@ public class PdfService {
     }
 
     private String safe(String s) {
-        return (s != null && !s.isBlank()) ? s : "—";
+        return (s != null && !s.isBlank()) ? s : "-";
     }
 
     private String joinNonBlank(String sep, String... parts) {
@@ -327,7 +327,7 @@ public class PdfService {
         return sb.toString();
     }
 
-    // ══ Image loader ═══════════════════════════════════════════════════
+    // == Image loader ==
 
     private Image loadImage(String classpathPath) {
         try {
@@ -335,11 +335,11 @@ public class PdfService {
             Image img = Image.getInstance(bytes);
             return img;
         } catch (IOException | BadElementException e) {
-            throw new RuntimeException("Não foi possível carregar imagem: " + classpathPath, e);
+            throw new RuntimeException("Nao foi possivel carregar imagem: " + classpathPath, e);
         }
     }
 
-    // ══ Header + Footer image event ═════════════════════════════════════
+    // == Header + Footer image event ==
 
     private static class HeaderFooterImageEvent extends PdfPageEventHelper {
         private final Image headerImg;
@@ -356,7 +356,7 @@ public class PdfService {
             float pageWidth = document.getPageSize().getWidth();
 
             try {
-                // Cabeçalho — borda a borda no topo
+                // Cabecalho - borda a borda no topo
                 if (headerImg != null) {
                     headerImg.scaleToFit(pageWidth, 999f);
                     float hX = (pageWidth - headerImg.getScaledWidth()) / 2;
@@ -365,7 +365,17 @@ public class PdfService {
                     cb.addImage(headerImg);
                 }
 
-                // Rodapé — borda a borda no fundo
+                // Rodape - borda a borda no fundo
                 if (footerImg != null) {
                     footerImg.scaleToFit(pageWidth, 999f);
-                    float fX = (pa
+                    float fX = (pageWidth - footerImg.getScaledWidth()) / 2;
+                    float fY = 0f;
+                    footerImg.setAbsolutePosition(fX, fY);
+                    cb.addImage(footerImg);
+                }
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erro ao inserir imagem no PDF", e);
+            }
+        }
+    }
+}
