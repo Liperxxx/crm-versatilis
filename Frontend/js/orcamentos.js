@@ -100,19 +100,17 @@ class OrcamentosModule {
 
     async apiCreate(data) {
         const res = await fetch(API_ORCAMENTOS, { method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data) });
-        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
-        return (await res.json()).dados;
+        return (await window.CRMAuth.handleApi(res)).dados;
     }
 
     async apiUpdate(id, data) {
         const res = await fetch(`${API_ORCAMENTOS}/${id}`, { method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data) });
-        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
-        return (await res.json()).dados;
+        return (await window.CRMAuth.handleApi(res)).dados;
     }
 
     async apiDelete(id) {
         const res = await fetch(`${API_ORCAMENTOS}/${id}`, { method: 'DELETE', headers: this.authHeaders() });
-        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
+        await window.CRMAuth.handleApi(res);
     }
 
     async apiGetById(id) {
@@ -872,8 +870,7 @@ class OrcamentosModule {
             headers: this.authHeaders(),
             body: JSON.stringify({ destinatario, mensagemAdicional: mensagemAdicional || null }),
         });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
-        return (await res.json());
+        return await window.CRMAuth.handleApi(res);
     }
 
     renderDocument(o) {

@@ -6,37 +6,85 @@ const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8081/api'
     : 'https://crm-versatilis-production.up.railway.app/api';
 
+// ══ AUTH HELPERS GLOBAIS ═══════════════════════════════════════════════
+// Padroniza como todos os módulos buscam token, montam headers e
+// tratam respostas 401/403 da API.
+window.CRMAuth = {
+    getToken() {
+        return localStorage.getItem('crm_token')
+            || localStorage.getItem('token')
+            || localStorage.getItem('jwtToken')
+            || null;
+    },
+
+    authHeaders(extra = {}) {
+        const token = this.getToken();
+        const base = { 'Content-Type': 'application/json', ...extra };
+        if (token) base['Authorization'] = `Bearer ${token}`;
+        return base;
+    },
+
+    // Redireciona para login imediatamente (sessão expirada / ausente)
+    redirectToLogin(reason = 'Sua sessão expirou. Redirecionando para o login...') {
+        if (window.__crmRedirecting) return;
+        window.__crmRedirecting = true;
+        try {
+            localStorage.removeItem('crm_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('jwtToken');
+        } catch (_) { /* ignora */ }
+        try {
+            // Toast rápido antes do redirect, se existir algum handler global
+            if (typeof window.showGlobalToast === 'function') {
+                window.showGlobalToast('danger', 'fas fa-lock', reason, 2500);
+            } else {
+                console.warn('[CRMAuth]', reason);
+            }
+        } catch (_) { /* ignora */ }
+        setTimeout(() => window.location.replace('login.html'), 800);
+    },
+
+    // Trata resposta padrão do CRM. Lança Error customizado com .status.
+    async handleApi(res) {
+        if (res.status === 401) {
+            this.redirectToLogin('Sua sessão expirou. Faça login novamente.');
+            const err = new Error('Sessão expirada');
+            err.status = 401;
+            throw err;
+        }
+        if (res.status === 403) {
+            const json = await res.json().catch(() => ({}));
+            const err = new Error(json.mensagem || json.erro ||
+                'Você não tem permissão para executar esta ação.');
+            err.status = 403;
+            throw err;
+        }
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            const err = new Error(json.mensagem || json.erro || `HTTP ${res.status}`);
+            err.status = res.status;
+            throw err;
+        }
+        return res.json().catch(() => ({}));
+    }
+};
+
 // ── Interceptor global: redireciona para login ao receber 401 ──────────
 (function() {
     const _fetch = window.fetch;
-    let redirecting = false;
-    let consecutiveFailures = 0;
-    const MAX_FAILURES_BEFORE_REDIRECT = 3;
 
     window.fetch = function(...args) {
         return _fetch.apply(this, args).then(function(response) {
-            if (response.ok) {
-                consecutiveFailures = 0;
-            }
-
-            if (response.status === 401 && !redirecting) {
+            if (response.status === 401 && !window.__crmRedirecting) {
                 const input = args[0];
                 const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
                 // Não redirecionar em chamadas de login/registro/validação
                 if (url.indexOf('/auth/') === -1) {
-                    consecutiveFailures++;
-                    // Só redireciona depois de múltiplas falhas consecutivas
-                    // para evitar redirect em erros transitórios
-                    if (consecutiveFailures >= MAX_FAILURES_BEFORE_REDIRECT) {
-                        redirecting = true;
-                        localStorage.removeItem('crm_token');
-                        window.location.replace('login.html');
-                    }
+                    // Redirect imediato — o usuário não deve ficar vendo
+                    // múltiplos erros 401 em sequência
+                    window.CRMAuth.redirectToLogin('Sua sessão expirou. Faça login novamente.');
                 }
             }
-
-            // Não redirecionar em erros 500/503 - são transitórios
-            // O usuário deve poder tentar novamente
             return response;
         }).catch(function(error) {
             // Erros de rede não devem causar redirect

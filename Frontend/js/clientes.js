@@ -107,11 +107,7 @@ class ClientesModule {
             headers: this.authHeaders(),
             body: JSON.stringify(data)
         });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.mensagem || `HTTP ${res.status}`);
-        }
-        const json = await res.json();
+        const json = await window.CRMAuth.handleApi(res);
         return json.dados;
     }
 
@@ -121,11 +117,7 @@ class ClientesModule {
             headers: this.authHeaders(),
             body: JSON.stringify(data)
         });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.mensagem || `HTTP ${res.status}`);
-        }
-        const json = await res.json();
+        const json = await window.CRMAuth.handleApi(res);
         return json.dados;
     }
 
@@ -134,10 +126,7 @@ class ClientesModule {
             method: 'DELETE',
             headers: this.authHeaders()
         });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.mensagem || `HTTP ${res.status}`);
-        }
+        await window.CRMAuth.handleApi(res);
     }
 
     bindElements() {

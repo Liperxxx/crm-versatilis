@@ -108,23 +108,21 @@ class OportunidadesModule {
         const res = await fetch(API_OPORTUNIDADES, {
             method: 'POST', headers: this.authHeaders(), body: JSON.stringify(data)
         });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
-        return (await res.json()).dados;
+        return (await window.CRMAuth.handleApi(res)).dados;
     }
 
     async apiUpdate(id, data) {
         const res = await fetch(`${API_OPORTUNIDADES}/${id}`, {
             method: 'PUT', headers: this.authHeaders(), body: JSON.stringify(data)
         });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
-        return (await res.json()).dados;
+        return (await window.CRMAuth.handleApi(res)).dados;
     }
 
     async apiDelete(id) {
         const res = await fetch(`${API_OPORTUNIDADES}/${id}`, {
             method: 'DELETE', headers: this.authHeaders()
         });
-        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.mensagem || `HTTP ${res.status}`); }
+        await window.CRMAuth.handleApi(res);
     }
 
     // ══ BIND ════════════════════════════════════════════════════════════
