@@ -38,8 +38,13 @@ public class PdfService {
 
     public byte[] gerarPdf(OrcamentoDTO o) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            // Margens laterais 45, top/bottom maiores para caber as imagens
-            Document doc = new Document(PageSize.A4, 45f, 45f, 120f, 90f);
+            // Margens ABNT NBR 14724 (1 cm ≈ 28,35 pt):
+            //   Esquerda 3 cm ≈ 85 pt | Direita 2 cm ≈ 57 pt
+            //   Superior 3 cm ≈ 85 pt → complementado para 120 pt por causa da imagem
+            //   de cabeçalho (banner full-bleed). Inferior 2 cm ≈ 57 pt → 90 pt para
+            //   acomodar imagem de rodapé full-bleed. O conteúdo textual permanece
+            //   dentro da área útil ABNT.
+            Document doc = new Document(PageSize.A4, 85f, 57f, 120f, 90f);
             PdfWriter writer = PdfWriter.getInstance(doc, baos);
 
             // Carrega imagens de cabeçalho e rodapé do classpath
@@ -363,14 +368,4 @@ public class PdfService {
                 // Rodapé — borda a borda no fundo
                 if (footerImg != null) {
                     footerImg.scaleToFit(pageWidth, 999f);
-                    float fX = (pageWidth - footerImg.getScaledWidth()) / 2;
-                    float fY = 0f;
-                    footerImg.setAbsolutePosition(fX, fY);
-                    cb.addImage(footerImg);
-                }
-            } catch (DocumentException e) {
-                throw new RuntimeException("Erro ao inserir imagem no PDF", e);
-            }
-        }
-    }
-}
+                    float fX = (pa

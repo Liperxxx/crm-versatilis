@@ -1231,14 +1231,18 @@ table .actions,
         position: absolute; left: 0; top: 0; width: 100%;
         padding: 0; box-sizing: border-box;
     }
-    .orc-document { padding: 0 20mm; }
-    .orc-doc-header-img { margin: 0 -20mm 8px -20mm; }
+    /* Margens ABNT NBR 14724: Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm */
+    .orc-document { padding: 30mm 20mm 20mm 30mm; }
+    /* Cabeçalho/rodapé mantidos em full-bleed (margem negativa compensa o padding do .orc-document) */
+    .orc-doc-header-img { margin: -30mm -20mm 16px -30mm; }
     .orc-doc-header-img img { width: 100%; display: block; }
-    .orc-doc-footer-img { margin: 48px -20mm 0 -20mm; }
+    .orc-doc-footer-img { margin: 48px -20mm -20mm -30mm; }
     .orc-doc-footer-img img { width: 100%; display: block; }
     .orc-doc-meta-bar { border-bottom-color: #CD5A26 !important; }
     .orc-doc-items thead th { background: #CD5A26 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .orc-doc-totals .total-row td { color: #CD5A26 !important; border-top-color: #CD5A26 !important; }
+    /* @page margin=0 porque o espaço útil ABNT já é controlado via padding do .orc-document;
+       isso permite o cabeçalho/rodapé extenderem até a borda do papel. */
     @page { size: A4; margin: 0; }
 }
 
@@ -1903,20 +1907,4 @@ table .actions,
         display: flex;
         overflow-x: auto;
         gap: 0;
-        padding: 0;
-    }
-    .config-nav-item {
-        border-left: none;
-        border-bottom: 3px solid transparent;
-        white-space: nowrap;
-        padding: 10px 14px;
-    }
-    .config-nav-item.active {
-        border-left-color: transparent;
-        border-bottom-color: var(--color-primary);
-    }
-    .notif-dropdown {
-        right: -80px;
-        width: 320px;
-    }
-}
+     
