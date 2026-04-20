@@ -50,6 +50,9 @@ class OrcamentosModule {
             console.log('[Orcamentos] bindEvents OK — btnNovoOrcamento listener attached');
             this.loadClientes();
             this.loadData();
+            // Escuta evento global disparado quando um cliente é criado/editado/deletado
+            // em outro módulo. Invalida o cache para o próximo openModal() trazer a lista fresca.
+            window.addEventListener('cliente:changed', () => this.invalidateClientesCache());
         } catch (e) {
             console.error('[Orcamentos] INIT FAILED:', e);
         }
@@ -280,19 +283,34 @@ class OrcamentosModule {
         this._on(this.$fClienteId, 'change', () => this.onClienteSelected());
     }
 
-    // ══ CLIENTES (é carregado no init) ══════════════════════════════════════════════
+    // ══ CLIENTES ══════════════════════════════════════════════════════════
+    // Estratégia: cache em memória + revalidação em background toda vez que
+    // o modal de orçamento abre. Se outro módulo (ex.: clientes.js) criar/editar
+    // um cliente, ele dispara o evento global 'cliente:changed' que invalida
+    // o cache aqui. Assim a lista nunca fica visivelmente desatualizada.
 
     async loadClientes() {
-        try {
-            const res = await fetch(`${API_BASE_URL}/clientes?size=500&sort=nomeEmpresa,asc`, { headers: this.authHeaders() });
-            if (!res.ok) return;
-            const json = await res.json();
-            const clientes = json.dados?.content ?? json.dados ?? [];
-            this.clientesCache = clientes;
-            this.populateClienteDropdown();
-        } catch (e) {
-            console.warn('[Orcamentos] Não foi possível carregar lista de clientes:', e.message);
-        }
+        // Evita requests concorrentes: se já existe uma carga em voo, reaproveita
+        if (this._loadClientesPromise) return this._loadClientesPromise;
+
+        this._loadClientesPromise = (async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/clientes?size=500&sort=nomeEmpresa,asc`, {
+                    headers: this.authHeaders()
+                });
+                if (!res.ok) return;
+                const json = await res.json();
+                const clientes = json.dados?.content ?? json.dados ?? [];
+                this.clientesCache = clientes;
+                this.clientesCacheAt = Date.now();
+                this.populateClienteDropdown();
+            } catch (e) {
+                console.warn('[Orcamentos] Não foi possível carregar lista de clientes:', e.message);
+            } finally {
+                this._loadClientesPromise = null;
+            }
+        })();
+        return this._loadClientesPromise;
     }
 
     populateClienteDropdown() {
@@ -312,10 +330,31 @@ class OrcamentosModule {
         if (currentVal) this.$fClienteId.value = currentVal;
     }
 
+    /**
+     * Garante que exista ao menos 1 carregamento concluído antes de prosseguir.
+     * Uso típico: antes de abrir o modal quando o cache pode estar vazio (primeira visita).
+     */
     async ensureClientesLoaded() {
         if (this.clientesCache.length === 0) {
             await this.loadClientes();
         }
+    }
+
+    /**
+     * Revalida em background — mostra o cache antigo instantaneamente
+     * e, quando a resposta nova chega, atualiza o <select> sem travar a UI.
+     * Se o cache tem < 10s, pula (evita chamadas duplicadas em sequência rápida).
+     */
+    revalidateClientesInBackground() {
+        const CACHE_TTL_MS = 10_000;
+        if (this.clientesCacheAt && (Date.now() - this.clientesCacheAt) < CACHE_TTL_MS) return;
+        this.loadClientes(); // fire-and-forget
+    }
+
+    /** Invalidação externa do cache (acionada pelo evento 'cliente:changed'). */
+    invalidateClientesCache() {
+        this.clientesCacheAt = 0;  // força o próximo revalidate a refazer
+        this.loadClientes();       // dispara já em background
     }
 
     onClienteSelected(orcData = null) {
@@ -435,8 +474,11 @@ class OrcamentosModule {
         this.itemSeq = 0;
         if (this.$clienteInfo) this.$clienteInfo.classList.add('hidden');
 
-        // Garante que a lista de clientes esteja carregada antes de popular o form
+        // Garante que exista cache (primeira visita); nas subsequentes usa o cache
+        // atual e dispara revalidação em background para refletir criações feitas
+        // em outros módulos sem travar a abertura do modal.
         await this.ensureClientesLoaded();
+        this.revalidateClientesInBackground();
 
         const pageLabel = id !== null ? 'Editar Orçamento' : 'Novo Orçamento';
         if (this.$formTitle) this.$formTitle.textContent = pageLabel;

@@ -405,10 +405,14 @@ class ClientesModule {
                 const idx = this.clientes.findIndex(c => c.id === this.editingId);
                 if (idx > -1) this.clientes[idx] = updated;
                 this.toast('success', 'fas fa-check-circle', `Cliente <strong>${this.esc(data.nome)}</strong> atualizado.`);
+                window.dispatchEvent(new CustomEvent('cliente:changed',
+                    { detail: { action: 'update', cliente: updated } }));
             } else {
                 const created = await this.apiCreate(data);
                 this.clientes.unshift(created);
                 this.toast('success', 'fas fa-check-circle', `Cliente <strong>${this.esc(data.nome)}</strong> cadastrado.`);
+                window.dispatchEvent(new CustomEvent('cliente:changed',
+                    { detail: { action: 'create', cliente: created } }));
             }
             this.closeModal();
             this.render();
@@ -474,10 +478,13 @@ class ClientesModule {
         const btn = document.getElementById('deleteModalConfirm');
         btn.disabled = true;
         try {
-            await this.apiDelete(this.deletingId);
+            const deletedId = this.deletingId;
+            await this.apiDelete(deletedId);
             this.closeDeleteModal();
             this.toast('success', 'fas fa-check-circle', `Cliente <strong>${this.esc(c.nome)}</strong> excluído com sucesso.`);
             await this.loadData(); // ressincronia com o servidor
+            window.dispatchEvent(new CustomEvent('cliente:changed',
+                { detail: { action: 'delete', id: deletedId } }));
         } catch (e) {
             this.toast('danger', 'fas fa-exclamation-circle', `Erro ao excluir: ${this.esc(e.message)}`);
             this.closeDeleteModal();
