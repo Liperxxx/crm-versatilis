@@ -19,6 +19,10 @@ public class SchemaMigrationRunner implements ApplicationRunner {
         addColumnIfNotExists("usuarios", "avatar_url", "VARCHAR(500)");
         createConfigTableIfNotExists();
         createEnviosWhatsappTableIfNotExists();
+        // Garante colunas herdadas de BaseEntity caso a tabela tenha sido criada antes do fix
+        addColumnIfNotExists("envios_whatsapp", "data_criacao", "TIMESTAMP NOT NULL DEFAULT NOW()");
+        addColumnIfNotExists("envios_whatsapp", "data_atualizacao", "TIMESTAMP");
+        addColumnIfNotExists("envios_whatsapp", "ativo", "BOOLEAN NOT NULL DEFAULT TRUE");
         seedDefaultConfig("whatsapp.numero-empresa", "+55 27 99576-7070");
     }
 
@@ -83,6 +87,7 @@ public class SchemaMigrationRunner implements ApplicationRunner {
                 "  erro TEXT," +
                 "  enviado_por VARCHAR(255)," +
                 "  data_envio TIMESTAMP NOT NULL," +
+                "  data_criacao TIMESTAMP NOT NULL DEFAULT NOW()," +
                 "  data_atualizacao TIMESTAMP," +
                 "  ativo BOOLEAN NOT NULL DEFAULT TRUE" +
                 ")"
