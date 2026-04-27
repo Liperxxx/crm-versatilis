@@ -192,6 +192,13 @@ class OrcamentosModule {
         this.$emailDestinatario = document.getElementById('orcEmailDestinatario');
         this.$emailMensagem     = document.getElementById('orcEmailMensagem');
         this.$emailClienteInfo  = document.getElementById('orcEmailClienteInfo');
+
+        // WhatsApp modal
+        this.$whatsappModal        = document.getElementById('orcWhatsAppModalBackdrop');
+        this.$whatsappDestinatario = document.getElementById('orcWhatsAppDestinatario');
+        this.$whatsappMensagem     = document.getElementById('orcWhatsAppMensagem');
+        this.$whatsappClienteInfo  = document.getElementById('orcWhatsAppClienteInfo');
+        this.$whatsappAnexarPdf    = document.getElementById('orcWhatsAppAnexarPdf');
         // Current orçamento shown in preview
         this.currentPreviewOrc  = null;
     }
@@ -234,7 +241,7 @@ class OrcamentosModule {
         this._on(this.$previewModal, 'click', e => { if (e.target === this.$previewModal) this.closePreview(); });
         this._on('orcPrintBtn',     'click', () => window.print());
         this._on('orcDocxBtn',      'click', () => this.downloadDocx());
-        this._on('orcWhatsAppBtn',  'click', () => this.sendWhatsApp());
+        this._on('orcWhatsAppBtn',  'click', () => this.openWhatsAppModal());
         this._on('orcEmailBtn',     'click', () => this.openEmailModal());
 
         // Email modal
@@ -243,6 +250,12 @@ class OrcamentosModule {
         this._on(this.$emailModal, 'click', e => { if (e.target === this.$emailModal) this.closeEmailModal(); });
         this._on('orcEmailModalSend', 'click', () => this.doSendEmail());
 
+        // WhatsApp modal
+        this._on('orcWhatsAppModalClose',  'click', () => this.closeWhatsAppModal());
+        this._on('orcWhatsAppModalCancel', 'click', () => this.closeWhatsAppModal());
+        this._on(this.$whatsappModal, 'click', e => { if (e.target === this.$whatsappModal) this.closeWhatsAppModal(); });
+        this._on('orcWhatsAppModalSend', 'click', () => this.doSendWhatsApp());
+
         // Esc
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
@@ -250,6 +263,7 @@ class OrcamentosModule {
                 if (this.$deleteModal && !this.$deleteModal.classList.contains('hidden')) this.closeDeleteModal();
                 if (this.$previewModal && !this.$previewModal.classList.contains('hidden')) this.closePreview();
                 if (this.$emailModal && !this.$emailModal.classList.contains('hidden')) this.closeEmailModal();
+                if (this.$whatsappModal && !this.$whatsappModal.classList.contains('hidden')) this.closeWhatsAppModal();
             }
         });
 
@@ -808,58 +822,77 @@ class OrcamentosModule {
     }
 
     // ── WhatsApp ─────────────────────────────────────────────────
+    // Envio via integração Evolution API (backend).
+    // O backend gera o PDF, monta a mensagem padrão (ou usa a personalizada)
+    // e dispara via WhatsApp Business da Versatilis (+55 27 99576-7070).
 
-    sendWhatsApp() {
+    openWhatsAppModal() {
+        const o = this.currentPreviewOrc;
+        if (!o) return;
+        const tel = (o.clienteTelefone || '').trim();
+        this.$whatsappDestinatario.value = tel;
+        this.$whatsappMensagem.value = '';
+        this.$whatsappAnexarPdf.checked = true;
+        this.$whatsappClienteInfo.textContent = tel
+            ? `Telefone do cliente: ${tel}`
+            : 'O cliente não possui telefone cadastrado — informe o destinatário acima.';
+        this.$whatsappModal.classList.remove('hidden');
+        setTimeout(() => this.$whatsappDestinatario.focus(), 50);
+    }
+
+    closeWhatsAppModal() { this.$whatsappModal.classList.add('hidden'); }
+
+    async doSendWhatsApp() {
         const o = this.currentPreviewOrc;
         if (!o) return;
 
-        const tel      = (o.clienteTelefone || '').replace(/\D/g, '');
-        const total    = this.formatCurrency(o.total || 0);
-        const emissao  = this.formatDate(o.dataEmissao);
-        const validade = this.formatDate(o.dataValidade);
+        const destinatario = this.$whatsappDestinatario.value.trim();
+        // Validação básica: precisa ter pelo menos 10 dígitos (DDD + número)
+        const digits = destinatario.replace(/\D/g, '');
+        if (!destinatario || digits.length < 10) {
+            this.$whatsappDestinatario.classList.add('invalid');
+            this.$whatsappDestinatario.focus();
+            this.toast('warning', 'fas fa-exclamation-triangle', 'Telefone inválido — informe pelo menos DDD + número (10 dígitos).');
+            return;
+        }
+        this.$whatsappDestinatario.classList.remove('invalid');
 
-        // Serviços incluídos (excluindo marcador interno)
-        const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
-        const itensTexto = serviceItems.slice(0, 6)
-            .map((item, i) => `  • ${item.descricao || '—'}`)
-            .join('\n');
-        const maisItens = serviceItems.length > 6
-            ? `\n  ... e mais ${serviceItems.length - 6} serviço(s)`
-            : '';
+        const btn = document.getElementById('orcWhatsAppModalSend');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
-        // Desconto (só se houver)
-        const descontoLinha = (o.desconto && o.desconto > 0)
-            ? `\n💸 *Desconto:* − ${this.formatCurrency(o.desconto)}`
-            : '';
+        try {
+            const resp = await this.apiEnviarWhatsApp(
+                o.id,
+                destinatario,
+                this.$whatsappMensagem.value.trim(),
+                this.$whatsappAnexarPdf.checked
+            );
+            this.closeWhatsAppModal();
+            this.closePreview();
+            const tel = resp?.dados?.telefone || destinatario;
+            this.toast('success', 'fab fa-whatsapp', `Orçamento enviado via WhatsApp para <strong>${this.esc(tel)}</strong>.`);
+            // Atualizar lista local para refletir novo status
+            await this.loadData();
+        } catch (e) {
+            this.toast('danger', 'fas fa-exclamation-circle', `Erro ao enviar: ${this.esc(e.message)}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar';
+        }
+    }
 
-        // Oportunidade (contexto)
-        const oportunidadeLinha = o.oportunidadeTitulo
-            ? `\n🎯 *Ref.:* ${o.oportunidadeTitulo}`
-            : '';
-
-        const servicosBloco = itensTexto
-            ? `\n\n*Serviços incluídos:*\n${itensTexto}${maisItens}`
-            : '';
-
-        const msg = [
-            `Olá ${o.clienteNome || ''},`,
-            ``,
-            `A Versatilis preparou uma proposta comercial para você:`,
-            ``,
-            `📄 *Orçamento:* ${o.numero || '—'}${oportunidadeLinha}`,
-            `📅 *Emissão:* ${emissao}  |  *Válido até:* ${validade}`,
-            servicosBloco,
-            ``,
-            `💰 *Valor total: ${total}*${descontoLinha}`,
-            ``,
-            `O orçamento completo em PDF será enviado por email.`,
-            `Qualquer dúvida, estamos à disposição! 😊`,
-        ].join('\n');
-
-        const url = tel
-            ? `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`
-            : `https://web.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
+    async apiEnviarWhatsApp(id, destinatario, mensagem, anexarPdf) {
+        const res = await fetch(`${API_ORCAMENTOS}/${id}/enviar-whatsapp`, {
+            method: 'POST',
+            headers: this.authHeaders(),
+            body: JSON.stringify({
+                destinatario,
+                mensagem: mensagem || null,
+                anexarPdf: anexarPdf !== false
+            }),
+        });
+        return await window.CRMAuth.handleApi(res);
     }
 
     // ── Email modal ──────────────────────────────────────────────
