@@ -111,6 +111,13 @@
             <version>5.3.0</version>
         </dependency>
 
+        <!-- JSON parsing (usado em PdfService para detectar e renderizar
+             observacoes_comerciais salvas como JSON pelo frontend) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- PDF GENERATION (OpenPDF) -->
         <dependency>
             <groupId>com.github.librepdf</groupId>
