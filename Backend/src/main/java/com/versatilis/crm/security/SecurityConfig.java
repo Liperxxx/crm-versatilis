@@ -67,6 +67,10 @@ public class SecurityConfig {
                 .requestMatchers("/management/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
 
+                // Webhook público (autenticação via shared-secret no controller)
+                .requestMatchers(HttpMethod.POST, "/webhook/whatsapp").permitAll()
+                .requestMatchers(HttpMethod.POST, "/webhook/whatsapp/**").permitAll()
+
                 // Rotas administrativas - apenas ADMIN
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("ADMIN")
@@ -75,6 +79,8 @@ public class SecurityConfig {
 
                 // Configurações da empresa
                 .requestMatchers(HttpMethod.POST, "/config/logo").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/config/whatsapp").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/config/whatsapp/test").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.GET, "/config/**").authenticated()
 
                 // Rotas de gerenciamento - ADMIN e GERENTE

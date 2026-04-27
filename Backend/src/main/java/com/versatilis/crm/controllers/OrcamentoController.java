@@ -3,10 +3,13 @@ package com.versatilis.crm.controllers;
 import com.versatilis.crm.dto.EmailEnvioDTO;
 import com.versatilis.crm.dto.OrcamentoDTO;
 import com.versatilis.crm.dto.ResponseDTO;
+import com.versatilis.crm.dto.WhatsAppEnvioDTO;
+import com.versatilis.crm.dto.WhatsAppEnvioResponseDTO;
 import com.versatilis.crm.model.Orcamento;
 import com.versatilis.crm.services.EmailService;
 import com.versatilis.crm.services.OrcamentoService;
 import com.versatilis.crm.services.TemplateService;
+import com.versatilis.crm.services.WhatsAppService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,6 +34,7 @@ public class OrcamentoController {
     private final OrcamentoService orcamentoService;
     private final EmailService emailService;
     private final TemplateService templateService;
+    private final WhatsAppService whatsAppService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
@@ -100,6 +104,18 @@ public class OrcamentoController {
         orcamentoService.marcarComoEnviado(id);
 
         return ResponseEntity.ok(ResponseDTO.sucesso("Email enviado com sucesso para " + destinatario, null));
+    }
+
+    @PostMapping("/{id}/enviar-whatsapp")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
+    public ResponseEntity<ResponseDTO<WhatsAppEnvioResponseDTO>> enviarWhatsApp(
+            @PathVariable Long id,
+            @RequestBody(required = false) WhatsAppEnvioDTO dto) {
+        log.info("POST /api/orcamentos/{}/enviar-whatsapp - Enviando orçamento via WhatsApp", id);
+        WhatsAppEnvioDTO body = dto != null ? dto : new WhatsAppEnvioDTO();
+        WhatsAppEnvioResponseDTO envio = whatsAppService.enviarOrcamento(id, body);
+        return ResponseEntity.ok(
+            ResponseDTO.sucesso("Orçamento enviado via WhatsApp para " + envio.getTelefone(), envio));
     }
 
     @GetMapping("/{id}/docx")
