@@ -189,6 +189,3 @@ public class EvolutionApiClient {
         public String getResponseBody() { return responseBody; }
     }
 }
-sponseBody; }
-    }
-}
