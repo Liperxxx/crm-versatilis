@@ -159,11 +159,12 @@ public class WhatsAppService {
             int i = 1;
             for (OrcamentoItemDTO item : o.getItens()) {
                 if (i > 5) {
-                    sb.append("• … e mais ").append(o.getItens().size() - 5).append(" item(ns)\n");
+                    sb.append("– … e mais ").append(o.getItens().size() - 5).append(" item(ns)\n");
                     break;
                 }
-                sb.append("• ").append(item.getDescricao() != null ? item.getDescricao() : "-")
-                  .append(" (").append(item.getQuantidade()).append("x)\n");
+                String descricao = sanitizarDescricaoItem(item.getDescricao());
+                Integer qtd = item.getQuantidade() != null ? item.getQuantidade() : 1;
+                sb.append("– ").append(descricao).append(" (").append(qtd).append("x)\n");
                 i++;
             }
         }
@@ -171,6 +172,16 @@ public class WhatsAppService {
         sb.append("\n_O PDF completo segue anexado. Estamos à disposição para qualquer dúvida._\n\n");
         sb.append("— *Versatilis*");
         return sb.toString();
+    }
+
+    /**
+     * Limpa descrição do item: vazio ou placeholder tipo VALOR_TOTAL → texto amigável.
+     */
+    private String sanitizarDescricaoItem(String descricao) {
+        if (descricao == null || descricao.isBlank()) return "Item sem descrição";
+        String d = descricao.trim();
+        if (d.matches("^[A-Z_]{4,}$")) return "Item sem descrição";
+        return d;
     }
 
     private String buildPdfFileName(OrcamentoDTO o) {
@@ -226,7 +237,6 @@ public class WhatsAppService {
             .telefone(e.getTelefone())
             .messageId(e.getMessageId())
             .status(e.getStatus())
-            .mensagem(e.getMensagem())
             .nomeArquivo(e.getNomeArquivo())
             .dataEnvio(e.getDataEnvio())
             .build();

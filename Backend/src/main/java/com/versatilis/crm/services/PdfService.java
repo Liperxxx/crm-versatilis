@@ -1,11 +1,13 @@
 package com.versatilis.crm.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
-import com.versatilis.crm.dto.OrcamentoDTO;
-import com.versatilis.crm.dto.OrcamentoItemDTO;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import com.versatilis.crm.dto.OrcamentoDTO;
+import com.versatilis.crm.dto.OrcamentoItemDTO;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -97,8 +100,8 @@ public class PdfService {
         PdfPCell right = noCell();
         right.setHorizontalAlignment(Element.ALIGN_RIGHT);
         right.addElement(rightParagraph(o.getNumero() != null ? o.getNumero() : "-", font(16, Font.BOLD, C_PRIMARY)));
-        right.addElement(rightParagraph("Emissao: " + emissao, font(9, Font.NORMAL, C_MUTED)));
-        right.addElement(rightParagraph("Valido ate: " + validade, font(9, Font.BOLD, C_ACCENT)));
+        right.addElement(rightParagraph("Emissão: " + emissao, font(9, Font.NORMAL, C_MUTED)));
+        right.addElement(rightParagraph("Válido até: " + validade, font(9, Font.BOLD, C_ACCENT)));
         right.setBorderWidthBottom(2f);
         right.setBorderColorBottom(C_PRIMARY);
         right.setBorder(Rectangle.BOTTOM);
@@ -124,11 +127,11 @@ public class PdfService {
 
         String cidEst = joinNonBlank(", ", o.getClienteCidade(), o.getClienteEstado());
         addLabelValue(t, "Cidade / Estado", cidEst.isBlank() ? "-" : cidEst, true);
-        addLabelValue(t, "Endereco",        safe(o.getClienteEndereco()), false);
+        addLabelValue(t, "Endereço",        safe(o.getClienteEndereco()), false);
 
         if (o.getOportunidadeTitulo() != null) {
             addLabelValue(t, "Oportunidade", o.getOportunidadeTitulo(), true);
-            addLabelValue(t, "Responsavel",  safe(o.getResponsavelNome()), false);
+            addLabelValue(t, "Responsável",  safe(o.getResponsavelNome()), false);
         }
 
         doc.add(t);
@@ -144,11 +147,11 @@ public class PdfService {
         t.setSpacingAfter(6);
 
         // Header row
-        for (String h : new String[]{"#", "Descricao", "Qtd", "Val. Unit.", "Subtotal"}) {
+        for (String h : new String[]{"#", "Descrição", "Qtd", "Val. Unit.", "Subtotal"}) {
             PdfPCell c = new PdfPCell(new Phrase(h, font(9, Font.BOLD, C_WHITE)));
             c.setBackgroundColor(C_PRIMARY);
             c.setPadding(7);
-            c.setHorizontalAlignment(h.equals("#") || h.equals("Descricao") ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
+            c.setHorizontalAlignment(h.equals("#") || h.equals("Descrição") ? Element.ALIGN_LEFT : Element.ALIGN_RIGHT);
             c.setBorder(Rectangle.NO_BORDER);
             t.addCell(c);
         }
@@ -170,9 +173,12 @@ public class PdfService {
                 Color bg = alt ? C_LIGHT : C_WHITE;
                 alt = !alt;
 
+                String descricao = sanitizarDescricao(item.getDescricao());
+                Integer qtd = item.getQuantidade() != null ? item.getQuantidade() : 1;
+
                 addItemCell(t, String.valueOf(i + 1), bg, Element.ALIGN_LEFT);
-                addItemCell(t, item.getDescricao() != null ? item.getDescricao() : "-", bg, Element.ALIGN_LEFT);
-                addItemCell(t, String.valueOf(item.getQuantidade()), bg, Element.ALIGN_RIGHT);
+                addItemCell(t, descricao, bg, Element.ALIGN_LEFT);
+                addItemCell(t, String.valueOf(qtd), bg, Element.ALIGN_RIGHT);
                 addItemCell(t, nf.format(item.getValorUnitario() != null ? item.getValorUnitario() : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
                 addItemCell(t, nf.format(item.getValorTotal()    != null ? item.getValorTotal()    : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
             }
@@ -208,7 +214,7 @@ public class PdfService {
     }
 
     private void buildObservacoes(Document doc, OrcamentoDTO o) throws DocumentException {
-        Paragraph title = new Paragraph("Observacoes Comerciais", font(10, Font.BOLD, C_PRIMARY));
+        Paragraph title = new Paragraph("Observações Comerciais", font(10, Font.BOLD, C_PRIMARY));
         title.setSpacingAfter(4);
         doc.add(title);
 
@@ -216,16 +222,83 @@ public class PdfService {
         t.setWidthPercentage(100);
         t.setSpacingAfter(16);
 
-        PdfPCell c = new PdfPCell(new Phrase(o.getObservacoesComerciais(), font(9, Font.NORMAL, C_TEXT)));
-        c.setBackgroundColor(C_LIGHT);
-        c.setBorderColor(C_BORDER);
-        c.setBorderWidthLeft(3f);
-        c.setBorderColorLeft(C_PRIMARY);
-        c.setBorder(Rectangle.LEFT);
-        c.setPadding(10);
-        t.addCell(c);
+        // Tenta interpretar o campo como JSON (legado do frontend que serializou objeto)
+        // Se for JSON com campos conhecidos (descricaoDetalhada, condicao1, condicao2,
+        // tipoSistema, prazoExecucao, garantia), renderiza bonito.
+        // Caso contrário, mostra como texto simples.
+        List<KV> linhas = parseObservacoes(o.getObservacoesComerciais());
+
+        if (linhas.isEmpty()) {
+            // Texto puro
+            PdfPCell c = new PdfPCell(new Phrase(o.getObservacoesComerciais(), font(9, Font.NORMAL, C_TEXT)));
+            c.setBackgroundColor(C_LIGHT);
+            c.setBorderColor(C_BORDER);
+            c.setBorderWidthLeft(3f);
+            c.setBorderColorLeft(C_PRIMARY);
+            c.setBorder(Rectangle.LEFT);
+            c.setPadding(10);
+            t.addCell(c);
+        } else {
+            // JSON estruturado — renderiza como label/value
+            PdfPCell wrapper = new PdfPCell();
+            wrapper.setBackgroundColor(C_LIGHT);
+            wrapper.setBorderColor(C_BORDER);
+            wrapper.setBorderWidthLeft(3f);
+            wrapper.setBorderColorLeft(C_PRIMARY);
+            wrapper.setBorder(Rectangle.LEFT);
+            wrapper.setPadding(10);
+
+            for (KV kv : linhas) {
+                Paragraph p = new Paragraph();
+                p.add(new Chunk(kv.label + ": ", font(9, Font.BOLD, C_PRIMARY)));
+                p.add(new Chunk(kv.value, font(9, Font.NORMAL, C_TEXT)));
+                p.setSpacingAfter(4);
+                wrapper.addElement(p);
+            }
+            t.addCell(wrapper);
+        }
 
         doc.add(t);
+    }
+
+    /**
+     * Detecta se a string de observações é um JSON estruturado (legado) e
+     * extrai os campos relevantes em pares label/value. Se não for JSON
+     * ou não tiver campos úteis, retorna lista vazia (caller mostra como texto).
+     */
+    private List<KV> parseObservacoes(String raw) {
+        List<KV> out = new ArrayList<>();
+        if (raw == null) return out;
+        String s = raw.trim();
+        if (!s.startsWith("{") || !s.endsWith("}")) return out;
+        try {
+            JsonNode node = new ObjectMapper().readTree(s);
+            addIfPresent(out, node, "descricaoDetalhada", "Descrição detalhada");
+            addIfPresent(out, node, "tipoSistema",        "Tipo de sistema");
+            addIfPresent(out, node, "quantidadeUnidades", "Quantidade de unidades");
+            addIfPresent(out, node, "prazoExecucao",      "Prazo de execução");
+            addIfPresent(out, node, "garantia",           "Garantia");
+            addIfPresent(out, node, "condicao1",          "Condição de pagamento");
+            addIfPresent(out, node, "condicao2",          "Condição complementar");
+        } catch (Exception ignored) {
+            // não era JSON válido — caller renderiza como texto
+        }
+        return out;
+    }
+
+    private void addIfPresent(List<KV> out, JsonNode node, String field, String label) {
+        JsonNode v = node.get(field);
+        if (v == null || v.isNull()) return;
+        String value = v.asText();
+        if (value == null || value.isBlank()) return;
+        out.add(new KV(label, value));
+    }
+
+    /** Par label/value usado na renderização das observações estruturadas. */
+    private static class KV {
+        final String label;
+        final String value;
+        KV(String label, String value) { this.label = label; this.value = value; }
     }
 
     // == Cell helpers ==
@@ -302,8 +375,35 @@ public class PdfService {
 
     // == Font / layout helpers ==
 
+    private static final BaseFont BASE_FONT_NORMAL;
+    private static final BaseFont BASE_FONT_BOLD;
+    private static final BaseFont BASE_FONT_ITALIC;
+    static {
+        try {
+            BASE_FONT_NORMAL = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+            BASE_FONT_BOLD   = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+            BASE_FONT_ITALIC = BaseFont.createFont(BaseFont.HELVETICA_OBLIQUE, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao carregar BaseFont Cp1252", e);
+        }
+    }
+
     private Font font(float size, int style, Color color) {
-        return FontFactory.getFont(FontFactory.HELVETICA, size, style, color);
+        BaseFont base;
+        int residualStyle = style;
+        // Quando a BaseFont ja carrega Bold/Italic, removemos do residualStyle
+        // para evitar que o OpenPDF sintetize bold/italic em cima do que a
+        // fonte ja tem (efeito de "sombra" / texto duplicado nos negritos).
+        if ((style & Font.BOLD) != 0) {
+            base = BASE_FONT_BOLD;
+            residualStyle = style & ~Font.BOLD;
+        } else if ((style & Font.ITALIC) != 0) {
+            base = BASE_FONT_ITALIC;
+            residualStyle = style & ~Font.ITALIC;
+        } else {
+            base = BASE_FONT_NORMAL;
+        }
+        return new Font(base, size, residualStyle, color);
     }
 
     private Paragraph rightParagraph(String text, Font f) {
@@ -314,6 +414,14 @@ public class PdfService {
 
     private String safe(String s) {
         return (s != null && !s.isBlank()) ? s : "-";
+    }
+
+    /** Limpa descrições com placeholders (VALOR_TOTAL etc) ou vazias. */
+    private String sanitizarDescricao(String descricao) {
+        if (descricao == null || descricao.isBlank()) return "Item sem descrição";
+        String d = descricao.trim();
+        if (d.matches("^[A-Z_]{4,}$")) return "Item sem descrição";
+        return d;
     }
 
     private String joinNonBlank(String sep, String... parts) {
@@ -332,8 +440,7 @@ public class PdfService {
     private Image loadImage(String classpathPath) {
         try {
             byte[] bytes = new ClassPathResource(classpathPath).getInputStream().readAllBytes();
-            Image img = Image.getInstance(bytes);
-            return img;
+            return Image.getInstance(bytes);
         } catch (IOException | BadElementException e) {
             throw new RuntimeException("Nao foi possivel carregar imagem: " + classpathPath, e);
         }
@@ -354,9 +461,7 @@ public class PdfService {
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
             float pageWidth = document.getPageSize().getWidth();
-
             try {
-                // Cabecalho - borda a borda no topo
                 if (headerImg != null) {
                     headerImg.scaleToFit(pageWidth, 999f);
                     float hX = (pageWidth - headerImg.getScaledWidth()) / 2;
@@ -364,13 +469,10 @@ public class PdfService {
                     headerImg.setAbsolutePosition(hX, hY);
                     cb.addImage(headerImg);
                 }
-
-                // Rodape - borda a borda no fundo
                 if (footerImg != null) {
                     footerImg.scaleToFit(pageWidth, 999f);
                     float fX = (pageWidth - footerImg.getScaledWidth()) / 2;
-                    float fY = 0f;
-                    footerImg.setAbsolutePosition(fX, fY);
+                    footerImg.setAbsolutePosition(fX, 0f);
                     cb.addImage(footerImg);
                 }
             } catch (DocumentException e) {
