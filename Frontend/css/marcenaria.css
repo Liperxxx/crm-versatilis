@@ -1,0 +1,491 @@
+/*
+   MARCENARIA.CSS - Estilos da Calculadora de Custos (Marcenaria)
+   Reutiliza tokens de variables.css (cores, espaçamentos, sombras).
+*/
+
+/* ─── Tabs internas do módulo (Lista de Orçamentos | Calculadora) ─── */
+.module-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: var(--spacing-xl);
+    padding: 0 2px;
+}
+
+.module-tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font: inherit;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: -2px;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.module-tab:hover {
+    color: var(--color-primary);
+    background: var(--color-primary-50);
+}
+
+.module-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.module-tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.module-tab-panel { display: none; }
+.module-tab-panel.active { display: block; animation: fadeIn var(--transition-base); }
+.module-tab-panel[hidden] { display: none; }
+
+/* ─── Sub-tabs por tipo (Marcenaria, Pintura, Vidraçaria...) ─── */
+.calc-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.calc-subtab {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-fast);
+}
+
+.calc-subtab:hover {
+    background: var(--color-primary-50);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.calc-subtab.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.calc-subtab-panel { display: none; }
+.calc-subtab-panel.active { display: block; animation: fadeIn var(--transition-base); }
+
+/* ─── Sub-sub-abas dentro de Marcenaria (Cadastros | Calcular | Resultado) ─── */
+.marc-section-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.marc-section-tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-bottom: -1px;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.marc-section-tab:hover { color: var(--color-primary); }
+
+.marc-section-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.marc-section-panel { display: none; }
+.marc-section-panel.active { display: block; animation: fadeIn var(--transition-base); }
+.marc-section-panel[hidden] { display: none; }
+
+/* ─── Cartão genérico ─── */
+.marc-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-xs);
+}
+
+.marc-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.marc-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin: 0 0 4px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.marc-card-title i { color: var(--color-primary); }
+
+.marc-card-sub {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* ─── Mão de obra display ─── */
+.marc-mao-obra-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.marc-mao-obra-display {
+    background: var(--color-primary-50);
+    border-left: 4px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.marc-mao-obra-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
+}
+
+.marc-mao-obra-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
+
+.marc-mao-obra-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: var(--font-size-base);
+}
+
+/* ─── Tabela de cadastros ─── */
+.marc-table { font-size: var(--font-size-sm); }
+
+.marc-table .marc-actions-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.marc-table .marc-action-btn {
+    background: transparent;
+    border: 0;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.marc-table .marc-action-btn:hover { background: var(--bg-hover); color: var(--color-primary); }
+.marc-table .marc-action-btn.danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+
+.marc-empty-row td {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-style: italic;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+/* ─── Form-grid para cadastros e calculadora ─── */
+.marc-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.marc-form-grid .form-group { margin-bottom: 0; }
+
+/* ─── Ações da calculadora (botões inferiores) ─── */
+.marc-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0 var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+/* ─── Inputs em linha de tabela ─── */
+.marc-row-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    background: var(--bg-primary);
+    color: var(--color-text);
+}
+
+.marc-row-input:focus {
+    border-color: var(--border-color-focus);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+.marc-row-input.narrow { max-width: 100px; }
+
+/* ─── Resultado ─── */
+.marc-result-empty {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-lg);
+    color: var(--color-text-muted);
+}
+
+.marc-result-empty i {
+    font-size: 64px;
+    color: var(--color-gray-light);
+    margin-bottom: var(--spacing-md);
+    display: block;
+}
+
+.marc-result-empty h3 {
+    font-size: var(--font-size-lg);
+    color: var(--color-text);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.marc-result-empty p { font-size: var(--font-size-sm); margin: 0; }
+
+.marc-result-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.marc-result-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-xs);
+    border-left: 4px solid var(--color-primary);
+}
+
+.marc-result-card.is-total {
+    border-left-color: var(--color-success);
+    background: var(--color-success-bg);
+}
+
+/* v2: cards de produção/margem/venda */
+.marc-result-card.is-producao {
+    border-left-color: var(--color-info);
+}
+.marc-result-card.is-margem {
+    border-left-color: var(--color-warning);
+}
+.marc-result-card.is-venda {
+    border-left-color: var(--color-success);
+    background: var(--color-success-bg);
+    box-shadow: var(--shadow-md);
+}
+
+.marc-result-card-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.marc-result-card-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+}
+
+.marc-result-card.is-total .marc-result-card-value,
+.marc-result-card.is-venda .marc-result-card-value { color: var(--color-success); }
+.marc-result-card.is-producao .marc-result-card-value { color: var(--color-info); }
+.marc-result-card.is-margem .marc-result-card-value { color: var(--color-warning); }
+
+/* Tabela de Totais (produção / margem / venda) */
+.marc-totais-card .marc-totais-venda td {
+    font-size: var(--font-size-lg);
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    border-top: 2px solid var(--color-success);
+    border-bottom: 0;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+.marc-totais-card .marc-totais-venda td:last-child {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-xl);
+}
+
+/* Badge de "editando cálculo salvo" */
+.marc-editing-badge {
+    background: var(--color-info-bg);
+    border-left: 4px solid var(--color-info);
+    color: var(--color-info);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ─── Layouts de chapa (visualização SVG) ─── */
+.marc-layouts-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.marc-layout-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-xs);
+}
+
+.marc-layout-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-sm);
+}
+
+.marc-layout-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin: 0;
+}
+
+.marc-layout-aprov {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-success);
+}
+
+.marc-layout-svg-wrap {
+    width: 100%;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+}
+
+.marc-layout-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: var(--color-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.marc-layout-svg .marc-piece-rect {
+    fill: var(--color-primary-100);
+    stroke: var(--color-primary);
+    stroke-width: 2;
+}
+
+.marc-layout-svg .marc-piece-rect.rotated {
+    fill: rgba(48, 110, 180, 0.18);
+    stroke: var(--sidebar-accent);
+}
+
+.marc-layout-svg .marc-piece-label {
+    fill: var(--color-dark);
+    font-size: 30px;
+    font-family: var(--font-family);
+    font-weight: var(--font-weight-semibold);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+
+.marc-layout-svg .marc-piece-dim {
+    fill: var(--color-text-muted);
+    font-size: 24px;
+    font-family: var(--font-family);
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+/* ─── Tabela de detalhamento ─── */
+.marc-detalhe-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.marc-detalhe-table th,
+.marc-detalhe-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.marc-detalhe-table th {
+    background: var(--bg-secondary);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.5px;
+}
+
+.marc-detalhe-table tfoot td {
+    font-weight: var(--font-weight-semibold);
+    background: var(--bg-tertiary);
+    border-top: 2px solid var(--border-color);
+    border-bottom: 0;
+}
+
+.marc-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ─── Responsivo ─── */
+@media (max-width: 768px) {
+    .marc-card { padding: var(--spacing-md); }
+    .marc-card-head { flex-direction: column; align-items: stretch; }
+    .marc-actions { justify-content: stretch; }
+    .marc-actions .btn { flex: 1; }
+}

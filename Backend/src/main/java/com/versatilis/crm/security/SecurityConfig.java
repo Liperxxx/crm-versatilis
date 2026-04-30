@@ -111,6 +111,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.DELETE, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
+                // Marcenaria — calculadora de custos (módulo Orçamentos)
+                .requestMatchers(HttpMethod.POST,   "/marcenaria/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
+                .requestMatchers(HttpMethod.PUT,    "/marcenaria/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
+                .requestMatchers(HttpMethod.DELETE, "/marcenaria/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
+
                 .requestMatchers(HttpMethod.GET, "/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
                 .requestMatchers("/conversoes/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")

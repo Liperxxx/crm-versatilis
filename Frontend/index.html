@@ -32,7 +32,8 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    
+    <link rel="stylesheet" href="css/marcenaria.css">
+
     <!-- Ícones (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -787,6 +788,20 @@
 
                 <!-- ORÇAMENTOS MODULE -->
                 <section id="orcamentos-module" class="module">
+                    <!-- Abas internas: Lista de Orçamentos | Calculadora -->
+                    <div class="module-tabs" role="tablist" aria-label="Orçamentos">
+                        <button class="module-tab active" data-orc-tab="lista" role="tab"
+                                aria-selected="true" aria-controls="orcTabLista" id="orcTabBtnLista">
+                            <i class="fas fa-list"></i> Lista de Orçamentos
+                        </button>
+                        <button class="module-tab" data-orc-tab="calculadora" role="tab"
+                                aria-selected="false" aria-controls="orcTabCalculadora" id="orcTabBtnCalculadora">
+                            <i class="fas fa-calculator"></i> Calculadora
+                        </button>
+                    </div>
+
+                    <!-- ── PAINEL: Lista de Orçamentos ── -->
+                    <div class="module-tab-panel active" id="orcTabLista" role="tabpanel" aria-labelledby="orcTabBtnLista">
                     <div class="module-header">
                         <div>
                             <h1>Orçamentos</h1>
@@ -864,7 +879,476 @@
                         <p>Crie seu primeiro orçamento para gerar propostas comerciais profissionais.<br>
                         <button class="btn-link" id="btnOrcEmptyNovo">Novo Orçamento</button></p>
                     </div>
+                    </div><!-- /#orcTabLista -->
+
+                    <!-- ── PAINEL: Calculadora ── -->
+                    <div class="module-tab-panel" id="orcTabCalculadora" role="tabpanel" aria-labelledby="orcTabBtnCalculadora" hidden>
+                        <!-- Sub-tabs por tipo de cálculo (estrutura pronta para Pintura, Vidraçaria etc.) -->
+                        <div class="calc-subtabs" role="tablist" aria-label="Tipo de cálculo">
+                            <button class="calc-subtab active" data-calc-tab="marcenaria" role="tab"
+                                    aria-selected="true" aria-controls="calcTabMarcenaria" id="calcSubtabMarcenaria">
+                                <i class="fas fa-hammer"></i> Marcenaria
+                            </button>
+                        </div>
+
+                        <!-- ─── MARCENARIA ─── -->
+                        <div class="calc-subtab-panel active" id="calcTabMarcenaria" role="tabpanel" aria-labelledby="calcSubtabMarcenaria">
+                            <!-- Sub-sub-abas: Cadastros | Calcular Produto | Resultado | Salvos -->
+                            <div class="marc-section-tabs" role="tablist" aria-label="Seções de Marcenaria">
+                                <button class="marc-section-tab active" data-marc-section="cadastros" role="tab"
+                                        aria-selected="true" aria-controls="marcSecCadastros" id="marcSecBtnCadastros">
+                                    <i class="fas fa-database"></i> Cadastros
+                                </button>
+                                <button class="marc-section-tab" data-marc-section="calcular" role="tab"
+                                        aria-selected="false" aria-controls="marcSecCalcular" id="marcSecBtnCalcular">
+                                    <i class="fas fa-calculator"></i> Calcular Produto
+                                </button>
+                                <button class="marc-section-tab" data-marc-section="resultado" role="tab"
+                                        aria-selected="false" aria-controls="marcSecResultado" id="marcSecBtnResultado">
+                                    <i class="fas fa-chart-pie"></i> Resultado
+                                </button>
+                                <button class="marc-section-tab" data-marc-section="salvos" role="tab"
+                                        aria-selected="false" aria-controls="marcSecSalvos" id="marcSecBtnSalvos">
+                                    <i class="fas fa-folder-open"></i> Salvos
+                                </button>
+                            </div>
+
+                            <!-- ─── CADASTROS ─── -->
+                            <div class="marc-section-panel active" id="marcSecCadastros" role="tabpanel" aria-labelledby="marcSecBtnCadastros">
+                                <!-- Mão de obra + Margem de lucro -->
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-hard-hat"></i> Mão de obra e margem</h3>
+                                            <p class="marc-card-sub">Valores diários e margem de lucro padrão da empresa, usados nos cálculos.</p>
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm" id="marcMaoObraEdit">
+                                            <i class="fas fa-pen"></i> Editar
+                                        </button>
+                                    </div>
+                                    <div class="marc-mao-obra-grid">
+                                        <div class="marc-mao-obra-display">
+                                            <span class="marc-mao-obra-label">Custo diário (funcionário)</span>
+                                            <span class="marc-mao-obra-value" id="marcMaoObraValor">—</span>
+                                        </div>
+                                        <div class="marc-mao-obra-display">
+                                            <span class="marc-mao-obra-label">Custo diário do ajudante</span>
+                                            <span class="marc-mao-obra-value" id="marcMaoObraAjudanteValor">—</span>
+                                        </div>
+                                        <div class="marc-mao-obra-display">
+                                            <span class="marc-mao-obra-label">Margem de lucro padrão</span>
+                                            <span class="marc-mao-obra-value" id="marcMargemPadraoValor">—</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Materiais -->
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-layer-group"></i> Materiais (chapas)</h3>
+                                            <p class="marc-card-sub">Catálogo de chapas: MDF, MDP, compensado etc.</p>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" id="marcNovoMaterial">
+                                            <i class="fas fa-plus"></i> Novo Material
+                                        </button>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome</th>
+                                                    <th>Categoria</th>
+                                                    <th>Esp. (mm)</th>
+                                                    <th>Chapa (mm)</th>
+                                                    <th>Preço/Chapa</th>
+                                                    <th>Fornecedor</th>
+                                                    <th style="width:110px;text-align:center">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcMateriaisBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Acessórios -->
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-screwdriver-wrench"></i> Acessórios</h3>
+                                            <p class="marc-card-sub">Dobradiças, corrediças, puxadores, parafusos, fitas de borda etc.</p>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" id="marcNovoAcessorio">
+                                            <i class="fas fa-plus"></i> Novo Acessório
+                                        </button>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome</th>
+                                                    <th>Categoria</th>
+                                                    <th>Unidade</th>
+                                                    <th>Preço unit.</th>
+                                                    <th>Fornecedor</th>
+                                                    <th style="width:110px;text-align:center">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcAcessoriosBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── CALCULAR PRODUTO ─── -->
+                            <div class="marc-section-panel" id="marcSecCalcular" role="tabpanel" aria-labelledby="marcSecBtnCalcular" hidden>
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-cube"></i> Calcular custo do produto</h3>
+                                            <p class="marc-card-sub">Informe peças, acessórios e dias de mão de obra.</p>
+                                        </div>
+                                    </div>
+                                    <div class="marc-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label" for="marcCalcNome">Nome do produto</label>
+                                            <input type="text" class="form-control" id="marcCalcNome" placeholder="Ex: Armário cozinha 2,40m">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="marcCalcModo">Modo de cálculo</label>
+                                            <select class="form-control" id="marcCalcModo">
+                                                <option value="APROVEITAMENTO">Por aproveitamento de chapa</option>
+                                                <option value="METRO_QUADRADO">Por metro quadrado</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="marcCalcDias">Dias do funcionário</label>
+                                            <input type="number" min="0" step="0.5" class="form-control" id="marcCalcDias" value="1" placeholder="Ex: 3.5">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="marcCalcDiasAjudante">Dias do ajudante</label>
+                                            <input type="number" min="0" step="0.5" class="form-control" id="marcCalcDiasAjudante" placeholder="(opcional)">
+                                            <p class="text-muted text-sm" style="margin-top:4px">Deixe em branco se não houver ajudante.</p>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="marcCalcMargemLucro">Margem de lucro (%)</label>
+                                            <input type="number" min="0" max="1000" step="0.01" class="form-control" id="marcCalcMargemLucro" placeholder="30.00">
+                                            <p class="text-muted text-sm" style="margin-top:4px">Sobrescreva se quiser uma margem diferente da padrão.</p>
+                                        </div>
+                                        <div class="form-group" id="marcCalcMargemWrap">
+                                            <label class="form-label" for="marcCalcMargem">Margem de corte (mm)</label>
+                                            <input type="number" min="0" step="1" class="form-control" id="marcCalcMargem" value="4">
+                                        </div>
+                                        <div class="form-group" id="marcCalcRotacaoWrap">
+                                            <label class="form-label" for="marcCalcRotacao">Permitir rotação 90°</label>
+                                            <select class="form-control" id="marcCalcRotacao">
+                                                <option value="true" selected>Sim</option>
+                                                <option value="false">Não</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Peças (modo APROVEITAMENTO) -->
+                                <div class="marc-card" id="marcPecasWrap">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-puzzle-piece"></i> Peças</h3>
+                                            <p class="marc-card-sub">Cada linha é um tipo de peça: largura × altura × quantidade.</p>
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm" id="marcAddPeca">
+                                            <i class="fas fa-plus"></i> Nova peça
+                                        </button>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Descrição</th>
+                                                    <th>Material</th>
+                                                    <th>Largura (mm)</th>
+                                                    <th>Altura (mm)</th>
+                                                    <th>Qtd.</th>
+                                                    <th style="width:60px"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcPecasBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Áreas (modo METRO_QUADRADO) -->
+                                <div class="marc-card hidden" id="marcAreasWrap">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-ruler-combined"></i> Áreas por material (m²)</h3>
+                                            <p class="marc-card-sub">Informe a área total de cada material — sem otimização de corte.</p>
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm" id="marcAddArea">
+                                            <i class="fas fa-plus"></i> Nova área
+                                        </button>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Material</th>
+                                                    <th>Área (m²)</th>
+                                                    <th style="width:60px"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcAreasBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Acessórios -->
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-screwdriver-wrench"></i> Acessórios usados</h3>
+                                            <p class="marc-card-sub">Quantidades por acessório do catálogo.</p>
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm" id="marcAddAcessorioCalc">
+                                            <i class="fas fa-plus"></i> Novo acessório
+                                        </button>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Acessório</th>
+                                                    <th>Quantidade</th>
+                                                    <th style="width:60px"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcAcessoriosCalcBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="marc-actions">
+                                    <button class="btn btn-secondary" id="marcLimparCalc">
+                                        <i class="fas fa-eraser"></i> Limpar
+                                    </button>
+                                    <button class="btn btn-primary" id="marcCalcular">
+                                        <i class="fas fa-calculator"></i> Calcular custo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- ─── RESULTADO ─── -->
+                            <div class="marc-section-panel" id="marcSecResultado" role="tabpanel" aria-labelledby="marcSecBtnResultado" hidden>
+                                <div class="marc-result-empty" id="marcResultEmpty">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <h3>Nenhum cálculo realizado</h3>
+                                    <p>Use a aba <strong>Calcular Produto</strong> para ver o detalhamento do custo aqui.</p>
+                                </div>
+                                <div id="marcResultContent" class="hidden"></div>
+                                <div id="marcResultActions" class="marc-actions hidden">
+                                    <button class="btn btn-secondary" id="marcResultRecalcular">
+                                        <i class="fas fa-arrow-left"></i> Voltar e editar
+                                    </button>
+                                    <button class="btn btn-primary" id="marcResultSalvar">
+                                        <i class="fas fa-save"></i> Salvar cálculo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- ─── SALVOS ─── -->
+                            <div class="marc-section-panel" id="marcSecSalvos" role="tabpanel" aria-labelledby="marcSecBtnSalvos" hidden>
+                                <div class="marc-card">
+                                    <div class="marc-card-head">
+                                        <div>
+                                            <h3 class="marc-card-title"><i class="fas fa-folder-open"></i> Cálculos salvos</h3>
+                                            <p class="marc-card-sub">Histórico dos cálculos persistidos. Reabra para editar e recalcular, ou exclua.</p>
+                                        </div>
+                                        <div class="search-box table-search" style="max-width:280px">
+                                            <i class="fas fa-search"></i>
+                                            <input type="text" id="marcSalvosSearch" placeholder="Buscar por nome...">
+                                        </div>
+                                    </div>
+                                    <div class="table-wrapper">
+                                        <table class="table marc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome</th>
+                                                    <th>Modo</th>
+                                                    <th>Data</th>
+                                                    <th class="marc-num">Custo de produção</th>
+                                                    <th class="marc-num">Preço de venda</th>
+                                                    <th style="width:130px;text-align:center">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="marcSalvosBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /#orcTabCalculadora -->
                 </section>
+
+                <!-- ── MODAL: Material de Marcenaria ── -->
+                <div class="modal-backdrop hidden" id="marcMaterialModalBackdrop">
+                    <div class="modal modal-md" role="dialog" aria-modal="true">
+                        <div class="modal-header">
+                            <h2 class="modal-title"><i class="fas fa-layer-group"></i> <span id="marcMaterialModalTitle">Novo Material</span></h2>
+                            <button class="modal-close" id="marcMaterialModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="marcMaterialId">
+                            <div class="form-group">
+                                <label class="form-label" for="marcMaterialNome">Nome <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="marcMaterialNome" placeholder="Ex: MDF Branco TX 15mm">
+                            </div>
+                            <div class="marc-form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialCategoria">Categoria <span class="required">*</span></label>
+                                    <select class="form-control" id="marcMaterialCategoria">
+                                        <option value="MDF">MDF</option>
+                                        <option value="MDP">MDP</option>
+                                        <option value="COMPENSADO">Compensado</option>
+                                        <option value="OUTRO">Outro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialEspessura">Espessura (mm)</label>
+                                    <input type="number" min="1" class="form-control" id="marcMaterialEspessura" placeholder="15">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialLargura">Largura da chapa (mm) <span class="required">*</span></label>
+                                    <input type="number" min="100" class="form-control" id="marcMaterialLargura" value="2750">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialAltura">Altura da chapa (mm) <span class="required">*</span></label>
+                                    <input type="number" min="100" class="form-control" id="marcMaterialAltura" value="1850">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialPreco">Preço por chapa (R$) <span class="required">*</span></label>
+                                    <input type="number" min="0.01" step="0.01" class="form-control" id="marcMaterialPreco" placeholder="270.00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaterialFornecedor">Fornecedor</label>
+                                    <input type="text" class="form-control" id="marcMaterialFornecedor" placeholder="(opcional)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="marcMaterialModalCancel">Cancelar</button>
+                            <button class="btn btn-primary" id="marcMaterialModalSave"><i class="fas fa-check"></i> Salvar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MODAL: Acessório de Marcenaria ── -->
+                <div class="modal-backdrop hidden" id="marcAcessorioModalBackdrop">
+                    <div class="modal modal-sm" role="dialog" aria-modal="true">
+                        <div class="modal-header">
+                            <h2 class="modal-title"><i class="fas fa-screwdriver-wrench"></i> <span id="marcAcessorioModalTitle">Novo Acessório</span></h2>
+                            <button class="modal-close" id="marcAcessorioModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="marcAcessorioId">
+                            <div class="form-group">
+                                <label class="form-label" for="marcAcessorioNome">Nome <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="marcAcessorioNome" placeholder="Ex: Dobradiça Caneco 35mm">
+                            </div>
+                            <div class="marc-form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="marcAcessorioCategoria">Categoria <span class="required">*</span></label>
+                                    <select class="form-control" id="marcAcessorioCategoria">
+                                        <option value="DOBRADICA">Dobradiça</option>
+                                        <option value="CORREDICA">Corrediça</option>
+                                        <option value="PUXADOR">Puxador</option>
+                                        <option value="PARAFUSO">Parafuso</option>
+                                        <option value="FITA_BORDA">Fita de borda</option>
+                                        <option value="OUTRO">Outro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcAcessorioUnidade">Unidade <span class="required">*</span></label>
+                                    <select class="form-control" id="marcAcessorioUnidade">
+                                        <option value="UN">UN</option>
+                                        <option value="M">M</option>
+                                        <option value="KG">KG</option>
+                                        <option value="PAR">PAR</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcAcessorioPreco">Preço unitário (R$) <span class="required">*</span></label>
+                                    <input type="number" min="0.01" step="0.01" class="form-control" id="marcAcessorioPreco" placeholder="6.50">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcAcessorioFornecedor">Fornecedor</label>
+                                    <input type="text" class="form-control" id="marcAcessorioFornecedor" placeholder="(opcional)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="marcAcessorioModalCancel">Cancelar</button>
+                            <button class="btn btn-primary" id="marcAcessorioModalSave"><i class="fas fa-check"></i> Salvar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MODAL: Salvar Cálculo ── -->
+                <div class="modal-backdrop hidden" id="marcSaveCalcModalBackdrop">
+                    <div class="modal modal-sm" role="dialog" aria-modal="true">
+                        <div class="modal-header">
+                            <h2 class="modal-title"><i class="fas fa-save"></i> <span id="marcSaveCalcModalTitle">Salvar cálculo</span></h2>
+                            <button class="modal-close" id="marcSaveCalcModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label" for="marcSaveCalcNome">Nome do cálculo <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="marcSaveCalcNome" placeholder="Ex: Armário Maria — Cozinha 2,40m" maxlength="255">
+                                <p class="text-muted text-sm" style="margin-top:4px">Use um nome que ajude a identificar depois (cliente, ambiente, descrição curta).</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="marcSaveCalcObs">Observações <span class="text-muted">(opcional)</span></label>
+                                <textarea class="form-control" id="marcSaveCalcObs" rows="3" placeholder="Notas sobre o cálculo..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="marcSaveCalcModalCancel">Cancelar</button>
+                            <button class="btn btn-primary" id="marcSaveCalcModalSave"><i class="fas fa-check"></i> Salvar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MODAL: Mão de obra + Margem ── -->
+                <div class="modal-backdrop hidden" id="marcMaoObraModalBackdrop">
+                    <div class="modal modal-md" role="dialog" aria-modal="true">
+                        <div class="modal-header">
+                            <h2 class="modal-title"><i class="fas fa-hard-hat"></i> Editar Mão de obra e margem</h2>
+                            <button class="modal-close" id="marcMaoObraModalClose" aria-label="Fechar"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="marc-form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaoObraCustoDiario">Custo diário do funcionário (R$) <span class="required">*</span></label>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="marcMaoObraCustoDiario" placeholder="300.00">
+                                    <p class="text-muted text-sm" style="margin-top:4px">Valor pago por dia de profissional principal.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMaoObraCustoAjudante">Custo diário do ajudante (R$)</label>
+                                    <input type="number" min="0" step="0.01" class="form-control" id="marcMaoObraCustoAjudante" placeholder="(opcional)">
+                                    <p class="text-muted text-sm" style="margin-top:4px">Deixe em branco se não houver ajudante.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="marcMargemPadraoPct">Margem de lucro padrão (%) <span class="required">*</span></label>
+                                    <input type="number" min="0" max="1000" step="0.01" class="form-control" id="marcMargemPadraoPct" placeholder="30.00">
+                                    <p class="text-muted text-sm" style="margin-top:4px">Aplicada por padrão no preço de venda. Pode ser sobrescrita por cálculo.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="marcMaoObraModalCancel">Cancelar</button>
+                            <button class="btn btn-primary" id="marcMaoObraModalSave"><i class="fas fa-check"></i> Salvar</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- ORÇAMENTO FORM MODULE (página dedicada de criação/edição) -->
                 <section id="orcamento-form-module" class="module">
@@ -2292,6 +2776,7 @@
     <script src="js/tarefas.js"></script>
     <script src="js/oportunidades.js"></script>
     <script src="js/orcamentos.js"></script>
+    <script src="js/marcenaria.js"></script>
     <script src="js/relatorios.js"></script>
     <script src="js/perfil.js"></script>
     <script src="js/configuracoes.js"></script>
