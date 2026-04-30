@@ -8,6 +8,7 @@ import com.versatilis.crm.dto.WhatsAppEnvioResponseDTO;
 import com.versatilis.crm.model.Orcamento;
 import com.versatilis.crm.services.EmailService;
 import com.versatilis.crm.services.OrcamentoService;
+import com.versatilis.crm.services.PdfService;
 import com.versatilis.crm.services.TemplateService;
 import com.versatilis.crm.services.WhatsAppService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class OrcamentoController {
     private final EmailService emailService;
     private final TemplateService templateService;
     private final WhatsAppService whatsAppService;
+    private final PdfService pdfService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
@@ -116,6 +118,25 @@ public class OrcamentoController {
         WhatsAppEnvioResponseDTO envio = whatsAppService.enviarOrcamento(id, body);
         return ResponseEntity.ok(
             ResponseDTO.sucesso("Orçamento enviado via WhatsApp para " + envio.getTelefone(), envio));
+    }
+
+    /**
+     * Download direto do PDF do orcamento. Usa o mesmo PdfService do envio
+     * via WhatsApp, garantindo que o PDF baixado seja identico ao que o
+     * cliente recebe (todas as paginas, sem depender do navegador renderizar
+     * a preview no @media print).
+     */
+    @GetMapping("/{id}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
+    public ResponseEntity<byte[]> gerarPdf(@PathVariable Long id) {
+        log.info("GET /api/orcamentos/{}/pdf - Gerando PDF do orcamento", id);
+        OrcamentoDTO orcamento = orcamentoService.buscarPorId(id);
+        byte[] pdf = pdfService.gerarPdf(orcamento);
+        String filename = "orcamento-" + (orcamento.getNumero() != null ? orcamento.getNumero() : id) + ".pdf";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+            .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+            .body(pdf);
     }
 
     @GetMapping("/{id}/docx")

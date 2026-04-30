@@ -239,7 +239,7 @@ class OrcamentosModule {
         // Preview modal
         this._on('orcPreviewClose', 'click', () => this.closePreview());
         this._on(this.$previewModal, 'click', e => { if (e.target === this.$previewModal) this.closePreview(); });
-        this._on('orcPrintBtn',     'click', () => window.print());
+        this._on('orcPrintBtn',     'click', () => this.downloadPdf());
         this._on('orcDocxBtn',      'click', () => this.downloadDocx());
         this._on('orcWhatsAppBtn',  'click', () => this.openWhatsAppModal());
         this._on('orcEmailBtn',     'click', () => this.openEmailModal());
@@ -781,6 +781,45 @@ class OrcamentosModule {
     closePreview() { this.$previewModal.classList.add('hidden'); }
 
     // ── Download DOCX (template preenchido) ──────────────────────────
+
+    /**
+     * Baixa o PDF do orçamento direto do backend (mesmo PDF que o WhatsApp anexa
+     * no envio). Substitui o antigo window.print() que dependia do @media print
+     * da preview HTML — esse caminho truncava após a 1ª página em alguns casos.
+     */
+    async downloadPdf() {
+        const o = this.currentPreviewOrc;
+        if (!o) return;
+        const btn = document.getElementById('orcPrintBtn');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        try {
+            const token = this.getToken();
+            const res = await fetch(`${API_ORCAMENTOS}/${o.id}/pdf`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.mensagem || `HTTP ${res.status}`);
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `orcamento-${o.numero || o.id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            this.toast('success', 'fas fa-file-pdf', `PDF <strong>${this.esc(o.numero || '')}</strong> baixado.`);
+        } catch (e) {
+            this.toast('danger', 'fas fa-exclamation-circle', `Erro ao gerar PDF: ${this.esc(e.message)}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
 
     async downloadDocx() {
         const o = this.currentPreviewOrc;
