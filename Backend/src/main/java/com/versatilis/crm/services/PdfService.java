@@ -15,9 +15,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Gera PDF de orcamento de forma independente (sem DOCX template).
@@ -58,14 +58,18 @@ public class PdfService {
 
             NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
 
+            // Campos estruturados serializados como JSON pelo frontend (v2).
+            JsonNode obs = parseJson(o.getObservacoesComerciais());
+            JsonNode rod = parseJson(o.getRodapeInstitucional());
+
             buildHeader(doc, o);
             buildClientSection(doc, o);
+            buildDescricaoServicos(doc, o, obs);  // descrição + especificações ANTES dos itens
             buildItemsTable(doc, o, nf);
             buildTotals(doc, o, nf);
-
-            if (o.getObservacoesComerciais() != null && !o.getObservacoesComerciais().isBlank()) {
-                buildObservacoes(doc, o);
-            }
+            buildCondicoesPagamento(doc, obs);
+            buildAssinaturas(doc, o, rod);
+            buildTextoJuridico(doc, o, rod);
 
             doc.close();
             return baos.toByteArray();
@@ -127,7 +131,12 @@ public class PdfService {
 
         String cidEst = joinNonBlank(", ", o.getClienteCidade(), o.getClienteEstado());
         addLabelValue(t, "Cidade / Estado", cidEst.isBlank() ? "-" : cidEst, true);
-        addLabelValue(t, "Endereço",        safe(o.getClienteEndereco()), false);
+        // O cadastro de cliente não tem campo de endereço dedicado — usa-se o
+        // conteúdo de "Observações" do cliente neste campo (decisão de produto).
+        String endereco = (o.getClienteObservacoes() != null && !o.getClienteObservacoes().isBlank())
+            ? o.getClienteObservacoes()
+            : o.getClienteEndereco();
+        addLabelValue(t, "Endereço",        safe(endereco), false);
 
         if (o.getOportunidadeTitulo() != null) {
             addLabelValue(t, "Oportunidade", o.getOportunidadeTitulo(), true);
@@ -156,9 +165,13 @@ public class PdfService {
             t.addCell(c);
         }
 
-        // Data rows
-        List<OrcamentoItemDTO> itens = o.getItens();
-        if (itens == null || itens.isEmpty()) {
+        // Data rows — exclui o marcador legado "VALOR_TOTAL" (orçamentos antigos
+        // guardavam o total num item-marcador; o total agora vem da soma dos itens).
+        List<OrcamentoItemDTO> itens = o.getItens() == null ? List.of()
+            : o.getItens().stream()
+                .filter(i -> !"VALOR_TOTAL".equals(i.getDescricao()))
+                .collect(Collectors.toList());
+        if (itens.isEmpty()) {
             PdfPCell empty = new PdfPCell(new Phrase("Nenhum item cadastrado.", font(9, Font.ITALIC, C_MUTED)));
             empty.setColspan(5);
             empty.setPadding(10);
@@ -213,24 +226,27 @@ public class PdfService {
         doc.add(outer);
     }
 
-    private void buildObservacoes(Document doc, OrcamentoDTO o) throws DocumentException {
-        Paragraph title = new Paragraph("Observações Comerciais", font(10, Font.BOLD, C_PRIMARY));
-        title.setSpacingAfter(4);
-        doc.add(title);
+    /**
+     * Descrição detalhada dos serviços + especificações técnicas. Renderizado
+     * ANTES da tabela de itens, funcionando como prévia do que será detalhado.
+     */
+    private void buildDescricaoServicos(Document doc, OrcamentoDTO o, JsonNode obs) throws DocumentException {
+        String descricao = jsonText(obs, "descricaoDetalhada");
+        if (descricao == null && obs == null) {
+            // Legado: observacoesComerciais como texto puro (não-JSON).
+            String raw = o.getObservacoesComerciais();
+            if (raw != null && !raw.isBlank()) descricao = raw;
+        }
 
-        PdfPTable t = new PdfPTable(1);
-        t.setWidthPercentage(100);
-        t.setSpacingAfter(16);
+        if (descricao != null && !descricao.isBlank()) {
+            Paragraph title = new Paragraph("Descrição Detalhada dos Serviços", font(10, Font.BOLD, C_PRIMARY));
+            title.setSpacingAfter(4);
+            doc.add(title);
 
-        // Tenta interpretar o campo como JSON (legado do frontend que serializou objeto)
-        // Se for JSON com campos conhecidos (descricaoDetalhada, condicao1, condicao2,
-        // tipoSistema, prazoExecucao, garantia), renderiza bonito.
-        // Caso contrário, mostra como texto simples.
-        List<KV> linhas = parseObservacoes(o.getObservacoesComerciais());
-
-        if (linhas.isEmpty()) {
-            // Texto puro
-            PdfPCell c = new PdfPCell(new Phrase(o.getObservacoesComerciais(), font(9, Font.NORMAL, C_TEXT)));
+            PdfPTable t = new PdfPTable(1);
+            t.setWidthPercentage(100);
+            t.setSpacingAfter(14);
+            PdfPCell c = new PdfPCell(new Phrase(descricao, font(9, Font.NORMAL, C_TEXT)));
             c.setBackgroundColor(C_LIGHT);
             c.setBorderColor(C_BORDER);
             c.setBorderWidthLeft(3f);
@@ -238,67 +254,139 @@ public class PdfService {
             c.setBorder(Rectangle.LEFT);
             c.setPadding(10);
             t.addCell(c);
-        } else {
-            // JSON estruturado — renderiza como label/value
-            PdfPCell wrapper = new PdfPCell();
-            wrapper.setBackgroundColor(C_LIGHT);
-            wrapper.setBorderColor(C_BORDER);
-            wrapper.setBorderWidthLeft(3f);
-            wrapper.setBorderColorLeft(C_PRIMARY);
-            wrapper.setBorder(Rectangle.LEFT);
-            wrapper.setPadding(10);
-
-            for (KV kv : linhas) {
-                Paragraph p = new Paragraph();
-                p.add(new Chunk(kv.label + ": ", font(9, Font.BOLD, C_PRIMARY)));
-                p.add(new Chunk(kv.value, font(9, Font.NORMAL, C_TEXT)));
-                p.setSpacingAfter(4);
-                wrapper.addElement(p);
-            }
-            t.addCell(wrapper);
+            doc.add(t);
         }
+
+        // Especificações técnicas (também antes dos itens)
+        String tipoSistema   = jsonText(obs, "tipoSistema");
+        String qtdUnidades   = jsonText(obs, "quantidadeUnidades");
+        String prazoExecucao = jsonText(obs, "prazoExecucao");
+        String garantia      = jsonText(obs, "garantia");
+
+        if (tipoSistema != null || qtdUnidades != null || prazoExecucao != null || garantia != null) {
+            Paragraph title = new Paragraph("Especificações Técnicas", font(10, Font.BOLD, C_PRIMARY));
+            title.setSpacingAfter(6);
+            doc.add(title);
+
+            PdfPTable t = new PdfPTable(new float[]{1.2f, 2.8f});
+            t.setWidthPercentage(100);
+            t.setSpacingAfter(16);
+            if (tipoSistema   != null) addLabelValue(t, "Tipo de Sistema",        tipoSistema, true);
+            if (qtdUnidades   != null) addLabelValue(t, "Quantidade de Unidades", qtdUnidades + " unidades", true);
+            if (prazoExecucao != null) addLabelValue(t, "Prazo de Execução",      prazoExecucao, true);
+            if (garantia      != null) addLabelValue(t, "Garantia",               garantia, true);
+            doc.add(t);
+        }
+    }
+
+    private void buildCondicoesPagamento(Document doc, JsonNode obs) throws DocumentException {
+        String c1 = jsonText(obs, "condicao1");
+        String c2 = jsonText(obs, "condicao2");
+        if (c1 == null && c2 == null) return;
+
+        Paragraph title = new Paragraph("Condições de Pagamento", font(10, Font.BOLD, C_PRIMARY));
+        title.setSpacingAfter(4);
+        doc.add(title);
+
+        PdfPTable t = new PdfPTable(1);
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(16);
+
+        PdfPCell wrapper = new PdfPCell();
+        wrapper.setBackgroundColor(C_LIGHT);
+        wrapper.setBorderColor(C_BORDER);
+        wrapper.setBorderWidthLeft(3f);
+        wrapper.setBorderColorLeft(C_PRIMARY);
+        wrapper.setBorder(Rectangle.LEFT);
+        wrapper.setPadding(10);
+        if (c1 != null) {
+            Paragraph p = new Paragraph("• 1ª opção: " + c1, font(9, Font.NORMAL, C_TEXT));
+            p.setSpacingAfter(c2 != null ? 4 : 0);
+            wrapper.addElement(p);
+        }
+        if (c2 != null) {
+            wrapper.addElement(new Paragraph("• 2ª opção: " + c2, font(9, Font.NORMAL, C_TEXT)));
+        }
+        t.addCell(wrapper);
+        doc.add(t);
+    }
+
+    /** Bloco de assinaturas: responsável comercial (empresa) e cliente. */
+    private void buildAssinaturas(Document doc, OrcamentoDTO o, JsonNode rod) throws DocumentException {
+        String empresa = jsonText(rod, "empresa");
+        if (empresa == null) empresa = "Versatilis";
+        String respComercial = jsonText(rod, "responsavelComercial");
+
+        PdfPTable t = new PdfPTable(new float[]{1f, 0.2f, 1f});
+        t.setWidthPercentage(100);
+        t.setSpacingBefore(40);  // espaço para assinar acima da linha
+        t.setSpacingAfter(18);
+
+        t.addCell(signatureCell(empresa, respComercial != null ? respComercial : "Responsável Comercial"));
+        t.addCell(emptyCell());
+        t.addCell(signatureCell("Cliente", safe(o.getClienteNome())));
 
         doc.add(t);
     }
 
-    /**
-     * Detecta se a string de observações é um JSON estruturado (legado) e
-     * extrai os campos relevantes em pares label/value. Se não for JSON
-     * ou não tiver campos úteis, retorna lista vazia (caller mostra como texto).
-     */
-    private List<KV> parseObservacoes(String raw) {
-        List<KV> out = new ArrayList<>();
-        if (raw == null) return out;
-        String s = raw.trim();
-        if (!s.startsWith("{") || !s.endsWith("}")) return out;
-        try {
-            JsonNode node = new ObjectMapper().readTree(s);
-            addIfPresent(out, node, "descricaoDetalhada", "Descrição detalhada");
-            addIfPresent(out, node, "tipoSistema",        "Tipo de sistema");
-            addIfPresent(out, node, "quantidadeUnidades", "Quantidade de unidades");
-            addIfPresent(out, node, "prazoExecucao",      "Prazo de execução");
-            addIfPresent(out, node, "garantia",           "Garantia");
-            addIfPresent(out, node, "condicao1",          "Condição de pagamento");
-            addIfPresent(out, node, "condicao2",          "Condição complementar");
-        } catch (Exception ignored) {
-            // não era JSON válido — caller renderiza como texto
+    private PdfPCell signatureCell(String boldLine, String subLine) {
+        PdfPCell c = new PdfPCell();
+        c.setBorder(Rectangle.TOP);
+        c.setBorderWidthTop(1f);
+        c.setBorderColorTop(C_TEXT);
+        c.setPaddingTop(6);
+        Paragraph p1 = new Paragraph(boldLine, font(9, Font.BOLD, C_TEXT));
+        p1.setAlignment(Element.ALIGN_CENTER);
+        c.addElement(p1);
+        if (subLine != null && !subLine.isBlank()) {
+            Paragraph p2 = new Paragraph(subLine, font(8, Font.NORMAL, C_MUTED));
+            p2.setAlignment(Element.ALIGN_CENTER);
+            c.addElement(p2);
         }
-        return out;
+        return c;
     }
 
-    private void addIfPresent(List<KV> out, JsonNode node, String field, String label) {
+    private void buildTextoJuridico(Document doc, OrcamentoDTO o, JsonNode rod) throws DocumentException {
+        String texto = jsonText(rod, "textoJuridico");
+        if (texto == null && rod == null) {
+            String raw = o.getRodapeInstitucional();
+            if (raw != null && !raw.isBlank()) texto = raw;
+        }
+        if (texto == null || texto.isBlank()) return;
+
+        PdfPTable t = new PdfPTable(1);
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(8);
+        PdfPCell c = new PdfPCell(new Phrase(texto, font(8, Font.ITALIC, C_MUTED)));
+        c.setBorder(Rectangle.NO_BORDER);
+        c.setPaddingTop(6);
+        t.addCell(c);
+        doc.add(t);
+    }
+
+    // == JSON helpers (campos estruturados v2 do frontend) ==
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** Faz parse de uma string que deve ser um objeto JSON; null se não for. */
+    private JsonNode parseJson(String raw) {
+        if (raw == null) return null;
+        String s = raw.trim();
+        if (!s.startsWith("{") || !s.endsWith("}")) return null;
+        try {
+            return MAPPER.readTree(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Lê um campo de texto do JSON; null se ausente, nulo ou em branco. */
+    private String jsonText(JsonNode node, String field) {
+        if (node == null) return null;
         JsonNode v = node.get(field);
-        if (v == null || v.isNull()) return;
-        String value = v.asText();
-        if (value == null || value.isBlank()) return;
-        out.add(new KV(label, value));
-    }
-
-    /** Par label/value usado na renderização das observações estruturadas. */
-    private static class KV {
-        final String label;
-        final String value;
-        KV(String label, String value) { this.label = label; this.value = value; }
+        if (v == null || v.isNull()) return null;
+        String s = v.asText();
+        return (s == null || s.isBlank()) ? null : s;
     }
 
     // == Cell helpers ==

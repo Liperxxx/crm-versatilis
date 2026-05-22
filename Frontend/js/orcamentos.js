@@ -169,7 +169,7 @@ class OrcamentosModule {
         // Bloco 4 — Itens (serviços incluídos)
         this.$itensBody   = document.getElementById('orcItensBody');
         // Bloco 5 — Valores
-        this.$fValorTotal = document.getElementById('orcValorTotal');
+        this.$fSubtotal   = document.getElementById('orcSubtotalDisplay');
         this.$fDesconto   = document.getElementById('orcDesconto');
         this.$fTotal      = document.getElementById('orcTotal');
         this.$fCondicao1  = document.getElementById('orcCondicao1');
@@ -289,8 +289,7 @@ class OrcamentosModule {
         // Add service item
         this._on('orcAddItem', 'click', () => this.addItemRow());
 
-        // Recalculate totals when values change
-        this._on(this.$fValorTotal, 'input', () => this.recalcTotals());
+        // Recalcula ao mudar o desconto (cada linha de item liga seu próprio listener)
         this._on(this.$fDesconto,   'input', () => this.recalcTotals());
 
         // Auto-fill client info on selection
@@ -376,17 +375,21 @@ class OrcamentosModule {
         if (!id) { this.$clienteInfo.classList.add('hidden'); return; }
         let c;
         if (orcData) {
-            c = { endereco: orcData.clienteEndereco, cidade: orcData.clienteCidade, estado: orcData.clienteEstado,
+            c = { observacoes: orcData.clienteObservacoes, cidade: orcData.clienteCidade, estado: orcData.clienteEstado,
                   telefone: orcData.clienteTelefone, email: orcData.clienteEmail };
         } else {
             c = this.clientesCache.find(x => x.id === id);
         }
         if (!c) { this.$clienteInfo.classList.add('hidden'); return; }
-        const endParts = [c.endereco, c.cidade, c.estado].filter(Boolean);
-        this.$fCliEndereco.value  = endParts.join(', ') || '';
+        // O cadastro de cliente não tem campo de endereço — usa-se "Observações"
+        // como endereço; se vazio, cai para cidade/estado.
+        const endereco = (c.observacoes && c.observacoes.trim())
+            ? c.observacoes.trim()
+            : [c.cidade, c.estado].filter(Boolean).join(', ');
+        this.$fCliEndereco.value  = endereco || '';
         this.$fCliTelefone.value  = c.telefone || '';
         this.$fCliEmail.value     = c.email    || '';
-        const hasSomething = endParts.length || c.telefone || c.email;
+        const hasSomething = endereco || c.telefone || c.email;
         this.$clienteInfo.classList.toggle('hidden', !hasSomething);
     }
 
@@ -541,10 +544,22 @@ class OrcamentosModule {
                 }
 
                 const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
-                const totalItem    = (o.itens || []).find(i => i.descricao === 'VALOR_TOTAL');
-                serviceItems.forEach(item => this.addItemRow(item.descricao));
+                const marker       = (o.itens || []).find(i => i.descricao === 'VALOR_TOTAL');
+                const itemsSum     = serviceItems.reduce((s, i) => s + (Number(i.valorTotal) || 0), 0);
+                serviceItems.forEach(item => this.addItemRow(item));
                 if (serviceItems.length === 0) this.addItemRow();
-                this.$fValorTotal.value = totalItem ? (totalItem.valorUnitario ?? o.total ?? 0) : (o.total ?? 0);
+                // Compat com orçamentos antigos: o total ficava num item-marcador
+                // (VALOR_TOTAL) e os itens vinham com valor 0. Coloca o total no
+                // 1º item para preservá-lo ao re-salvar no novo modelo (soma dos itens).
+                if (marker && itemsSum === 0) {
+                    const legacyTotal = Number(marker.valorTotal ?? marker.valorUnitario ?? o.subtotal ?? 0);
+                    if (legacyTotal > 0) {
+                        const unitEl = this.$itensBody.querySelector('.item-servico-unit');
+                        const qtdEl  = this.$itensBody.querySelector('.item-servico-qtd');
+                        if (unitEl) unitEl.value = legacyTotal;
+                        if (qtdEl)  qtdEl.value  = 1;
+                    }
+                }
                 this.recalcTotals();
 
             } catch (e) {
@@ -615,34 +630,69 @@ class OrcamentosModule {
 
     // -- Serviços incluídos (lista dinâmica de texto) ---
 
-    addItemRow(descricaoInicial = null) {
-        if (descricaoInicial === 'VALOR_TOTAL') return;
+    addItemRow(item = null) {
+        // Compat: chamadas antigas passavam a descrição como string.
+        if (typeof item === 'string') item = { descricao: item };
+        if (item && item.descricao === 'VALOR_TOTAL') return;
         this.itemSeq++;
+
+        const desc = (item && item.descricao && item.descricao !== 'VALOR_TOTAL') ? item.descricao : '';
+        const qtd  = (item && item.quantidade != null) ? item.quantidade : 1;
+        const unit = (item && item.valorUnitario != null && Number(item.valorUnitario) > 0)
+            ? Number(item.valorUnitario) : '';
+        const descEsc = String(desc).replace(/"/g, '&quot;');
+
         const div = document.createElement('div');
         div.className = 'orc-servico-row';
-        const valEsc = typeof descricaoInicial === 'string'
-            ? descricaoInicial.replace(/"/g, '&quot;')
-            : '';
         div.innerHTML = `
             <input type="text" class="form-control item-servico-desc"
-                   placeholder="Descreva o serviço incluído (ex.: Limpeza e lubrificação do sistema)..."
-                   value="${valEsc}">
+                   placeholder="Descreva o item (ex.: Armário de cozinha sob medida)..."
+                   value="${descEsc}">
+            <input type="number" class="form-control item-servico-qtd" min="1" step="1" value="${qtd}">
+            <input type="number" class="form-control item-servico-unit" min="0" step="0.01" placeholder="0,00" value="${unit}">
+            <input type="text" class="form-control item-servico-sub" readonly tabindex="-1">
             <button type="button" class="btn-remove-item" title="Remover"><i class="fas fa-times"></i></button>`;
         this.$itensBody.appendChild(div);
-        div.querySelector('.btn-remove-item').addEventListener('click', () => div.remove());
+
+        div.querySelector('.btn-remove-item').addEventListener('click', () => { div.remove(); this.recalcTotals(); });
+        div.querySelector('.item-servico-qtd').addEventListener('input',  () => this.recalcTotals());
+        div.querySelector('.item-servico-unit').addEventListener('input', () => this.recalcTotals());
+        this.recalcTotals();
     }
 
     recalcTotals() {
-        const total    = parseFloat(this.$fValorTotal?.value) || 0;
-        const desconto = parseFloat(this.$fDesconto?.value)  || 0;
-        if (this.$fTotal) this.$fTotal.value = this.formatCurrency(Math.max(0, total - desconto));
+        let subtotal = 0;
+        if (this.$itensBody) {
+            this.$itensBody.querySelectorAll('.orc-servico-row').forEach(row => {
+                const qtd  = parseFloat(row.querySelector('.item-servico-qtd')?.value)  || 0;
+                const unit = parseFloat(row.querySelector('.item-servico-unit')?.value) || 0;
+                const sub  = qtd * unit;
+                const subEl = row.querySelector('.item-servico-sub');
+                if (subEl) subEl.value = this.formatCurrency(sub);
+                subtotal += sub;
+            });
+        }
+        const desconto = parseFloat(this.$fDesconto?.value) || 0;
+        this._subtotal = subtotal;
+        if (this.$fSubtotal) this.$fSubtotal.value = this.formatCurrency(subtotal);
+        if (this.$fTotal)    this.$fTotal.value    = this.formatCurrency(Math.max(0, subtotal - desconto));
     }
 
     collectItens() {
         const itens = [];
-        this.$itensBody.querySelectorAll('.item-servico-desc').forEach(input => {
-            const desc = input.value.trim();
-            if (desc) itens.push({ descricao: desc, quantidade: 1, valorUnitario: 0, valorTotal: 0 });
+        this.$itensBody.querySelectorAll('.orc-servico-row').forEach(row => {
+            const desc = row.querySelector('.item-servico-desc').value.trim();
+            const qtd  = parseInt(row.querySelector('.item-servico-qtd').value)    || 1;
+            const unit = parseFloat(row.querySelector('.item-servico-unit').value) || 0;
+            // Inclui a linha se houver descrição OU valor (linha totalmente vazia é ignorada).
+            if (desc || unit > 0) {
+                itens.push({
+                    descricao: desc || 'Item',
+                    quantidade: qtd,
+                    valorUnitario: unit,
+                    valorTotal: +(unit * qtd).toFixed(2),
+                });
+            }
         });
         return itens;
     }
@@ -652,12 +702,10 @@ class OrcamentosModule {
     async save() {
         if (!this.validateForm()) return;
 
-        const totalValue = parseFloat(this.$fValorTotal.value) || 0;
         const desconto   = parseFloat(this.$fDesconto.value)   || 0;
         const opVal      = this.$fOpId.value.trim();
 
         const itens = this.collectItens();
-        itens.push({ descricao: 'VALOR_TOTAL', quantidade: 1, valorUnitario: totalValue, valorTotal: totalValue });
 
         const obsData = {
             v: 2,
@@ -718,8 +766,12 @@ class OrcamentosModule {
         if (!cli || isNaN(parseInt(cli))) { this.showFieldError(this.$fClienteId, 'orcErrCliente'); ok = false; }
         if (!this.$fEmissao.value)  { this.showFieldError(this.$fEmissao, 'orcErrEmissao');   ok = false; }
         if (!this.$fValidade.value) { this.showFieldError(this.$fValidade, 'orcErrValidade');  ok = false; }
-        const tot = parseFloat(this.$fValorTotal.value) || 0;
-        if (tot <= 0) { this.showFieldError(this.$fValorTotal, 'orcErrValor'); ok = false; }
+        this.recalcTotals();
+        if (!(this._subtotal > 0)) {
+            const errEl = document.getElementById('orcErrValor');
+            if (errEl) errEl.classList.remove('hidden');
+            ok = false;
+        }
         return ok;
     }
 
@@ -1008,14 +1060,27 @@ class OrcamentosModule {
 
         // --- Service items (exclude VALOR_TOTAL marker) ---
         const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
-        const totalValue   = o.total || 0;
         const desconto     = o.desconto || 0;
+        const subtotalItens = (o.subtotal != null)
+            ? o.subtotal
+            : serviceItems.reduce((s, i) => s + (Number(i.valorTotal) || 0), 0);
+        const totalFinal   = (o.total != null) ? o.total : Math.max(0, subtotalItens - desconto);
 
-        const clienteEndereco = [o.clienteEndereco, o.clienteCidade, o.clienteEstado].filter(Boolean).join(', ');
+        // Cliente não tem campo de endereço — usa "Observações" como endereço.
+        const clienteEndereco = (o.clienteObservacoes && o.clienteObservacoes.trim())
+            ? o.clienteObservacoes.trim()
+            : [o.clienteEndereco, o.clienteCidade, o.clienteEstado].filter(Boolean).join(', ');
 
-        const servicosHtml = serviceItems.length > 0
-            ? serviceItems.map(i => `<li>${this.esc(i.descricao)}</li>`).join('')
-            : '<li style="color:#999">Nenhum serviço listado</li>';
+        const itemRows = serviceItems.length > 0
+            ? serviceItems.map((i, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${this.esc(i.descricao)}</td>
+                    <td style="text-align:right">${i.quantidade != null ? i.quantidade : 1}</td>
+                    <td style="text-align:right">${this.formatCurrency(i.valorUnitario || 0)}</td>
+                    <td style="text-align:right">${this.formatCurrency(i.valorTotal || 0)}</td>
+                </tr>`).join('')
+            : '<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item listado</td></tr>';
 
         this.$printArea.innerHTML = `
             <!-- CABEÇALHO — imagem -->
@@ -1066,10 +1131,21 @@ class OrcamentosModule {
             </div>` : ''}
 
             ${serviceItems.length > 0 ? `
-            <!-- SERVIÇOS INCLUÍDOS -->
+            <!-- ITENS DA PROPOSTA -->
             <div class="orc-doc-section">
-                <h3>3. Serviços Incluídos</h3>
-                <ul class="orc-doc-services">${servicosHtml}</ul>
+                <h3>3. Itens da Proposta</h3>
+                <table class="orc-doc-items">
+                    <thead>
+                        <tr>
+                            <th style="width:30px">#</th>
+                            <th>Descrição</th>
+                            <th style="width:48px;text-align:right">Qtd</th>
+                            <th style="width:90px;text-align:right">Val. Unit.</th>
+                            <th style="width:90px;text-align:right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemRows}</tbody>
+                </table>
             </div>` : ''}
 
             <!-- VALORES E PAGAMENTO -->
@@ -1077,12 +1153,12 @@ class OrcamentosModule {
                 <h3>${serviceItems.length > 0 ? '4.' : '2.'} Valores e Condições de Pagamento</h3>
                 <div class="orc-doc-totals">
                     <table>
-                        <tr><td class="label">Valor Total do Orçamento:</td>
-                            <td class="value"><strong>${this.formatCurrency(totalValue)}</strong></td></tr>
+                        <tr><td class="label">Subtotal:</td>
+                            <td class="value">${this.formatCurrency(subtotalItens)}</td></tr>
                         ${desconto > 0 ? `<tr><td class="label">Desconto:</td>
-                            <td class="value" style="color:var(--color-danger)">− ${this.formatCurrency(desconto)}</td></tr>
-                            <tr class="total-row"><td class="label">Total com Desconto:</td>
-                            <td class="value">${this.formatCurrency(Math.max(0, totalValue - desconto))}</td></tr>` : ''}
+                            <td class="value" style="color:var(--color-danger)">− ${this.formatCurrency(desconto)}</td></tr>` : ''}
+                        <tr class="total-row"><td class="label">Total${desconto > 0 ? ' com Desconto' : ''}:</td>
+                            <td class="value"><strong>${this.formatCurrency(totalFinal)}</strong></td></tr>
                     </table>
                 </div>
                 ${condicao1 || condicao2 ? `

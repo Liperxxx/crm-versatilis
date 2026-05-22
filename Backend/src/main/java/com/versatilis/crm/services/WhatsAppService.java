@@ -1,7 +1,6 @@
 package com.versatilis.crm.services;
 
 import com.versatilis.crm.dto.OrcamentoDTO;
-import com.versatilis.crm.dto.OrcamentoItemDTO;
 import com.versatilis.crm.dto.WhatsAppEnvioDTO;
 import com.versatilis.crm.dto.WhatsAppEnvioResponseDTO;
 import com.versatilis.crm.exceptions.BadRequestException;
@@ -154,34 +153,11 @@ public class WhatsAppService {
         BigDecimal total = o.getTotal() != null ? o.getTotal() : BigDecimal.ZERO;
         sb.append("💰 *Total: ").append(nf.format(total)).append("*\n");
 
-        if (o.getItens() != null && !o.getItens().isEmpty()) {
-            sb.append("\n*Itens:*\n");
-            int i = 1;
-            for (OrcamentoItemDTO item : o.getItens()) {
-                if (i > 5) {
-                    sb.append("– … e mais ").append(o.getItens().size() - 5).append(" item(ns)\n");
-                    break;
-                }
-                String descricao = sanitizarDescricaoItem(item.getDescricao());
-                Integer qtd = item.getQuantidade() != null ? item.getQuantidade() : 1;
-                sb.append("– ").append(descricao).append(" (").append(qtd).append("x)\n");
-                i++;
-            }
-        }
-
-        sb.append("\n_O PDF completo segue anexado. Estamos à disposição para qualquer dúvida._\n\n");
+        // A pedido do comercial, a mensagem não lista os itens — o detalhamento
+        // completo segue no PDF anexado.
+        sb.append("\nO PDF completo segue anexado. Estamos à disposição para qualquer dúvida.\n\n");
         sb.append("— *Versatilis*");
         return sb.toString();
-    }
-
-    /**
-     * Limpa descrição do item: vazio ou placeholder tipo VALOR_TOTAL → texto amigável.
-     */
-    private String sanitizarDescricaoItem(String descricao) {
-        if (descricao == null || descricao.isBlank()) return "Item sem descrição";
-        String d = descricao.trim();
-        if (d.matches("^[A-Z_]{4,}$")) return "Item sem descrição";
-        return d;
     }
 
     private String buildPdfFileName(OrcamentoDTO o) {

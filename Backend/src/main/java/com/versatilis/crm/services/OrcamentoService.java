@@ -155,9 +155,12 @@ public class OrcamentoService {
     private OrcamentoItem buildItem(OrcamentoItemDTO dto) {
         OrcamentoItem item = new OrcamentoItem();
         item.setDescricao(dto.getDescricao());
-        item.setQuantidade(dto.getQuantidade());
-        item.setValorUnitario(dto.getValorUnitario());
-        item.setValorTotal(dto.getValorUnitario().multiply(BigDecimal.valueOf(dto.getQuantidade())));
+        // Null-safe: quantidade default 1, valor unitário default 0.
+        int quantidade = dto.getQuantidade() != null ? dto.getQuantidade() : 1;
+        BigDecimal valorUnitario = dto.getValorUnitario() != null ? dto.getValorUnitario() : BigDecimal.ZERO;
+        item.setQuantidade(quantidade);
+        item.setValorUnitario(valorUnitario);
+        item.setValorTotal(valorUnitario.multiply(BigDecimal.valueOf(quantidade)));
 
         if (dto.getProdutoId() != null) {
             Produto produto = produtoRepository.findById(dto.getProdutoId())
@@ -188,6 +191,7 @@ public class OrcamentoService {
             dto.setClienteNome(o.getCliente().getNomeEmpresa());
             dto.setClienteCnpj(o.getCliente().getCnpj());
             dto.setClienteEndereco(o.getCliente().getEndereco());
+            dto.setClienteObservacoes(o.getCliente().getObservacoes());
             dto.setClienteCidade(o.getCliente().getCidade());
             dto.setClienteEstado(o.getCliente().getEstado());
             dto.setClienteEmail(o.getCliente().getEmail());

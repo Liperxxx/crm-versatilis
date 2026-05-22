@@ -1025,13 +1025,32 @@ table .actions,
     justify-content: space-between;
     margin-bottom: 4px;
 }
+/* Cabeçalho de colunas + linhas de item (grid alinhado) */
+.orc-itens-cabecalho,
 .orc-servico-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 64px 130px 120px 34px;
     gap: 8px;
     align-items: center;
-    margin-bottom: 8px;
 }
-.orc-servico-row .form-control { flex: 1; }
+.orc-itens-cabecalho {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: 600;
+    padding: 0 2px;
+}
+.orc-itens-cabecalho .col-qtd,
+.orc-itens-cabecalho .col-unit,
+.orc-itens-cabecalho .col-sub { text-align: right; }
+.orc-servico-row { margin-bottom: 8px; }
+.orc-servico-row .item-servico-qtd,
+.orc-servico-row .item-servico-unit { text-align: right; }
+.orc-servico-row .item-servico-sub {
+    text-align: right;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-bg-subtle, #f8f9fa);
+}
 .orc-servico-row .btn-remove-item {
     flex-shrink: 0;
     background: none;
@@ -1166,6 +1185,15 @@ table .actions,
 /* Lista de serviços incluídos */
 .orc-doc-services { padding-left: 20px; margin: 0; font-size: 12px; }
 .orc-doc-services li { margin-bottom: 4px; }
+
+/* Tabela de itens da proposta (preview) */
+.orc-doc-items { width: 100%; border-collapse: collapse; font-size: 12px; }
+.orc-doc-items thead th {
+    background: #112251; color: #fff; text-align: left;
+    padding: 7px 8px; font-weight: 600;
+}
+.orc-doc-items tbody td { padding: 6px 8px; border-bottom: 1px solid #dee2e6; }
+.orc-doc-items tbody tr:nth-child(even) { background: #f8f9fa; }
 
 /* Assinaturas lado a lado */
 .orc-doc-signature-block {

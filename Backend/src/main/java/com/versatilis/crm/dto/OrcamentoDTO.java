@@ -40,6 +40,7 @@ public class OrcamentoDTO {
     private String clienteNome;
     private String clienteCnpj;
     private String clienteEndereco;
+    private String clienteObservacoes;
     private String clienteCidade;
     private String clienteEstado;
     private String clienteEmail;
