@@ -147,6 +147,27 @@ public class PdfService {
     }
 
     private void buildItemsTable(Document doc, OrcamentoDTO o, NumberFormat nf) throws DocumentException {
+        // Exclui o marcador legado "VALOR_TOTAL" (orçamentos antigos guardavam o
+        // total num item-marcador).
+        List<OrcamentoItemDTO> itens = o.getItens() == null ? List.of()
+            : o.getItens().stream()
+                .filter(i -> !"VALOR_TOTAL".equals(i.getDescricao()))
+                .collect(Collectors.toList());
+
+        // Modo "só total" (valor total manual) ou legado com marcador: lista os
+        // itens apenas como descrição, sem colunas de valor.
+        boolean manual = o.getValorTotalManual() != null
+            || (o.getItens() != null && o.getItens().stream().anyMatch(i -> "VALOR_TOTAL".equals(i.getDescricao())));
+
+        if (manual) {
+            buildItemsListSimple(doc, itens);
+        } else {
+            buildItemsTablePriced(doc, itens, nf);
+        }
+    }
+
+    /** Tabela de itens detalhada, com Qtd / Val. Unit. / Subtotal (modo itemizado). */
+    private void buildItemsTablePriced(Document doc, List<OrcamentoItemDTO> itens, NumberFormat nf) throws DocumentException {
         Paragraph title = new Paragraph("Itens da Proposta", font(10, Font.BOLD, C_PRIMARY));
         title.setSpacingAfter(6);
         doc.add(title);
@@ -155,7 +176,6 @@ public class PdfService {
         t.setWidthPercentage(100);
         t.setSpacingAfter(6);
 
-        // Header row
         for (String h : new String[]{"#", "Descrição", "Qtd", "Val. Unit.", "Subtotal"}) {
             PdfPCell c = new PdfPCell(new Phrase(h, font(9, Font.BOLD, C_WHITE)));
             c.setBackgroundColor(C_PRIMARY);
@@ -165,12 +185,6 @@ public class PdfService {
             t.addCell(c);
         }
 
-        // Data rows — exclui o marcador legado "VALOR_TOTAL" (orçamentos antigos
-        // guardavam o total num item-marcador; o total agora vem da soma dos itens).
-        List<OrcamentoItemDTO> itens = o.getItens() == null ? List.of()
-            : o.getItens().stream()
-                .filter(i -> !"VALOR_TOTAL".equals(i.getDescricao()))
-                .collect(Collectors.toList());
         if (itens.isEmpty()) {
             PdfPCell empty = new PdfPCell(new Phrase("Nenhum item cadastrado.", font(9, Font.ITALIC, C_MUTED)));
             empty.setColspan(5);
@@ -195,6 +209,38 @@ public class PdfService {
                 addItemCell(t, nf.format(item.getValorUnitario() != null ? item.getValorUnitario() : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
                 addItemCell(t, nf.format(item.getValorTotal()    != null ? item.getValorTotal()    : BigDecimal.ZERO), bg, Element.ALIGN_RIGHT);
             }
+        }
+
+        doc.add(t);
+    }
+
+    /** Lista de serviços só com descrição (modo "só total" / valor total manual). */
+    private void buildItemsListSimple(Document doc, List<OrcamentoItemDTO> itens) throws DocumentException {
+        if (itens.isEmpty()) return;  // sem itens, o orçamento mostra apenas o total
+
+        Paragraph title = new Paragraph("Serviços Incluídos", font(10, Font.BOLD, C_PRIMARY));
+        title.setSpacingAfter(6);
+        doc.add(title);
+
+        PdfPTable t = new PdfPTable(new float[]{0.5f, 9.5f});
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(6);
+
+        for (String h : new String[]{"#", "Descrição"}) {
+            PdfPCell c = new PdfPCell(new Phrase(h, font(9, Font.BOLD, C_WHITE)));
+            c.setBackgroundColor(C_PRIMARY);
+            c.setPadding(7);
+            c.setHorizontalAlignment(Element.ALIGN_LEFT);
+            c.setBorder(Rectangle.NO_BORDER);
+            t.addCell(c);
+        }
+
+        boolean alt = false;
+        for (int i = 0; i < itens.size(); i++) {
+            Color bg = alt ? C_LIGHT : C_WHITE;
+            alt = !alt;
+            addItemCell(t, String.valueOf(i + 1), bg, Element.ALIGN_LEFT);
+            addItemCell(t, sanitizarDescricao(itens.get(i).getDescricao()), bg, Element.ALIGN_LEFT);
         }
 
         doc.add(t);

@@ -168,8 +168,13 @@ class OrcamentosModule {
         this.$fGarantia         = document.getElementById('orcGarantia');
         // Bloco 4 — Itens (serviços incluídos)
         this.$itensBody   = document.getElementById('orcItensBody');
+        this.$itensSection      = document.getElementById('orcItensSection');
+        this.$totalManualToggle = document.getElementById('orcTotalManualToggle');
         // Bloco 5 — Valores
         this.$fSubtotal   = document.getElementById('orcSubtotalDisplay');
+        this.$fValorTotalManual     = document.getElementById('orcValorTotalManual');
+        this.$subtotalGroup         = document.getElementById('orcSubtotalGroup');
+        this.$valorTotalManualGroup = document.getElementById('orcValorTotalManualGroup');
         this.$fDesconto   = document.getElementById('orcDesconto');
         this.$fTotal      = document.getElementById('orcTotal');
         this.$fCondicao1  = document.getElementById('orcCondicao1');
@@ -289,8 +294,13 @@ class OrcamentosModule {
         // Add service item
         this._on('orcAddItem', 'click', () => this.addItemRow());
 
-        // Recalcula ao mudar o desconto (cada linha de item liga seu próprio listener)
-        this._on(this.$fDesconto,   'input', () => this.recalcTotals());
+        // Alterna entre modo itemizado (soma dos itens) e modo "só total" (valor manual)
+        this._on(this.$totalManualToggle, 'change', () => this.setTotalMode(this.$totalManualToggle.checked));
+
+        // Recalcula ao mudar o desconto / valor total manual
+        // (cada linha de item liga seu próprio listener)
+        this._on(this.$fDesconto,         'input', () => this.recalcTotals());
+        this._on(this.$fValorTotalManual, 'input', () => this.recalcTotals());
 
         // Auto-fill client info on selection
         this._on(this.$fClienteId, 'change', () => this.onClienteSelected());
@@ -545,21 +555,24 @@ class OrcamentosModule {
 
                 const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
                 const marker       = (o.itens || []).find(i => i.descricao === 'VALOR_TOTAL');
-                const itemsSum     = serviceItems.reduce((s, i) => s + (Number(i.valorTotal) || 0), 0);
                 serviceItems.forEach(item => this.addItemRow(item));
                 if (serviceItems.length === 0) this.addItemRow();
-                // Compat com orçamentos antigos: o total ficava num item-marcador
-                // (VALOR_TOTAL) e os itens vinham com valor 0. Coloca o total no
-                // 1º item para preservá-lo ao re-salvar no novo modelo (soma dos itens).
-                if (marker && itemsSum === 0) {
+
+                // Detecta o modo do orçamento:
+                //  - valorTotalManual != null → modo "só total" (novo)
+                //  - marcador VALOR_TOTAL     → orçamento legado = "só total"
+                //  - senão                    → itemizado (valor por item)
+                let manual = false;
+                if (o.valorTotalManual != null) {
+                    manual = true;
+                    this.$fValorTotalManual.value = o.valorTotalManual;
+                } else if (marker) {
+                    manual = true;
                     const legacyTotal = Number(marker.valorTotal ?? marker.valorUnitario ?? o.subtotal ?? 0);
-                    if (legacyTotal > 0) {
-                        const unitEl = this.$itensBody.querySelector('.item-servico-unit');
-                        const qtdEl  = this.$itensBody.querySelector('.item-servico-qtd');
-                        if (unitEl) unitEl.value = legacyTotal;
-                        if (qtdEl)  qtdEl.value  = 1;
-                    }
+                    this.$fValorTotalManual.value = legacyTotal > 0 ? legacyTotal : '';
                 }
+                if (this.$totalManualToggle) this.$totalManualToggle.checked = manual;
+                this.setTotalMode(manual);
                 this.recalcTotals();
 
             } catch (e) {
@@ -576,6 +589,9 @@ class OrcamentosModule {
             this.$fValidade.value = v.toISOString().split('T')[0];
             this.$fStatus.value   = 'RASCUNHO';
             this.$fTotal.value    = 'R$ 0,00';
+            if (this.$fValorTotalManual) this.$fValorTotalManual.value = '';
+            if (this.$totalManualToggle) this.$totalManualToggle.checked = false;
+            this.setTotalMode(false);
             this.$fEmpresaAssin.value = 'Versatilis';
             this.$fTextoJuridico.value = 'Com a assinatura desse orçamento a Versatilis está autorizada a iniciar esse serviço, conforme o termo deste.\nO aceite deste orçamento por via digital no Whatsapp tem o mesmo efeito jurídico do presente documento assinado.';
             this.addItemRow();
@@ -616,6 +632,9 @@ class OrcamentosModule {
             this.$fTotal.value     = 'R$ 0,00';
             this.$fEmpresaAssin.value = 'Versatilis';
             this.$fTextoJuridico.value = 'Com a assinatura desse orçamento a Versatilis está autorizada a iniciar esse serviço, conforme o termo deste.\nO aceite deste orçamento por via digital no Whatsapp tem o mesmo efeito jurídico do presente documento assinado.';
+            if (this.$fValorTotalManual) this.$fValorTotalManual.value = '';
+            if (this.$totalManualToggle) this.$totalManualToggle.checked = false;
+            this.setTotalMode(false);
             // Pre-fill client info from cache
             this.onClienteSelected();
             this.addItemRow();
@@ -660,8 +679,21 @@ class OrcamentosModule {
         this.recalcTotals();
     }
 
+    /** Alterna a UI entre itemizado (valor por item) e "só total" (valor manual). */
+    setTotalMode(manual) {
+        this._totalManual = !!manual;
+        if (this.$itensSection)          this.$itensSection.classList.toggle('total-manual', this._totalManual);
+        if (this.$subtotalGroup)         this.$subtotalGroup.classList.toggle('hidden', this._totalManual);
+        if (this.$valorTotalManualGroup) this.$valorTotalManualGroup.classList.toggle('hidden', !this._totalManual);
+        const hint  = this.$itensSection?.querySelector('.orc-itens-hint');
+        const hintM = this.$itensSection?.querySelector('.orc-itens-hint-manual');
+        if (hint)  hint.classList.toggle('hidden', this._totalManual);
+        if (hintM) hintM.classList.toggle('hidden', !this._totalManual);
+        this.recalcTotals();
+    }
+
     recalcTotals() {
-        let subtotal = 0;
+        let subtotalItens = 0;
         if (this.$itensBody) {
             this.$itensBody.querySelectorAll('.orc-servico-row').forEach(row => {
                 const qtd  = parseFloat(row.querySelector('.item-servico-qtd')?.value)  || 0;
@@ -669,12 +701,16 @@ class OrcamentosModule {
                 const sub  = qtd * unit;
                 const subEl = row.querySelector('.item-servico-sub');
                 if (subEl) subEl.value = this.formatCurrency(sub);
-                subtotal += sub;
+                subtotalItens += sub;
             });
         }
+        // No modo "só total" o subtotal é o valor manual; senão é a soma dos itens.
+        const subtotal = this._totalManual
+            ? (parseFloat(this.$fValorTotalManual?.value) || 0)
+            : subtotalItens;
         const desconto = parseFloat(this.$fDesconto?.value) || 0;
         this._subtotal = subtotal;
-        if (this.$fSubtotal) this.$fSubtotal.value = this.formatCurrency(subtotal);
+        if (this.$fSubtotal) this.$fSubtotal.value = this.formatCurrency(subtotalItens);
         if (this.$fTotal)    this.$fTotal.value    = this.formatCurrency(Math.max(0, subtotal - desconto));
     }
 
@@ -732,6 +768,7 @@ class OrcamentosModule {
             clienteId:             parseInt(this.$fClienteId.value),
             oportunidadeId:        opVal ? parseInt(opVal) : null,
             desconto,
+            valorTotalManual:      this._totalManual ? (parseFloat(this.$fValorTotalManual.value) || 0) : null,
             observacoesComerciais: JSON.stringify(obsData),
             rodapeInstitucional:   JSON.stringify(rodapeData),
             itens,
@@ -1060,6 +1097,9 @@ class OrcamentosModule {
 
         // --- Service items (exclude VALOR_TOTAL marker) ---
         const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
+        const hasMarker    = (o.itens || []).some(i => i.descricao === 'VALOR_TOTAL');
+        // Modo "só total": valorTotalManual definido OU orçamento legado (marcador).
+        const manual       = (o.valorTotalManual != null) || hasMarker;
         const desconto     = o.desconto || 0;
         const subtotalItens = (o.subtotal != null)
             ? o.subtotal
@@ -1081,6 +1121,11 @@ class OrcamentosModule {
                     <td style="text-align:right">${this.formatCurrency(i.valorTotal || 0)}</td>
                 </tr>`).join('')
             : '<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item listado</td></tr>';
+
+        // Modo "só total": itens entram como lista de descrições, sem valores.
+        const servicosListHtml = serviceItems.length > 0
+            ? serviceItems.map(i => `<li>${this.esc(i.descricao)}</li>`).join('')
+            : '<li style="color:#999">Nenhum serviço listado</li>';
 
         this.$printArea.innerHTML = `
             <!-- CABEÇALHO — imagem -->
@@ -1133,7 +1178,10 @@ class OrcamentosModule {
             ${serviceItems.length > 0 ? `
             <!-- ITENS DA PROPOSTA -->
             <div class="orc-doc-section">
-                <h3>3. Itens da Proposta</h3>
+                <h3>3. ${manual ? 'Serviços Incluídos' : 'Itens da Proposta'}</h3>
+                ${manual ? `
+                <ul class="orc-doc-services">${servicosListHtml}</ul>
+                ` : `
                 <table class="orc-doc-items">
                     <thead>
                         <tr>
@@ -1146,6 +1194,7 @@ class OrcamentosModule {
                     </thead>
                     <tbody>${itemRows}</tbody>
                 </table>
+                `}
             </div>` : ''}
 
             <!-- VALORES E PAGAMENTO -->

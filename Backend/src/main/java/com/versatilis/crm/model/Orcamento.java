@@ -44,6 +44,14 @@ public class Orcamento extends BaseEntity {
     @Builder.Default
     private BigDecimal total = BigDecimal.ZERO;
 
+    /**
+     * Valor total informado manualmente (modo "só total", sem detalhar valor por
+     * item). Quando preenchido, o subtotal passa a ser este valor e os itens
+     * funcionam apenas como descrição. NULL = total = soma dos itens.
+     */
+    @Column(name = "valor_total_manual", precision = 12, scale = 2)
+    private BigDecimal valorTotalManual;
+
     @Column(name = "observacoes_comerciais", columnDefinition = "TEXT")
     private String observacoesComerciais;
 
@@ -77,9 +85,16 @@ public class Orcamento extends BaseEntity {
     }
 
     public void recalcularTotais() {
-        this.subtotal = itens.stream()
-            .map(OrcamentoItem::getValorTotal)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (valorTotalManual != null) {
+            // Modo "só total": subtotal = valor informado manualmente.
+            this.subtotal = valorTotalManual;
+        } else {
+            // Modo itemizado: subtotal = soma dos itens.
+            this.subtotal = itens.stream()
+                .map(OrcamentoItem::getValorTotal)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         this.total = this.subtotal.subtract(this.desconto != null ? this.desconto : BigDecimal.ZERO);
     }
 

@@ -1051,6 +1051,34 @@ table .actions,
     color: var(--color-primary);
     background: var(--color-bg-subtle, #f8f9fa);
 }
+
+/* Toggle "informar apenas o valor total" */
+.orc-total-mode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+.orc-total-mode input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+
+/* Modo "só total": colapsa as colunas de valor, deixando descrição + remover */
+#orcItensSection.total-manual .orc-itens-cabecalho,
+#orcItensSection.total-manual .orc-servico-row {
+    grid-template-columns: 1fr 34px;
+}
+#orcItensSection.total-manual .col-qtd,
+#orcItensSection.total-manual .col-unit,
+#orcItensSection.total-manual .col-sub,
+#orcItensSection.total-manual .item-servico-qtd,
+#orcItensSection.total-manual .item-servico-unit,
+#orcItensSection.total-manual .item-servico-sub {
+    display: none;
+}
+
 .orc-servico-row .btn-remove-item {
     flex-shrink: 0;
     background: none;

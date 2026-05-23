@@ -32,6 +32,10 @@ public class OrcamentoDTO {
     private BigDecimal desconto;
     private BigDecimal total;
 
+    // Valor total manual: quando != null, o total = este valor (− desconto) e os
+    // itens são apenas descritivos. null = total calculado pela soma dos itens.
+    private BigDecimal valorTotalManual;
+
     private String observacoesComerciais;
     private String rodapeInstitucional;
 

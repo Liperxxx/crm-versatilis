@@ -25,6 +25,10 @@ public class SchemaMigrationRunner implements ApplicationRunner {
         addColumnIfNotExists("envios_whatsapp", "ativo", "BOOLEAN NOT NULL DEFAULT TRUE");
         seedDefaultConfig("whatsapp.numero-empresa", "+55 27 99576-7070");
 
+        // Orçamentos: valor total informado manualmente (modo "só total", sem
+        // detalhar valor por item). NULL = total calculado pela soma dos itens.
+        addColumnIfNotExists("orcamentos", "valor_total_manual", "NUMERIC(12,2)");
+
         // ── Marcenaria (calculadora de custos no módulo Orçamentos) ───────
         createMateriaisMarcenariaTable();
         createAcessoriosMarcenariaTable();

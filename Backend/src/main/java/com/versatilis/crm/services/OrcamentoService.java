@@ -44,6 +44,7 @@ public class OrcamentoService {
         orcamento.setObservacoesComerciais(dto.getObservacoesComerciais());
         orcamento.setRodapeInstitucional(dto.getRodapeInstitucional());
         orcamento.setDesconto(dto.getDesconto() != null ? dto.getDesconto() : BigDecimal.ZERO);
+        orcamento.setValorTotalManual(dto.getValorTotalManual());
         orcamento.setCliente(cliente);
 
         if (dto.getOportunidadeId() != null) {
@@ -102,6 +103,7 @@ public class OrcamentoService {
         orcamento.setObservacoesComerciais(dto.getObservacoesComerciais());
         orcamento.setRodapeInstitucional(dto.getRodapeInstitucional());
         orcamento.setDesconto(dto.getDesconto() != null ? dto.getDesconto() : BigDecimal.ZERO);
+        orcamento.setValorTotalManual(dto.getValorTotalManual());
 
         if (dto.getOportunidadeId() != null) {
             Oportunidade oportunidade = oportunidadeRepository.findById(dto.getOportunidadeId())
@@ -183,6 +185,7 @@ public class OrcamentoService {
         dto.setSubtotal(o.getSubtotal());
         dto.setDesconto(o.getDesconto());
         dto.setTotal(o.getTotal());
+        dto.setValorTotalManual(o.getValorTotalManual());
         dto.setObservacoesComerciais(o.getObservacoesComerciais());
         dto.setRodapeInstitucional(o.getRodapeInstitucional());
 

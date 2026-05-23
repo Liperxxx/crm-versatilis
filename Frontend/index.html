@@ -1468,11 +1468,15 @@
                                 </div>
 
                                 <!-- ══ BLOCO 4: ITENS DA PROPOSTA ══ -->
-                                <div class="orc-form-section">
+                                <div class="orc-form-section" id="orcItensSection">
                                     <div class="orc-itens-header">
                                         <h3 class="orc-section-title" style="margin-bottom:0"><i class="fas fa-list-check"></i> Itens da Proposta</h3>
                                         <button type="button" class="btn btn-sm btn-primary" id="orcAddItem"><i class="fas fa-plus"></i> Adicionar Item</button>
                                     </div>
+                                    <label class="orc-total-mode" title="Quando marcado, você informa só o valor total e os itens ficam apenas como descrição">
+                                        <input type="checkbox" id="orcTotalManualToggle">
+                                        <span>Informar apenas o valor total (sem detalhar valor por item)</span>
+                                    </label>
                                     <div class="orc-itens-cabecalho" style="margin-top:12px">
                                         <span class="col-desc">Descrição</span>
                                         <span class="col-qtd">Qtd</span>
@@ -1481,17 +1485,22 @@
                                         <span class="col-rem"></span>
                                     </div>
                                     <div id="orcItensBody" class="orc-itens-list" style="margin-top:6px"></div>
-                                    <p class="form-error hidden" id="orcErrValor">Adicione ao menos um item com valor.</p>
-                                    <p class="text-muted text-sm" style="margin-top:6px">Informe cada item com quantidade e valor unitário. O total é a soma dos itens.</p>
+                                    <p class="form-error hidden" id="orcErrValor">Informe o valor total ou ao menos um item com valor.</p>
+                                    <p class="text-muted text-sm orc-itens-hint" style="margin-top:6px">Informe cada item com quantidade e valor unitário. O total é a soma dos itens.</p>
+                                    <p class="text-muted text-sm orc-itens-hint-manual hidden" style="margin-top:6px">Liste os serviços (apenas descrição). O valor total é informado abaixo, no bloco de Valores.</p>
                                 </div>
 
                                 <!-- ══ BLOCO 5: VALORES E PAGAMENTO ══ -->
                                 <div class="orc-form-section">
                                     <h3 class="orc-section-title"><i class="fas fa-dollar-sign"></i> Valores e Condições de Pagamento</h3>
                                     <div class="form-row orc-totais">
-                                        <div class="form-group">
+                                        <div class="form-group" id="orcSubtotalGroup">
                                             <label class="form-label">Subtotal (itens)</label>
                                             <input type="text" class="form-control orc-total-display" id="orcSubtotalDisplay" readonly tabindex="-1">
+                                        </div>
+                                        <div class="form-group hidden" id="orcValorTotalManualGroup">
+                                            <label class="form-label" for="orcValorTotalManual">Valor Total do Orçamento (R$)</label>
+                                            <input type="number" class="form-control orc-valor-input" id="orcValorTotalManual" placeholder="0,00" min="0" step="0.01">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="orcDesconto">Desconto (R$)</label>
