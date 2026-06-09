@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -51,7 +50,10 @@ public class WhatsAppService {
      * @param orcamentoId ID do orçamento (deve existir)
      * @param dto         opções de envio (destino opcional, mensagem opcional, anexar PDF)
      */
-    @Transactional
+    // Intencionalmente SEM @Transactional: queremos que cada envioRepo.save
+    // (PENDENTE / FALHA / ENVIADO) seja persistido independentemente em sua
+    // própria transação. Com @Transactional no método inteiro, uma exceção
+    // acabava revertendo o save do FALHA, escondendo o erro original.
     public WhatsAppEnvioResponseDTO enviarOrcamento(Long orcamentoId, WhatsAppEnvioDTO dto) {
         OrcamentoDTO orcamento = orcamentoService.buscarPorId(orcamentoId);
 
@@ -115,17 +117,31 @@ public class WhatsAppService {
 
         } catch (EvolutionApiClient.EvolutionApiException e) {
             envio.setStatus(EnvioWhatsApp.StatusEnvio.FALHA);
-            envio.setErro(e.getMessage());
+            envio.setErro(formatErrorChain(e));
             envioRepo.save(envio);
             log.error("Falha ao enviar orçamento {} via WhatsApp: {}", orcamento.getNumero(), e.getMessage());
             throw e;
         } catch (Exception e) {
             envio.setStatus(EnvioWhatsApp.StatusEnvio.FALHA);
-            envio.setErro(e.getMessage());
+            envio.setErro(formatErrorChain(e));
             envioRepo.save(envio);
             log.error("Erro inesperado ao enviar orçamento {} via WhatsApp", orcamento.getNumero(), e);
             throw new RuntimeException("Erro ao enviar WhatsApp: " + e.getMessage(), e);
         }
+    }
+
+    /** Concatena a cadeia de causas para diagnóstico no campo {@code erro}. */
+    private String formatErrorChain(Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        Throwable cur = t;
+        int depth = 0;
+        while (cur != null && depth < 6) {
+            if (depth > 0) sb.append("\ncaused by: ");
+            sb.append(cur.getClass().getName()).append(": ").append(cur.getMessage());
+            cur = cur.getCause();
+            depth++;
+        }
+        return sb.toString();
     }
 
     // ── Templates / formatação ──────────────────────────────────────
