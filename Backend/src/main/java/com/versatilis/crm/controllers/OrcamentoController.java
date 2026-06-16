@@ -9,6 +9,7 @@ import com.versatilis.crm.model.Orcamento;
 import com.versatilis.crm.services.EmailService;
 import com.versatilis.crm.services.OrcamentoService;
 import com.versatilis.crm.services.PdfService;
+import com.versatilis.crm.services.SupabaseStorageService;
 import com.versatilis.crm.services.TemplateService;
 import com.versatilis.crm.services.WhatsAppService;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orcamentos")
@@ -37,6 +40,7 @@ public class OrcamentoController {
     private final TemplateService templateService;
     private final WhatsAppService whatsAppService;
     private final PdfService pdfService;
+    private final SupabaseStorageService storageService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
@@ -118,6 +122,29 @@ public class OrcamentoController {
         WhatsAppEnvioResponseDTO envio = whatsAppService.enviarOrcamento(id, body);
         return ResponseEntity.ok(
             ResponseDTO.sucesso("Orçamento enviado via WhatsApp para " + envio.getTelefone(), envio));
+    }
+
+    /**
+     * Upload de uma foto do projeto (Supabase Storage, bucket "orcamento-fotos").
+     * O frontend acumula as URLs retornadas e envia o array final em
+     * {@code OrcamentoDTO.fotosUrls} ao salvar o orçamento.
+     */
+    @PostMapping("/fotos/upload")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
+    public ResponseEntity<ResponseDTO<Map<String, String>>> uploadFoto(
+            @RequestParam("file") MultipartFile file) {
+        log.info("POST /api/orcamentos/fotos/upload - Upload de foto do projeto ({} bytes)",
+            file != null ? file.getSize() : 0);
+        try {
+            String url = storageService.upload("orcamento-fotos", file);
+            return ResponseEntity.ok(ResponseDTO.sucesso("Foto enviada com sucesso", Map.of("url", url)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ResponseDTO.erro(e.getMessage(), 400));
+        } catch (Exception e) {
+            log.error("Erro no upload de foto do orçamento: {}", e.getMessage());
+            return ResponseEntity.internalServerError()
+                .body(ResponseDTO.erro("Erro no upload: " + e.getMessage(), 500));
+        }
     }
 
     /**

@@ -39,6 +39,7 @@ class OrcamentosModule {
         this.filterDataAte = '';
         this.itemSeq     = 0;
         this.clientesCache = [];
+        this.fotosUrls   = [];
         this.init();
     }
 
@@ -179,6 +180,10 @@ class OrcamentosModule {
         this.$fTotal      = document.getElementById('orcTotal');
         this.$fCondicao1  = document.getElementById('orcCondicao1');
         this.$fCondicao2  = document.getElementById('orcCondicao2');
+        // Bloco 5.5 — Fotos do projeto
+        this.$btnAddFoto  = document.getElementById('orcAddFoto');
+        this.$fotoInput   = document.getElementById('orcFotoInput');
+        this.$fotosGrid   = document.getElementById('orcFotosGrid');
         // Bloco 6 — Assinaturas
         this.$fEmpresaAssin     = document.getElementById('orcEmpresaAssin');
         this.$fRespComercial    = document.getElementById('orcResponsavelComercial');
@@ -293,6 +298,10 @@ class OrcamentosModule {
 
         // Add service item
         this._on('orcAddItem', 'click', () => this.addItemRow());
+
+        // Fotos do projeto: abrir file picker + processar arquivos selecionados
+        this._on(this.$btnAddFoto, 'click', () => this.$fotoInput?.click());
+        this._on(this.$fotoInput,  'change', e => this.handleFotoFiles(e.target.files));
 
         // Alterna entre modo itemizado (soma dos itens) e modo "só total" (valor manual)
         this._on(this.$totalManualToggle, 'change', () => this.setTotalMode(this.$totalManualToggle.checked));
@@ -499,6 +508,8 @@ class OrcamentosModule {
         this.clearFormErrors();
         if (this.$itensBody) this.$itensBody.innerHTML = '';
         this.itemSeq = 0;
+        this.fotosUrls = [];
+        this.renderFotosGrid();
         if (this.$clienteInfo) this.$clienteInfo.classList.add('hidden');
 
         // Garante que exista cache (primeira visita); nas subsequentes usa o cache
@@ -552,6 +563,9 @@ class OrcamentosModule {
                     this.$fEmpresaAssin.value  = 'Versatilis';
                     this.$fTextoJuridico.value = o.rodapeInstitucional || '';
                 }
+
+                this.fotosUrls = Array.isArray(o.fotosUrls) ? [...o.fotosUrls] : [];
+                this.renderFotosGrid();
 
                 const serviceItems = (o.itens || []).filter(i => i.descricao !== 'VALOR_TOTAL');
                 const marker       = (o.itens || []).find(i => i.descricao === 'VALOR_TOTAL');
@@ -614,6 +628,8 @@ class OrcamentosModule {
             this.clearFormErrors();
             if (this.$itensBody) this.$itensBody.innerHTML = '';
             this.itemSeq = 0;
+            this.fotosUrls = [];
+            this.renderFotosGrid();
             if (this.$clienteInfo) this.$clienteInfo.classList.add('hidden');
 
             await this.ensureClientesLoaded();
@@ -733,6 +749,72 @@ class OrcamentosModule {
         return itens;
     }
 
+    // ── Fotos do projeto ────────────────────────────────────────────
+
+    /** Sobe cada arquivo selecionado pro Supabase via backend e empilha as URLs. */
+    async handleFotoFiles(files) {
+        if (!files || files.length === 0) return;
+        const arr = Array.from(files);
+        // Limpa o input pra permitir re-selecionar o mesmo arquivo depois.
+        if (this.$fotoInput) this.$fotoInput.value = '';
+
+        for (const file of arr) {
+            // Validação cliente (backend também valida)
+            if (!/^image\/(png|jpeg)$/.test(file.type)) {
+                this.toast('warning', 'fas fa-exclamation-triangle',
+                    `${this.esc(file.name)}: apenas PNG ou JPG.`); continue;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                this.toast('warning', 'fas fa-exclamation-triangle',
+                    `${this.esc(file.name)}: excede 5MB.`); continue;
+            }
+            try {
+                const url = await this.apiUploadFoto(file);
+                this.fotosUrls.push(url);
+                this.renderFotosGrid();
+            } catch (e) {
+                this.toast('danger', 'fas fa-exclamation-circle',
+                    `Erro ao subir ${this.esc(file.name)}: ${this.esc(e.message)}`);
+            }
+        }
+    }
+
+    async apiUploadFoto(file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const t = this.getToken();
+        const res = await fetch(`${API_ORCAMENTOS}/fotos/upload`, {
+            method: 'POST',
+            headers: t ? { 'Authorization': `Bearer ${t}` } : {},
+            body: fd,
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.sucesso) {
+            throw new Error(json.mensagem || `HTTP ${res.status}`);
+        }
+        return json.dados?.url;
+    }
+
+    renderFotosGrid() {
+        if (!this.$fotosGrid) return;
+        if (!this.fotosUrls || this.fotosUrls.length === 0) {
+            this.$fotosGrid.innerHTML = '';
+            return;
+        }
+        this.$fotosGrid.innerHTML = this.fotosUrls.map((url, idx) => `
+            <div class="orc-foto-thumb">
+                <img src="${this.esc(url)}" alt="Foto ${idx + 1}">
+                <button type="button" class="orc-foto-remove" data-idx="${idx}" title="Remover"><i class="fas fa-times"></i></button>
+            </div>
+        `).join('');
+        this.$fotosGrid.querySelectorAll('.orc-foto-remove').forEach(btn =>
+            btn.addEventListener('click', () => {
+                const i = parseInt(btn.dataset.idx);
+                this.fotosUrls.splice(i, 1);
+                this.renderFotosGrid();
+            }));
+    }
+
     // ── Save ────────────────────────────────────────────────────
 
     async save() {
@@ -771,6 +853,7 @@ class OrcamentosModule {
             valorTotalManual:      this._totalManual ? (parseFloat(this.$fValorTotalManual.value) || 0) : null,
             observacoesComerciais: JSON.stringify(obsData),
             rodapeInstitucional:   JSON.stringify(rodapeData),
+            fotosUrls:             Array.isArray(this.fotosUrls) ? this.fotosUrls : [],
             itens,
         };
 
@@ -1217,6 +1300,15 @@ class OrcamentosModule {
                     ${condicao2 ? `<p>• 2ª opção: ${this.esc(condicao2)}</p>` : ''}
                 </div>` : ''}
             </div>
+
+            ${(o.fotosUrls && o.fotosUrls.length > 0) ? `
+            <!-- FOTOS DO PROJETO -->
+            <div class="orc-doc-section">
+                <h3>${serviceItems.length > 0 ? '5.' : '3.'} Fotos do Projeto</h3>
+                <div class="orc-doc-fotos">
+                    ${o.fotosUrls.map(u => `<img src="${this.esc(u)}" alt="Foto do projeto">`).join('')}
+                </div>
+            </div>` : ''}
 
             <!-- ASSINATURAS -->
             <div class="orc-doc-signature-block">

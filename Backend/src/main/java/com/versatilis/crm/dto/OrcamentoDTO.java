@@ -36,6 +36,9 @@ public class OrcamentoDTO {
     // itens são apenas descritivos. null = total calculado pela soma dos itens.
     private BigDecimal valorTotalManual;
 
+    // URLs das fotos do projeto anexadas ao orçamento (Supabase Storage).
+    private List<String> fotosUrls;
+
     private String observacoesComerciais;
     private String rodapeInstitucional;
 

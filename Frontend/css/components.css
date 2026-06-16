@@ -1214,6 +1214,54 @@ table .actions,
 .orc-doc-services { padding-left: 20px; margin: 0; font-size: 12px; }
 .orc-doc-services li { margin-bottom: 4px; }
 
+/* Fotos do projeto (form e preview) */
+.orc-fotos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+.orc-foto-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    background: var(--color-bg-subtle, #f8f9fa);
+    border: 1px solid var(--border-color, #dee2e6);
+}
+.orc-foto-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.orc-foto-remove {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: background 0.15s;
+}
+.orc-foto-remove:hover { background: var(--color-danger, #dc3545); }
+
+/* Grid de fotos no preview do orçamento */
+.orc-doc-fotos {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.orc-doc-fotos img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    display: block;
+}
+
 /* Tabela de itens da proposta (preview) */
 .orc-doc-items { width: 100%; border-collapse: collapse; font-size: 12px; }
 .orc-doc-items thead th {

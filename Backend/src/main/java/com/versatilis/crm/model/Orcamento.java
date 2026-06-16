@@ -52,6 +52,14 @@ public class Orcamento extends BaseEntity {
     @Column(name = "valor_total_manual", precision = 12, scale = 2)
     private BigDecimal valorTotalManual;
 
+    /**
+     * URLs das fotos anexadas ao orçamento, serializadas como JSON array de
+     * strings (ex.: {@code ["https://.../foto1.jpg","..."]}). NULL ou vazio
+     * quando o orçamento não tem fotos.
+     */
+    @Column(name = "fotos_urls", columnDefinition = "TEXT")
+    private String fotosUrls;
+
     @Column(name = "observacoes_comerciais", columnDefinition = "TEXT")
     private String observacoesComerciais;
 

@@ -1,5 +1,7 @@
 package com.versatilis.crm.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.versatilis.crm.dto.OrcamentoDTO;
 import com.versatilis.crm.dto.OrcamentoItemDTO;
 import com.versatilis.crm.exceptions.ResourceNotFoundException;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,7 @@ public class OrcamentoService {
         orcamento.setRodapeInstitucional(dto.getRodapeInstitucional());
         orcamento.setDesconto(dto.getDesconto() != null ? dto.getDesconto() : BigDecimal.ZERO);
         orcamento.setValorTotalManual(dto.getValorTotalManual());
+        orcamento.setFotosUrls(serializeFotosUrls(dto.getFotosUrls()));
         orcamento.setCliente(cliente);
 
         if (dto.getOportunidadeId() != null) {
@@ -104,6 +108,7 @@ public class OrcamentoService {
         orcamento.setRodapeInstitucional(dto.getRodapeInstitucional());
         orcamento.setDesconto(dto.getDesconto() != null ? dto.getDesconto() : BigDecimal.ZERO);
         orcamento.setValorTotalManual(dto.getValorTotalManual());
+        orcamento.setFotosUrls(serializeFotosUrls(dto.getFotosUrls()));
 
         if (dto.getOportunidadeId() != null) {
             Oportunidade oportunidade = oportunidadeRepository.findById(dto.getOportunidadeId())
@@ -186,6 +191,7 @@ public class OrcamentoService {
         dto.setDesconto(o.getDesconto());
         dto.setTotal(o.getTotal());
         dto.setValorTotalManual(o.getValorTotalManual());
+        dto.setFotosUrls(deserializeFotosUrls(o.getFotosUrls()));
         dto.setObservacoesComerciais(o.getObservacoesComerciais());
         dto.setRodapeInstitucional(o.getRodapeInstitucional());
 
@@ -227,6 +233,32 @@ public class OrcamentoService {
         }
         dto.setItens(itensDto);
         return dto;
+    }
+
+    // ── Fotos do projeto: serialização em JSON ───────────────────────
+
+    private static final ObjectMapper FOTOS_MAPPER = new ObjectMapper();
+
+    /** Serializa a lista de URLs como JSON array para persistir em fotos_urls. */
+    private String serializeFotosUrls(List<String> urls) {
+        if (urls == null || urls.isEmpty()) return null;
+        try {
+            return FOTOS_MAPPER.writeValueAsString(urls);
+        } catch (Exception e) {
+            log.warn("Falha ao serializar fotos do orçamento: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** Deserializa o JSON de URLs; retorna lista vazia se nulo ou inválido. */
+    private List<String> deserializeFotosUrls(String raw) {
+        if (raw == null || raw.isBlank()) return Collections.emptyList();
+        try {
+            return FOTOS_MAPPER.readValue(raw, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("Falha ao deserializar fotos do orçamento (raw={}): {}", raw, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     @Transactional

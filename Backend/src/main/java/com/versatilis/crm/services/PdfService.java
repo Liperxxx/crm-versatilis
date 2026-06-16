@@ -12,7 +12,10 @@ import com.versatilis.crm.dto.OrcamentoItemDTO;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URLConnection;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -68,6 +71,7 @@ public class PdfService {
             buildItemsTable(doc, o, nf);
             buildTotals(doc, o, nf);
             buildCondicoesPagamento(doc, obs);
+            buildFotosProjeto(doc, o);
             buildAssinaturas(doc, o, rod);
             buildTextoJuridico(doc, o, rod);
 
@@ -355,6 +359,60 @@ public class PdfService {
         }
         t.addCell(wrapper);
         doc.add(t);
+    }
+
+    /**
+     * Fotos do projeto anexadas ao orçamento (Supabase Storage). Renderizadas
+     * em grid de 2 colunas. Cada URL é baixada com timeout curto; falhas de
+     * download são logadas e a foto é apenas omitida (não interrompem o PDF).
+     */
+    private void buildFotosProjeto(Document doc, OrcamentoDTO o) throws DocumentException {
+        List<String> urls = o.getFotosUrls();
+        if (urls == null || urls.isEmpty()) return;
+
+        Paragraph title = new Paragraph("Fotos do Projeto", font(10, Font.BOLD, C_PRIMARY));
+        title.setSpacingBefore(8);
+        title.setSpacingAfter(8);
+        doc.add(title);
+
+        PdfPTable t = new PdfPTable(2);
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(16);
+
+        int rendered = 0;
+        for (String url : urls) {
+            if (url == null || url.isBlank()) continue;
+            Image img = loadRemoteImage(url);
+            if (img == null) continue;
+            img.scaleToFit(250f, 250f);
+            PdfPCell c = new PdfPCell(img, false);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            c.setBorderColor(C_BORDER);
+            c.setPadding(6);
+            t.addCell(c);
+            rendered++;
+        }
+        // Se ficou linha incompleta, preenche com célula vazia para fechar o grid.
+        if (rendered % 2 == 1) {
+            t.addCell(emptyCell());
+        }
+        if (rendered > 0) doc.add(t);
+    }
+
+    /** Baixa uma imagem por URL com timeout; retorna null em caso de falha. */
+    private Image loadRemoteImage(String url) {
+        try {
+            URLConnection conn = URI.create(url).toURL().openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(15000);
+            try (InputStream in = conn.getInputStream()) {
+                byte[] bytes = in.readAllBytes();
+                return Image.getInstance(bytes);
+            }
+        } catch (Exception e) {
+            // Falha silenciosa: a foto é omitida do PDF, o resto segue normal.
+            return null;
+        }
     }
 
     /** Bloco de assinaturas: responsável comercial (empresa) e cliente. */

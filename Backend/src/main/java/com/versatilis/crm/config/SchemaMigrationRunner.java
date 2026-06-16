@@ -29,6 +29,10 @@ public class SchemaMigrationRunner implements ApplicationRunner {
         // detalhar valor por item). NULL = total calculado pela soma dos itens.
         addColumnIfNotExists("orcamentos", "valor_total_manual", "NUMERIC(12,2)");
 
+        // Orçamentos: fotos anexadas (URLs do Supabase Storage). Guardadas como
+        // JSON array de strings, ex.: ["https://.../foto1.jpg","..."].
+        addColumnIfNotExists("orcamentos", "fotos_urls", "TEXT");
+
         // ── Marcenaria (calculadora de custos no módulo Orçamentos) ───────
         createMateriaisMarcenariaTable();
         createAcessoriosMarcenariaTable();
