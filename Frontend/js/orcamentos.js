@@ -764,9 +764,9 @@ class OrcamentosModule {
                 this.toast('warning', 'fas fa-exclamation-triangle',
                     `${this.esc(file.name)}: apenas PNG ou JPG.`); continue;
             }
-            if (file.size > 5 * 1024 * 1024) {
+            if (file.size > 15 * 1024 * 1024) {
                 this.toast('warning', 'fas fa-exclamation-triangle',
-                    `${this.esc(file.name)}: excede 5MB.`); continue;
+                    `${this.esc(file.name)}: excede 15MB.`); continue;
             }
             try {
                 const url = await this.apiUploadFoto(file);

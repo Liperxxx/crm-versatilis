@@ -22,7 +22,7 @@ public class SupabaseStorageService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
     public String upload(String bucket, MultipartFile file) throws IOException {
         validateFile(file);
@@ -69,7 +69,7 @@ public class SupabaseStorageService {
             throw new IllegalArgumentException("Arquivo não pode ser vazio.");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Arquivo excede o tamanho máximo de 5MB.");
+            throw new IllegalArgumentException("Arquivo excede o tamanho máximo de 15MB.");
         }
         String contentType = file.getContentType();
         if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg"))) {
