@@ -44,4 +44,16 @@ public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
 
     @Query("SELECT COALESCE(SUM(o.total), 0) FROM Orcamento o WHERE o.ativo = true")
     BigDecimal sumTotalByAtivoTrue();
+
+    /**
+     * Contagem e soma de {@code total} agrupadas por status (só orçamentos ativos).
+     * Fonte única dos números da dashboard — evita que cada tela some o próprio
+     * recorte e produza valores divergentes. Statuses sem nenhum orçamento não
+     * aparecem no resultado; quem consome deve preencher com zero.
+     *
+     * @return linhas {@code [StatusOrcamento, Long count, BigDecimal soma]}
+     */
+    @Query("SELECT o.status, COUNT(o), COALESCE(SUM(o.total), 0) " +
+           "FROM Orcamento o WHERE o.ativo = true GROUP BY o.status")
+    List<Object[]> aggregateByStatus();
 }

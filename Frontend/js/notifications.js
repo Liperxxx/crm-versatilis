@@ -141,14 +141,15 @@ class NotificationsManager {
                 });
             }
 
-            // Orçamentos
-            if (d.totalOrcamentos > 0 && d.valorOrcamentos > 0) {
+            // Orçamentos — mesma semântica da dashboard: "gerado" = propostas
+            // entregues ao cliente (rascunho não conta).
+            if (d.totalOrcamentos > 0 && d.valorOrcamentosGerados > 0) {
                 this.notifications.push({
                     id: 'orcamentos',
                     icon: 'fas fa-file-invoice-dollar',
                     iconClass: 'notif-icon-success',
                     title: `${d.totalOrcamentos} orçamento(s) registrado(s)`,
-                    desc: `Valor total: R$ ${Number(d.valorOrcamentos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                    desc: `Gerado: R$ ${Number(d.valorOrcamentosGerados).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                     time: now,
                     read: true
                 });

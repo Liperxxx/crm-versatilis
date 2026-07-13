@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +28,28 @@ public class DashboardService {
     private final TarefaRepository tarefaRepository;
     private final OrcamentoRepository orcamentoRepository;
 
+    /** Statuses que representam uma proposta de fato entregue ao cliente (rascunho não conta). */
+    private static final List<Orcamento.StatusOrcamento> STATUS_PROPOSTA = List.of(
+            Orcamento.StatusOrcamento.ENVIADO,
+            Orcamento.StatusOrcamento.APROVADO,
+            Orcamento.StatusOrcamento.RECUSADO
+    );
+
     @Transactional(readOnly = true)
     public DashboardDTO getResumo() {
         log.info("Gerando resumo do dashboard");
 
         try {
+            OrcamentoAgregado agg = agregarOrcamentos();
+
+            BigDecimal valorAprovado = agg.valor(Orcamento.StatusOrcamento.APROVADO);
+            BigDecimal valorGerado = STATUS_PROPOSTA.stream()
+                    .map(agg::valor)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            long qtdGerada = STATUS_PROPOSTA.stream()
+                    .mapToLong(agg::qtd)
+                    .sum();
+
             return DashboardDTO.builder()
                     .totalClientes(clienteRepository.countByAtivoTrue())
                     .totalLeads(leadRepository.countByAtivoTrue())
@@ -41,16 +59,31 @@ public class DashboardService {
                     .totalOrcamentos(orcamentoRepository.countByAtivoTrue())
                     .valorOportunidadesAbertas(getValorOportunidadesAbertas())
                     .valorOrcamentos(getValorOrcamentos())
+                    .valorOrcamentosGerados(valorGerado)
+                    .valorOrcamentosAprovados(valorAprovado)
+                    .valorOrcamentosEmNegociacao(agg.valor(Orcamento.StatusOrcamento.ENVIADO))
+                    .valorOrcamentosRecusados(agg.valor(Orcamento.StatusOrcamento.RECUSADO))
+                    .taxaConversaoValor(percentual(valorAprovado, valorGerado))
+                    .taxaConversaoQuantidade(percentual(
+                            BigDecimal.valueOf(agg.qtd(Orcamento.StatusOrcamento.APROVADO)),
+                            BigDecimal.valueOf(qtdGerada)))
                     .clientesRecentes(getClientesRecentes())
                     .leadsRecentes(getLeadsRecentes())
                     .tarefasPendentes(getTarefasPendentes())
                     .oportunidadesPorEtapa(getOportunidadesPorEtapa())
-                    .orcamentosPorStatus(getOrcamentosPorStatus())
+                    .orcamentosPorStatus(agg.qtdPorNome())
                     .build();
         } catch (Exception e) {
             log.error("Erro ao gerar resumo do dashboard", e);
             throw e;
         }
+    }
+
+    /** {@code parte / base * 100}, escala 1. Zero quando a base é zero. */
+    private BigDecimal percentual(BigDecimal parte, BigDecimal base) {
+        if (base == null || base.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        return parte.multiply(BigDecimal.valueOf(100))
+                .divide(base, 1, RoundingMode.HALF_UP);
     }
 
     private long countOportunidadesAbertas() {
@@ -143,15 +176,44 @@ public class DashboardService {
         return mapa;
     }
 
-    private Map<String, Long> getOrcamentosPorStatus() {
-        List<Orcamento> todos = orcamentoRepository.findByAtivoTrue();
-        Map<String, Long> mapa = new LinkedHashMap<>();
+    /**
+     * Lê a agregação por status uma única vez e garante que todos os statuses do
+     * enum existam no mapa (zerados), na ordem de declaração — o gráfico da
+     * dashboard depende dessa ordem e de não haver buraco.
+     */
+    private OrcamentoAgregado agregarOrcamentos() {
+        Map<Orcamento.StatusOrcamento, Long> qtd = new LinkedHashMap<>();
+        Map<Orcamento.StatusOrcamento, BigDecimal> valor = new LinkedHashMap<>();
         for (Orcamento.StatusOrcamento status : Orcamento.StatusOrcamento.values()) {
-            long count = todos.stream()
-                    .filter(o -> o.getStatus() == status)
-                    .count();
-            mapa.put(status.name(), count);
+            qtd.put(status, 0L);
+            valor.put(status, BigDecimal.ZERO);
         }
-        return mapa;
+        for (Object[] linha : orcamentoRepository.aggregateByStatus()) {
+            Orcamento.StatusOrcamento status = (Orcamento.StatusOrcamento) linha[0];
+            if (status == null) continue;
+            qtd.put(status, ((Number) linha[1]).longValue());
+            valor.put(status, linha[2] != null ? (BigDecimal) linha[2] : BigDecimal.ZERO);
+        }
+        return new OrcamentoAgregado(qtd, valor);
+    }
+
+    private record OrcamentoAgregado(
+            Map<Orcamento.StatusOrcamento, Long> qtd,
+            Map<Orcamento.StatusOrcamento, BigDecimal> valor
+    ) {
+        long qtd(Orcamento.StatusOrcamento status) {
+            return qtd.getOrDefault(status, 0L);
+        }
+
+        BigDecimal valor(Orcamento.StatusOrcamento status) {
+            return valor.getOrDefault(status, BigDecimal.ZERO);
+        }
+
+        /** Contagens com a chave em String, como o frontend consome. */
+        Map<String, Long> qtdPorNome() {
+            Map<String, Long> mapa = new LinkedHashMap<>();
+            qtd.forEach((status, count) -> mapa.put(status.name(), count));
+            return mapa;
+        }
     }
 }

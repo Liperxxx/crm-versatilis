@@ -98,6 +98,7 @@ class DashboardManager {
         this.renderKpis(d);
         this.renderChartEtapa(d.oportunidadesPorEtapa);
         this.renderChartStatus(d.orcamentosPorStatus);
+        this.renderTaxaConversao(d);
         this.renderClientesRecentes(d.clientesRecentes);
         this.renderLeadsRecentes(d.leadsRecentes);
         this.renderTarefasPendentes(d.tarefasPendentes);
@@ -117,8 +118,12 @@ class DashboardManager {
         this.setText('kpiTarefasPendentes',
             `${d.totalTarefasPendentes || 0} tarefa${d.totalTarefasPendentes !== 1 ? 's' : ''} pendente${d.totalTarefasPendentes !== 1 ? 's' : ''}`);
 
+        // "Gerado" = propostas entregues ao cliente (enviado + aprovado + recusado);
+        // rascunho fica fora dos valores em R$ — ainda não virou proposta.
+        // "Fechado" = aprovados; é o mesmo número do card "Valor" do módulo Orçamentos.
         this.setText('kpiTotalOrcamentos', d.totalOrcamentos || 0);
-        this.setText('kpiValorOrcamentos', `Total: ${this.currency(d.valorOrcamentos)}`);
+        this.setText('kpiValorOrcamentos', `Gerado: ${this.currency(d.valorOrcamentosGerados)}`);
+        this.setText('kpiValorOrcamentosAprovados', `Fechado: ${this.currency(d.valorOrcamentosAprovados)}`);
     }
 
     // ── Gráfico: Oportunidades por Etapa (bar) ──────────────────────────
@@ -168,11 +173,10 @@ class DashboardManager {
         const values = Object.values(mapa);
         const total  = values.reduce((a, b) => a + b, 0);
 
-        // Labels com porcentagem: "Aprovado (35%)"
-        const labels = keys.map((k, i) => {
-            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) : '0.0';
-            return `${this.formatLabel(k)} (${pct}%)`;
-        });
+        // Label = contagem, não percentual. O % aqui seria a fatia sobre TODOS os
+        // orçamentos (rascunho incluído) e conflitava com a taxa de conversão
+        // logo abaixo, que ignora rascunho. Duas bases ≠ no mesmo card confundem.
+        const labels = keys.map((k, i) => `${this.formatLabel(k)} (${values[i]})`);
 
         const colors = ['#94a3b8', '#306EB4', '#10b981', '#ef4444'];
 
@@ -197,46 +201,47 @@ class DashboardManager {
                             label: (ctx) => {
                                 const val = ctx.parsed || 0;
                                 const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-                                return ` ${ctx.label.split(' (')[0]}: ${val} (${pct}%)`;
+                                return ` ${ctx.label.split(' (')[0]}: ${val} (${pct}% dos orçamentos)`;
                             }
                         }
                     }
                 }
             }
         });
-
-        // ── Taxa de Conversão Comercial ──
-        this.renderTaxaConversao(mapa, total);
     }
 
-    renderTaxaConversao(mapa, total) {
-        const container = document.getElementById('conversaoComercial');
-        const valorEl   = document.getElementById('taxaConversaoValor');
-        const detalheEl = document.getElementById('conversaoDetalhe');
+    /**
+     * Taxa de contratos fechados. A fonte é o backend (DashboardService) — o
+     * frontend não recalcula, senão volta a divergir. Base: propostas entregues
+     * ao cliente (ENVIADO + APROVADO + RECUSADO); rascunho não entra.
+     */
+    renderTaxaConversao(d) {
+        const container  = document.getElementById('conversaoComercial');
+        const valorEl    = document.getElementById('taxaConversaoValor');
+        const detalheEl  = document.getElementById('conversaoDetalhe');
+        const detalheQtd = document.getElementById('conversaoDetalheQtd');
         if (!container || !valorEl) return;
 
-        // Normalizar chaves para uppercase
-        const norm = {};
-        Object.keys(mapa).forEach(k => { norm[k.toUpperCase()] = mapa[k] || 0; });
-
-        const aprovados = norm['APROVADO'] || 0;
-        const enviados  = norm['ENVIADO']  || 0;
-        const recusados = norm['RECUSADO'] || 0;
-
-        // Base de cálculo: orçamentos que passaram por decisão (enviados + aprovados + recusados)
-        const base = aprovados + enviados + recusados;
-        const taxa = base > 0 ? ((aprovados / base) * 100).toFixed(1) : '0.0';
-
-        valorEl.textContent = `${taxa}%`;
+        const taxa = parseFloat(d.taxaConversaoValor) || 0;
+        valorEl.textContent = `${taxa.toFixed(1)}%`;
 
         // Cor condicional
-        const num = parseFloat(taxa);
-        if (num >= 50)      valorEl.style.color = '#10b981'; // verde
-        else if (num >= 25) valorEl.style.color = '#f59e0b'; // amarelo
-        else                valorEl.style.color = '#ef4444'; // vermelho
+        if (taxa >= 50)      valorEl.style.color = '#10b981'; // verde
+        else if (taxa >= 25) valorEl.style.color = '#f59e0b'; // amarelo
+        else                 valorEl.style.color = '#ef4444'; // vermelho
 
         if (detalheEl) {
-            detalheEl.textContent = `${aprovados} aprovado(s) de ${base} proposta(s) em negociação — Rascunhos não contabilizados`;
+            detalheEl.textContent =
+                `${this.currency(d.valorOrcamentosAprovados)} fechados de ${this.currency(d.valorOrcamentosGerados)} propostos`;
+        }
+
+        if (detalheQtd) {
+            const mapa = d.orcamentosPorStatus || {};
+            const qtd = (k) => mapa[k] || 0;
+            const baseQtd = qtd('ENVIADO') + qtd('APROVADO') + qtd('RECUSADO');
+            const taxaQtd = (parseFloat(d.taxaConversaoQuantidade) || 0).toFixed(1);
+            detalheQtd.textContent =
+                `Por quantidade: ${taxaQtd}% (${qtd('APROVADO')} de ${baseQtd} propostas) — rascunhos não contam`;
         }
 
         container.style.display = 'block';

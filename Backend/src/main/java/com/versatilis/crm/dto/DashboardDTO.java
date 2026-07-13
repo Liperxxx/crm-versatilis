@@ -26,7 +26,34 @@ public class DashboardDTO {
 
     // ── Valores ─────────────────────────────────────────────────
     private BigDecimal valorOportunidadesAbertas;
+
+    /** Soma de TODOS os orçamentos ativos, rascunho incluído. Legado/compat. */
     private BigDecimal valorOrcamentos;
+
+    /**
+     * Volume proposto ao cliente: ENVIADO + APROVADO + RECUSADO.
+     * Rascunho fica de fora — ainda não virou proposta.
+     */
+    private BigDecimal valorOrcamentosGerados;
+
+    /** Contratos fechados: soma dos orçamentos APROVADO. */
+    private BigDecimal valorOrcamentosAprovados;
+
+    /** Propostas aguardando decisão: soma dos orçamentos ENVIADO. */
+    private BigDecimal valorOrcamentosEmNegociacao;
+
+    /** Propostas perdidas: soma dos orçamentos RECUSADO. */
+    private BigDecimal valorOrcamentosRecusados;
+
+    /**
+     * % de contratos fechados POR VALOR:
+     * {@code valorOrcamentosAprovados / valorOrcamentosGerados * 100}.
+     * 0 quando não há proposta enviada. Escala 1 (ex.: 42.3).
+     */
+    private BigDecimal taxaConversaoValor;
+
+    /** % de contratos fechados POR QUANTIDADE, mesma base (sem rascunho). */
+    private BigDecimal taxaConversaoQuantidade;
 
     // ── Listas recentes ─────────────────────────────────────────
     private List<ItemRecente> clientesRecentes;
