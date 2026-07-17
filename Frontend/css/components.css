@@ -172,6 +172,33 @@
     color: var(--color-text-muted);
 }
 
+/* ── Select de status inline (listagem de orçamentos) ──
+   Aparência de "pílula" colorida como o badge, mas editável. */
+.orc-status-select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+    padding: 3px 26px 3px 12px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    /* seta custom (chevron) à direita */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23555' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: filter .12s ease, box-shadow .12s ease;
+}
+.orc-status-select:hover   { filter: brightness(0.97); }
+.orc-status-select:focus   { outline: none; box-shadow: 0 0 0 2px var(--color-primary-100); }
+.orc-status-select:disabled { opacity: .6; cursor: progress; }
+
+.orc-status-select.status-rascunho { background-color: var(--bg-tertiary);       color: var(--color-text-muted); }
+.orc-status-select.status-enviado  { background-color: var(--color-info-bg);     color: var(--color-info); }
+.orc-status-select.status-aprovado { background-color: var(--color-success-bg);  color: var(--color-success); }
+.orc-status-select.status-recusado { background-color: var(--color-danger-bg);   color: var(--color-danger); }
+
 /* ══════════════════════════════════════
    TABELAS
 ══════════════════════════════════════ */

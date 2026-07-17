@@ -109,6 +109,7 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.POST, "/orcamentos").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.PUT, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
+                .requestMatchers(HttpMethod.PATCH, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
                 .requestMatchers(HttpMethod.DELETE, "/orcamentos/**").hasAnyRole("ADMIN", "GERENTE", "OPERADOR")
 
                 // Marcenaria — calculadora de custos (módulo Orçamentos)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.versatilis.crm.dto.OrcamentoDTO;
 import com.versatilis.crm.dto.OrcamentoItemDTO;
+import com.versatilis.crm.exceptions.BadRequestException;
 import com.versatilis.crm.exceptions.ResourceNotFoundException;
 import com.versatilis.crm.model.*;
 import com.versatilis.crm.repositories.*;
@@ -269,5 +270,23 @@ public class OrcamentoService {
             o.setStatus(Orcamento.StatusOrcamento.ENVIADO);
             orcamentoRepository.save(o);
         }
+    }
+
+    /**
+     * Altera apenas o status do orçamento, sem tocar em itens/valores. Usado pela
+     * seleção inline na listagem — evita o PUT completo (que exigiria reenviar
+     * cliente, itens e datas só para mudar o status).
+     */
+    @Transactional
+    public OrcamentoDTO atualizarStatus(Long id, Orcamento.StatusOrcamento status) {
+        log.info("Atualizando status do orçamento ID {} para {}", id, status);
+        if (status == null) {
+            throw new BadRequestException("Status é obrigatório");
+        }
+        Orcamento o = orcamentoRepository.findByIdWithItens(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Orçamento não encontrado com ID: " + id));
+        o.setStatus(status);
+        o = orcamentoRepository.save(o);
+        return toDTO(o);
     }
 }

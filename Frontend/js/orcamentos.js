@@ -117,6 +117,14 @@ class OrcamentosModule {
         await window.CRMAuth.handleApi(res);
     }
 
+    // Altera só o status (PATCH dedicado) — não reenvia itens/valores.
+    async apiUpdateStatus(id, status) {
+        const res = await fetch(`${API_ORCAMENTOS}/${id}/status`, {
+            method: 'PATCH', headers: this.authHeaders(), body: JSON.stringify({ status })
+        });
+        return (await window.CRMAuth.handleApi(res)).dados;
+    }
+
     async apiGetById(id) {
         const res = await fetch(`${API_ORCAMENTOS}/${id}`, { headers: this.authHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -480,7 +488,7 @@ class OrcamentosModule {
             <td>${this.formatDate(o.dataEmissao)}</td>
             <td>${this.formatDate(o.dataValidade)}</td>
             <td><strong>${total}</strong></td>
-            <td>${this.statusBadge(o.status)}</td>
+            <td>${this.statusSelect(o)}</td>
             <td style="text-align:center">
                 <div class="actions">
                     <button class="btn btn-sm btn-secondary btn-orc-view" data-id="${o.id}" title="Visualizar"><i class="fas fa-eye"></i></button>
@@ -498,6 +506,53 @@ class OrcamentosModule {
             btn.addEventListener('click', () => this.openDeleteModal(parseInt(btn.dataset.id))));
         this.$tbody.querySelectorAll('.btn-orc-view').forEach(btn =>
             btn.addEventListener('click', () => this.openPreview(parseInt(btn.dataset.id))));
+        this.$tbody.querySelectorAll('.orc-status-select').forEach(sel =>
+            sel.addEventListener('change', () => this.changeStatus(sel)));
+    }
+
+    // ══ STATUS INLINE ═══════════════════════════════════════════════════
+
+    /** Select colorido para trocar o status direto na listagem, sem abrir o editor. */
+    statusSelect(o) {
+        const cur  = o.status || 'RASCUNHO';
+        const opts = Object.keys(OrcamentosModule.STATUS_LABELS).map(k =>
+            `<option value="${k}"${k === cur ? ' selected' : ''}>${OrcamentosModule.STATUS_LABELS[k]}</option>`
+        ).join('');
+        return `<select class="orc-status-select ${this.statusSelectClass(cur)}" data-id="${o.id}" data-prev="${cur}" title="Alterar status" aria-label="Alterar status do orçamento">${opts}</select>`;
+    }
+
+    statusSelectClass(status) {
+        const map = {
+            RASCUNHO: 'status-rascunho',
+            ENVIADO:  'status-enviado',
+            APROVADO: 'status-aprovado',
+            RECUSADO: 'status-recusado',
+        };
+        return map[status] || 'status-rascunho';
+    }
+
+    async changeStatus(sel) {
+        const id        = parseInt(sel.dataset.id);
+        const novo      = sel.value;
+        const anterior  = sel.dataset.prev;
+        if (novo === anterior) return;
+
+        sel.disabled = true;
+        try {
+            const updated = await this.apiUpdateStatus(id, novo);
+            const idx = this.orcamentos.findIndex(o => o.id === id);
+            if (idx > -1) this.orcamentos[idx] = updated;
+            const label = OrcamentosModule.STATUS_LABELS[novo] || novo;
+            this.toast('success', 'fas fa-check-circle',
+                `Status de <strong>${this.esc(updated.numero || '')}</strong> alterado para <strong>${this.esc(label)}</strong>.`);
+            // Re-renderiza: atualiza KPIs (aprovados, valor) e reaplica filtros.
+            this.render();
+        } catch (e) {
+            sel.value = anterior; // desfaz a seleção visual
+            this.toast('danger', 'fas fa-exclamation-circle', `Erro ao alterar status: ${this.esc(e.message)}`);
+        } finally {
+            sel.disabled = false;
+        }
     }
 
     // ══ MODAL ═══════════════════════════════════════════════════════════

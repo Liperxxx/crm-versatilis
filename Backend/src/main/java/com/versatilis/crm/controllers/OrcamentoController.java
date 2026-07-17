@@ -81,6 +81,22 @@ public class OrcamentoController {
         return ResponseEntity.ok(ResponseDTO.sucesso("Orçamento atualizado com sucesso", atualizado));
     }
 
+    /**
+     * Atualiza somente o status do orçamento (seleção inline na listagem).
+     * Não altera itens nem valores — ver {@link OrcamentoService#atualizarStatus}.
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
+    public ResponseEntity<ResponseDTO<OrcamentoDTO>> atualizarStatus(
+        @PathVariable Long id,
+        @RequestBody AtualizarStatusRequest req) {
+        log.info("PATCH /api/orcamentos/{}/status - Alterando status para {}", id, req.status());
+        OrcamentoDTO atualizado = orcamentoService.atualizarStatus(id, req.status());
+        return ResponseEntity.ok(ResponseDTO.sucesso("Status atualizado com sucesso", atualizado));
+    }
+
+    public record AtualizarStatusRequest(Orcamento.StatusOrcamento status) {}
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'OPERADOR')")
     public ResponseEntity<ResponseDTO<Void>> deletar(@PathVariable Long id) {
