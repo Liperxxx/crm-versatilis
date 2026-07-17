@@ -1,14 +1,19 @@
 package com.versatilis.crm.exceptions;
 
 import com.versatilis.crm.dto.ResponseDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -67,18 +72,75 @@ public class GlobalExceptionHandler {
             .body(ResponseDTO.erro("Erro de validação", HttpStatus.BAD_REQUEST.value()));
     }
 
+    /**
+     * Rota inexistente. No Spring Boot 4 uma URL sem handler cai no
+     * ResourceHttpRequestHandler e vira NoResourceFoundException — antes isso
+     * caía no handler genérico e retornava 500 "Erro interno do servidor",
+     * mascarando "endpoint não existe / não deployado" como erro de servidor.
+     * Agora retorna 404 explícito com o método e o caminho.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleNoResourceFound(
+            NoResourceFoundException ex, HttpServletRequest req) {
+        log.warn("Rota não encontrada: {} {}", req.getMethod(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ResponseDTO.erro(
+                "Rota não encontrada: " + req.getMethod() + " " + req.getRequestURI(),
+                HttpStatus.NOT_FOUND.value()));
+    }
+
+    /** Método HTTP não suportado nessa rota (ex.: POST onde só há GET) → 405. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+        log.warn("Método não suportado: {} {}", req.getMethod(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+            .body(ResponseDTO.erro(
+                "Método " + ex.getMethod() + " não permitido nesta rota",
+                HttpStatus.METHOD_NOT_ALLOWED.value()));
+    }
+
+    /**
+     * Corpo JSON malformado ou valor de enum inválido (ex.: status "BANANA").
+     * Antes virava 500; agora 400, deixando claro que o problema é do cliente.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleUnreadableMessage(
+            HttpMessageNotReadableException ex, HttpServletRequest req) {
+        log.warn("Corpo da requisição inválido em {} {}: {}",
+            req.getMethod(), req.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ResponseDTO.erro(
+                "Corpo da requisição inválido ou valor não reconhecido.",
+                HttpStatus.BAD_REQUEST.value()));
+    }
+
+    /** Tipo inválido em parâmetro de rota/query (ex.: ?status=XPTO) → 400. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ResponseDTO<Void>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        log.warn("Parâmetro '{}' inválido em {} {}: valor '{}'",
+            ex.getName(), req.getMethod(), req.getRequestURI(), ex.getValue());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ResponseDTO.erro(
+                "Valor inválido para o parâmetro '" + ex.getName() + "'.",
+                HttpStatus.BAD_REQUEST.value()));
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ResponseDTO<Void>> handleGenericException(Exception ex) {
+    public ResponseEntity<ResponseDTO<Void>> handleGenericException(Exception ex, HttpServletRequest req) {
         // Verificar se é erro de conexão com banco de dados
         if (isDatabaseConnectionError(ex)) {
-            log.error("Erro de conexão com banco de dados: {}", ex.getMessage());
+            log.error("Erro de conexão com banco de dados em {} {}: {}",
+                req.getMethod(), req.getRequestURI(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ResponseDTO.erro(
                     "Servidor temporariamente indisponível. Tente novamente em alguns segundos.",
                     HttpStatus.SERVICE_UNAVAILABLE.value()));
         }
 
-        log.error("Erro interno do servidor", ex);
+        // Log com método + rota: um 500 real agora diz ONDE ocorreu.
+        log.error("Erro interno do servidor em {} {}", req.getMethod(), req.getRequestURI(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ResponseDTO.erro("Erro interno do servidor", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
