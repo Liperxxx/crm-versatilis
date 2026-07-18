@@ -167,6 +167,8 @@ class ConfiguracoesManager {
         el.addEventListener('change', () => {
             this.config[configKey] = type === 'checkbox' ? el.checked : el.value;
             this.saveConfig();
+            // Preferências de Aparência aplicam efeito imediato (tema, sidebar, densidade).
+            if (window.Appearance) window.Appearance.apply(this.config);
             this.toast('success', 'fas fa-check-circle', 'Preferência salva!');
         });
     }

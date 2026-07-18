@@ -199,8 +199,10 @@ class App {
     }
 
     toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        sidebar.classList.toggle('collapsed');
+        // Alterna a mesma classe de raiz usada pela preferência "Sidebar Compacta"
+        // (css/appearance.css). Antes alternava .collapsed na sidebar, que não
+        // tinha CSS — por isso o botão não recolhia nada.
+        document.documentElement.classList.toggle('sidebar-compact');
     }
 
     toggleMobileSidebar() {

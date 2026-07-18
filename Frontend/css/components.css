@@ -1642,6 +1642,11 @@ table .actions,
 .notif-item:hover { background: var(--bg-tertiary); }
 .notif-item.unread { background: var(--color-primary-50); }
 .notif-item.unread:hover { background: var(--color-primary-100); }
+/* Lida = esmaecida: torna o "Marcar lidas" visível (antes a única pista
+   era o fundo de 8% de opacidade, quase imperceptível). */
+.notif-item { transition: background var(--transition-fast), opacity var(--transition-fast); }
+.notif-item:not(.unread) { opacity: 0.55; }
+.notif-item:not(.unread):hover { opacity: 1; }
 
 .notif-item-icon {
     width: 36px;

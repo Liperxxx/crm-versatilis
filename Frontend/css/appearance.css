@@ -1,0 +1,81 @@
+/*
+   APARÊNCIA — preferências visuais (Configurações › Aparência)
+   Tema escuro, sidebar compacta e densidade de tabelas.
+   O estado é aplicado por js/appearance.js como atributo/classe na <html>:
+     - <html data-theme="dark">        → tema escuro
+     - <html class="sidebar-compact">  → sidebar recolhida
+     - <html class="tables-compact">   → tabelas em modo compacto
+*/
+
+/* ═══════════════════════════════════════════════════════════
+   TEMA ESCURO
+   Sobrescreve APENAS as variáveis de superfície/texto/borda/sombra.
+   A marca (laranja), a sidebar (navy) e as cores semânticas são mantidas —
+   como quase tudo no app usa var(--bg-*)/var(--color-text), a maior parte
+   das telas tematiza automaticamente.
+   ═══════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+    --color-text:        #e5eaf2;
+    --color-text-muted:  #9aa7bd;
+    --color-gray-light:  #5b6b85;
+
+    --bg-primary:        #1b2436;  /* cards, header, inputs */
+    --bg-secondary:      #121926;  /* fundo da página */
+    --bg-tertiary:       #26324a;  /* realces, chips, hover de campos */
+    --bg-hover:          #2c3a56;
+
+    --border-color:      #303e58;
+    --border-color-focus: var(--color-primary);
+
+    /* tints um pouco mais fortes p/ manter contraste sobre fundo escuro */
+    --color-primary-50:  rgba(205, 90, 38, 0.16);
+    --color-primary-100: rgba(205, 90, 38, 0.26);
+    --color-success-bg:  rgba(16, 185, 129, 0.18);
+    --color-warning-bg:  rgba(250, 165, 50, 0.18);
+    --color-danger-bg:   rgba(239, 68, 68, 0.18);
+    --color-info-bg:     rgba(48, 110, 180, 0.22);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.50), 0 4px 6px rgba(0, 0, 0, 0.35);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.55), 0 8px 10px rgba(0, 0, 0, 0.40);
+}
+
+/* A prévia do orçamento representa PAPEL (o que vira PDF/impressão) —
+   permanece clara mesmo no tema escuro. */
+:root[data-theme="dark"] .orc-document {
+    color: #1a1a1a;
+    background: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR COMPACTA
+   Reaproveita --sidebar-width-collapsed. Vale tanto para a preferência
+   salva quanto para o botão de recolher (ambos alternam .sidebar-compact
+   na <html>). Só em desktop: abaixo de 1024px o layout já é compacto por
+   media query, e abaixo de 768px a sidebar vira off-canvas — não mexemos.
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+    html.sidebar-compact .sidebar      { width: var(--sidebar-width-collapsed); }
+    html.sidebar-compact .main-wrapper { margin-left: var(--sidebar-width-collapsed); }
+
+    html.sidebar-compact .sidebar .logo span,
+    html.sidebar-compact .sidebar .nav-link span,
+    html.sidebar-compact .sidebar .user-info { display: none; }
+
+    html.sidebar-compact .sidebar .nav-link { justify-content: center; padding: 10px; }
+    html.sidebar-compact .sidebar .nav-link.active::before { display: none; }
+    html.sidebar-compact .sidebar .logo { justify-content: center; }
+    html.sidebar-compact .sidebar .sidebar-footer { justify-content: center; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DENSIDADE DAS TABELAS
+   "Compacta" reduz o espaçamento/altura das linhas em todas as tabelas.
+   ═══════════════════════════════════════════════════════════ */
+html.tables-compact .data-table th,
+html.tables-compact .data-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+}
