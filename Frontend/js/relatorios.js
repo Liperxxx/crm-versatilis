@@ -29,6 +29,10 @@ class RelatoriosModule {
         this.$btnFiltrar?.addEventListener('click', () => this.carregarRelatorio());
         this.$btnLimpar?.addEventListener('click', () => this.limparFiltros());
         this.$btnPDF?.addEventListener('click', () => this.exportarPDF());
+        // Prepara a impressão (timbrado + gráficos legíveis no papel) tanto pelo
+        // botão quanto por Ctrl+P.
+        window.addEventListener('beforeprint', () => this.prepararImpressao());
+        window.addEventListener('afterprint',  () => this.restaurarAposImpressao());
     }
 
     // ── API ──────────────────────────────────────────────────────────────
@@ -87,9 +91,11 @@ class RelatoriosModule {
         this.setCardValue('relTotalClientes',     d.totalClientes);
         this.setCardValue('relTotalLeads',         d.totalLeads);
         this.setCardValue('relLeadsConvertidos',   d.leadsConvertidos);
-        this.setCardValue('relOportAbertas',       d.oportunidadesAbertas);
-        this.setCardValue('relOportGanhas',        d.oportunidadesGanhas);
-        this.setCardValue('relOportPerdidas',      d.oportunidadesPerdidas);
+        // Orçamentos por valor (foco do relatório)
+        this.setCardValue('relValorOrcAprovados',  this.formatCurrency(d.valorOrcamentosAprovados || 0));
+        this.setCardValue('relValorOrcRecusados',  this.formatCurrency(d.valorOrcamentosRecusados || 0));
+        this.setCardValue('relValorOrcEnviados',   this.formatCurrency(d.valorOrcamentosEnviados || 0));
+        this.setCardValue('relTaxaConversao',      `${(parseFloat(d.taxaConversaoOrcamentos) || 0).toFixed(1)}%`);
         this.setCardValue('relTarefasPendentes',   d.tarefasPendentes);
         this.setCardValue('relTarefasConcluidas',  d.tarefasConcluidas);
         this.setCardValue('relTotalOrcamentos',    this.formatCurrency(d.totalOrcamentos || 0));
@@ -105,7 +111,7 @@ class RelatoriosModule {
         // Cores de texto/grade dos gráficos seguem o tema (claro/escuro).
         if (window.Appearance) window.Appearance.applyChartTheme();
         this.renderLeadsChart();
-        this.renderOportChart();
+        this.renderGanhosPerdidosChart();
         this.renderOrcChart();
         this.renderTarefasChart();
     }
@@ -152,81 +158,66 @@ class RelatoriosModule {
         });
     }
 
-    renderOportChart() {
-        this.destroyChart('oport');
-        const ctx = document.getElementById('chartOportEtapa');
+    /** Ganhos (aprovados) × Perdidos (recusados) dos orçamentos, por valor (R$). */
+    renderGanhosPerdidosChart() {
+        this.destroyChart('ganhosPerdidos');
+        const ctx = document.getElementById('chartOrcGanhosPerdidos');
         if (!ctx) return;
 
-        const data = this.dados.oportunidadesPorEtapa || {};
-        const etapaLabels = {
-            'QUALIFICACAO': 'Qualificação', 'ANALISE_NECESSIDADES': 'Análise',
-            'PROPOSTA': 'Proposta', 'NEGOCIACAO': 'Negociação', 'FECHAMENTO': 'Fechamento'
-        };
-        const etapaColors = ['#306EB4', '#FF9300', '#CD5A26', '#FAA532', '#10b981'];
+        const d = this.dados;
+        const ganhos   = parseFloat(d.valorOrcamentosAprovados) || 0;
+        const perdidos = parseFloat(d.valorOrcamentosRecusados) || 0;
+        const qtdG = d.orcamentosAprovadosQtd || 0;
+        const qtdP = d.orcamentosRecusadosQtd || 0;
 
-        const orderedKeys = ['QUALIFICACAO', 'ANALISE_NECESSIDADES', 'PROPOSTA', 'NEGOCIACAO', 'FECHAMENTO'];
-        const labels = orderedKeys.filter(k => data[k] !== undefined).map(k => etapaLabels[k] || k);
-        const values = orderedKeys.filter(k => data[k] !== undefined).map(k => data[k]);
-        const colors = orderedKeys.filter(k => data[k] !== undefined).map((_, i) => etapaColors[i % etapaColors.length]);
-
-        this.charts.oport = new Chart(ctx, {
-            type: 'bar',
+        this.charts.ganhosPerdidos = new Chart(ctx, {
+            type: 'doughnut',
             data: {
-                labels,
-                datasets: [{
-                    label: 'Oportunidades',
-                    data: values,
-                    backgroundColor: colors,
-                    borderRadius: 6,
-                    maxBarThickness: 50
-                }]
+                labels: [`Ganhos (${qtdG})`, `Perdidos (${qtdP})`],
+                datasets: [{ data: [ganhos, perdidos], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 2, borderColor: '#fff' }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 12 } } },
+                    tooltip: { callbacks: { label: (c) => ` ${c.label}: ${this.formatCurrency(c.parsed)}` } }
                 }
             }
         });
     }
 
+    /** Orçamentos por status, em VALOR (R$): Em aberto, Aprovados, Recusados. */
     renderOrcChart() {
         this.destroyChart('orc');
         const ctx = document.getElementById('chartOrcStatus');
         if (!ctx) return;
 
-        const data = this.dados.orcamentosPorStatus || {};
-        const statusLabels = {
-            'RASCUNHO': 'Rascunho', 'ENVIADO': 'Enviado', 'APROVADO': 'Aprovado', 'RECUSADO': 'Recusado'
-        };
-        const statusColors = { 'RASCUNHO': '#94a3b8', 'ENVIADO': '#306EB4', 'APROVADO': '#10b981', 'RECUSADO': '#ef4444' };
-
-        const orderedKeys = ['RASCUNHO', 'ENVIADO', 'APROVADO', 'RECUSADO'];
-        const labels = orderedKeys.filter(k => data[k] !== undefined).map(k => statusLabels[k] || k);
-        const values = orderedKeys.filter(k => data[k] !== undefined).map(k => data[k]);
-        const colors = orderedKeys.filter(k => data[k] !== undefined).map(k => statusColors[k] || '#94a3b8');
+        const d = this.dados;
+        const labels = ['Em aberto', 'Aprovados', 'Recusados'];
+        const values = [
+            parseFloat(d.valorOrcamentosEnviados)  || 0,
+            parseFloat(d.valorOrcamentosAprovados) || 0,
+            parseFloat(d.valorOrcamentosRecusados) || 0
+        ];
+        const colors = ['#306EB4', '#10b981', '#ef4444'];
 
         this.charts.orc = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels,
-                datasets: [{
-                    label: 'Orçamentos',
-                    data: values,
-                    backgroundColor: colors,
-                    borderRadius: 6,
-                    maxBarThickness: 50
-                }]
+                datasets: [{ label: 'Valor (R$)', data: values, backgroundColor: colors, borderRadius: 6, maxBarThickness: 50 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (c) => ` ${this.formatCurrency(c.parsed.x)}` } }
+                },
                 scales: {
-                    x: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    x: { beginAtZero: true, ticks: { callback: (v) => this.formatCompact(v) } }
                 }
             }
         });
@@ -319,6 +310,31 @@ class RelatoriosModule {
         window.print();
     }
 
+    /** Antes de imprimir: preenche o período do timbrado e força os gráficos
+     *  para cores escuras (legíveis sobre o papel branco, mesmo no tema escuro). */
+    prepararImpressao() {
+        const el = document.getElementById('relPrintPeriodo');
+        if (el) {
+            const ini = this.$dataInicio?.value ? this.formatDate(this.$dataInicio.value) : null;
+            const fim = this.$dataFim?.value ? this.formatDate(this.$dataFim.value) : null;
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            el.textContent = (ini || fim)
+                ? `Período: ${ini || 'início'} a ${fim || 'hoje'} · Emitido em ${hoje}`
+                : `Todos os períodos · Emitido em ${hoje}`;
+        }
+        if (window.Chart) {
+            Chart.defaults.color = '#1e293b';
+            Chart.defaults.borderColor = 'rgba(0,0,0,0.08)';
+            Object.values(this.charts).forEach(c => c && c.update('none'));
+        }
+    }
+
+    /** Depois de imprimir: devolve os gráficos ao tema atual da tela. */
+    restaurarAposImpressao() {
+        if (window.Appearance) window.Appearance.applyChartTheme();
+        Object.values(this.charts).forEach(c => c && c.update('none'));
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────
     showLoading(show) {
         if (this.$loading)  this.$loading.style.display  = show ? 'block' : 'none';
@@ -328,6 +344,14 @@ class RelatoriosModule {
     formatCurrency(value) {
         const num = typeof value === 'number' ? value : parseFloat(value) || 0;
         return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    /** Valor compacto para eixos: R$ 1,2 mil / R$ 3,4 mi. */
+    formatCompact(value) {
+        const n = typeof value === 'number' ? value : parseFloat(value) || 0;
+        if (Math.abs(n) >= 1_000_000) return `R$ ${(n / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`;
+        if (Math.abs(n) >= 1_000)     return `R$ ${(n / 1_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil`;
+        return `R$ ${n.toLocaleString('pt-BR')}`;
     }
 
     formatDate(dateStr) {

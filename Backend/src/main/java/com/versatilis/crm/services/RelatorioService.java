@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -160,6 +161,18 @@ public class RelatorioService {
                         Collectors.counting()
                 ));
 
+        // Valores por status (R$) — ganhos (aprovados), perdidos (recusados),
+        // em aberto (enviados) e taxa de conversão por valor.
+        BigDecimal valorAprovados = somaPorStatus(orcFiltrados, Orcamento.StatusOrcamento.APROVADO);
+        BigDecimal valorRecusados = somaPorStatus(orcFiltrados, Orcamento.StatusOrcamento.RECUSADO);
+        BigDecimal valorEnviados  = somaPorStatus(orcFiltrados, Orcamento.StatusOrcamento.ENVIADO);
+        long qtdAprovados = orcFiltrados.stream().filter(o -> o.getStatus() == Orcamento.StatusOrcamento.APROVADO).count();
+        long qtdRecusados = orcFiltrados.stream().filter(o -> o.getStatus() == Orcamento.StatusOrcamento.RECUSADO).count();
+        BigDecimal baseConversao = valorEnviados.add(valorAprovados).add(valorRecusados);
+        BigDecimal taxaConversao = baseConversao.compareTo(BigDecimal.ZERO) > 0
+                ? valorAprovados.multiply(BigDecimal.valueOf(100)).divide(baseConversao, 1, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         return RelatorioDTO.builder()
                 .totalClientes(totalClientes)
                 .totalLeads(totalLeads)
@@ -170,6 +183,12 @@ public class RelatorioService {
                 .tarefasPendentes(tarefasPendentes)
                 .tarefasConcluidas(tarefasConcluidas)
                 .totalOrcamentos(totalOrcamentos)
+                .valorOrcamentosAprovados(valorAprovados)
+                .valorOrcamentosRecusados(valorRecusados)
+                .valorOrcamentosEnviados(valorEnviados)
+                .orcamentosAprovadosQtd(qtdAprovados)
+                .orcamentosRecusadosQtd(qtdRecusados)
+                .taxaConversaoOrcamentos(taxaConversao)
                 .valorOportunidadesAbertas(valorAbertas)
                 .valorOportunidadesGanhas(valorGanhas)
                 .leadsPorStatus(leadsPorStatus)
@@ -184,5 +203,14 @@ public class RelatorioService {
     private boolean estaDentroPeriodo(LocalDateTime dataCriacao, LocalDateTime inicio, LocalDateTime fim) {
         if (dataCriacao == null) return true;
         return !dataCriacao.isBefore(inicio) && !dataCriacao.isAfter(fim);
+    }
+
+    /** Soma do total dos orçamentos de um dado status. */
+    private BigDecimal somaPorStatus(List<Orcamento> orcs, Orcamento.StatusOrcamento status) {
+        return orcs.stream()
+                .filter(o -> o.getStatus() == status)
+                .map(Orcamento::getTotal)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

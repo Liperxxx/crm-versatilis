@@ -1550,17 +1550,55 @@ table .actions,
 }
 
 /* ─── Print styles for Relatórios ─────────────────────── */
+/* Timbrado do relatório: escondido na tela, aparece só na impressão/PDF. */
+.rel-print-header, .rel-print-title, .rel-print-footer { display: none; }
+
 @media print {
+    /* Imprime só o relatório, sempre em tema claro (papel branco), com o
+       timbrado Versatilis no topo e no rodapé. */
+    @page { margin: 12mm; }
+
     body * { visibility: hidden; }
     #relatorios-module,
     #relatorios-module * { visibility: visible; }
-    #relatorios-module { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-    #relatorios-module .toolbar { display: none !important; }
-    .rel-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-    .rel-chart-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-    .rel-table-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-    .rel-card__icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #relatorios-module {
+        position: absolute; left: 0; top: 0; width: 100%; padding: 0;
+        background: #fff; color: #1e293b;
+    }
+    #relatorios-module .toolbar,
+    #relatorios-module .module-header { display: none !important; }
     .sidebar, .header, .toast-container { display: none !important; }
+
+    /* Força cores claras mesmo se a tela estiver no tema escuro. */
+    #relatorios-module,
+    #relatorios-module .rel-card,
+    #relatorios-module .rel-chart-card,
+    #relatorios-module .rel-table-card {
+        background: #fff !important;
+        color: #1e293b !important;
+    }
+
+    /* Timbrado full-width (as imagens já têm a marca Versatilis). */
+    .rel-print-header, .rel-print-footer { display: block; text-align: center; }
+    .rel-print-header { margin-bottom: 8px; }
+    .rel-print-header img,
+    .rel-print-footer img {
+        width: 100%; max-width: 100%; display: block;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .rel-print-footer { margin-top: 16px; break-inside: avoid; }
+    .rel-print-title { display: block; text-align: center; margin: 4px 0 14px; }
+    .rel-print-title h2 { margin: 0; font-size: 18px; color: #112251; }
+    .rel-print-title p  { margin: 2px 0 0; font-size: 11px; color: #64748b; }
+
+    .rel-card, .rel-chart-card, .rel-table-card {
+        break-inside: avoid; box-shadow: none; border: 1px solid #ddd;
+    }
+    .rel-card__icon,
+    .rel-card__value { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Oportunidades foram despriorizadas: fora do relatório impresso. */
+    #relatorios-module .rel-table-card:has(#relTblTopOport) { display: none !important; }
 }
 
 /* ══════════════════════════════════════════════════════════

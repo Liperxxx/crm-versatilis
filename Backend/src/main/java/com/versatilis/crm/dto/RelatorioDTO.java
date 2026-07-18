@@ -25,6 +25,19 @@ public class RelatorioDTO {
     private long tarefasConcluidas;
     private BigDecimal totalOrcamentos;
 
+    // ── Orçamentos por valor (R$) ──────────────────────────────
+    /** Ganhos: soma dos orçamentos APROVADO. */
+    private BigDecimal valorOrcamentosAprovados;
+    /** Perdidos: soma dos orçamentos RECUSADO. */
+    private BigDecimal valorOrcamentosRecusados;
+    /** Em aberto/negociação: soma dos orçamentos ENVIADO. */
+    private BigDecimal valorOrcamentosEnviados;
+    /** Contagem de aprovados/recusados (relação ganhos × perdidos). */
+    private long orcamentosAprovadosQtd;
+    private long orcamentosRecusadosQtd;
+    /** % de conversão por valor: aprovados ÷ (enviados+aprovados+recusados) × 100. */
+    private BigDecimal taxaConversaoOrcamentos;
+
     private BigDecimal valorOportunidadesAbertas;
     private BigDecimal valorOportunidadesGanhas;
 

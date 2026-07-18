@@ -1688,6 +1688,15 @@
                     <!-- Conteúdo do relatório -->
                     <div id="relConteudo">
 
+                        <!-- Papel timbrado Versatilis — visível apenas na impressão/PDF -->
+                        <div class="rel-print-header">
+                            <img src="assets/cabecalho.png" alt="Versatilis">
+                        </div>
+                        <div class="rel-print-title">
+                            <h2>Relatório Gerencial</h2>
+                            <p id="relPrintPeriodo"></p>
+                        </div>
+
                         <!-- Cards de indicadores -->
                         <div class="rel-cards-grid" id="relCardsGrid">
                             <div class="rel-card rel-card--primary">
@@ -1711,25 +1720,32 @@
                                     <span class="rel-card__label">Leads Convertidos</span>
                                 </div>
                             </div>
-                            <div class="rel-card rel-card--warning">
-                                <div class="rel-card__icon"><i class="fas fa-handshake"></i></div>
-                                <div class="rel-card__body">
-                                    <span class="rel-card__value" id="relOportAbertas">0</span>
-                                    <span class="rel-card__label">Oport. Abertas</span>
-                                </div>
-                            </div>
                             <div class="rel-card rel-card--success-alt">
-                                <div class="rel-card__icon"><i class="fas fa-trophy"></i></div>
+                                <div class="rel-card__icon"><i class="fas fa-circle-check"></i></div>
                                 <div class="rel-card__body">
-                                    <span class="rel-card__value" id="relOportGanhas">0</span>
-                                    <span class="rel-card__label">Oport. Ganhas</span>
+                                    <span class="rel-card__value" id="relValorOrcAprovados">R$ 0</span>
+                                    <span class="rel-card__label">Orçamentos Aprovados</span>
                                 </div>
                             </div>
                             <div class="rel-card rel-card--danger">
-                                <div class="rel-card__icon"><i class="fas fa-times-circle"></i></div>
+                                <div class="rel-card__icon"><i class="fas fa-circle-xmark"></i></div>
                                 <div class="rel-card__body">
-                                    <span class="rel-card__value" id="relOportPerdidas">0</span>
-                                    <span class="rel-card__label">Oport. Perdidas</span>
+                                    <span class="rel-card__value" id="relValorOrcRecusados">R$ 0</span>
+                                    <span class="rel-card__label">Orçamentos Recusados</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--warning">
+                                <div class="rel-card__icon"><i class="fas fa-paper-plane"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relValorOrcEnviados">R$ 0</span>
+                                    <span class="rel-card__label">Orçamentos em Aberto</span>
+                                </div>
+                            </div>
+                            <div class="rel-card rel-card--info">
+                                <div class="rel-card__icon"><i class="fas fa-percent"></i></div>
+                                <div class="rel-card__body">
+                                    <span class="rel-card__value" id="relTaxaConversao">0%</span>
+                                    <span class="rel-card__label">Taxa de Conversão</span>
                                 </div>
                             </div>
                             <div class="rel-card rel-card--orange">
@@ -1764,13 +1780,13 @@
                                 </div>
                             </div>
                             <div class="rel-chart-card">
-                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-bar"></i> Funil de Oportunidades</h3>
+                                <h3 class="rel-chart-card__title"><i class="fas fa-scale-balanced"></i> Orçamentos: Ganhos × Perdidos</h3>
                                 <div class="rel-chart-card__body">
-                                    <canvas id="chartOportEtapa"></canvas>
+                                    <canvas id="chartOrcGanhosPerdidos"></canvas>
                                 </div>
                             </div>
                             <div class="rel-chart-card">
-                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-bar"></i> Orçamentos por Status</h3>
+                                <h3 class="rel-chart-card__title"><i class="fas fa-chart-bar"></i> Orçamentos por Status (R$)</h3>
                                 <div class="rel-chart-card__body">
                                     <canvas id="chartOrcStatus"></canvas>
                                 </div>
@@ -1825,6 +1841,11 @@
                                     <p>Nenhuma tarefa vencida</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Rodapé timbrado Versatilis — visível apenas na impressão/PDF -->
+                        <div class="rel-print-footer">
+                            <img src="assets/rodape.png" alt="">
                         </div>
 
                     </div><!-- /relConteudo -->
