@@ -1,15 +1,17 @@
 # Stage 1: Build
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+FROM eclipse-temurin:25-jdk-noble AS build
 
 WORKDIR /app
 
+COPY .mvn .mvn
+COPY mvnw .
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn package -DskipTests && mv target/crm-versatilis-*.jar target/app.jar
+RUN chmod +x mvnw && ./mvnw package -DskipTests && mv target/crm-versatilis-*.jar target/app.jar
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-noble
 
 WORKDIR /app
 

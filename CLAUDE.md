@@ -12,7 +12,7 @@ embutida no módulo Orçamentos (com packer 2D para corte de chapas, persistênc
 de cálculos e cálculo de margem de lucro / preço de venda).
 
 Stack:
-- **Backend:** Java 21 + Spring Boot + Spring Security (JWT) + Spring Data JPA + Lombok + Maven (`pom.xml` declara `<java.version>25</java.version>` para CI/Railway; localmente compila com 21 via `-Djava.version=21 -Dmaven.compiler.release=21`).
+- **Backend:** Java 25 + Spring Boot 4 + Spring Security (JWT) + Spring Data JPA + Lombok + Maven (`pom.xml` declara `<java.version>25</java.version>`). Build local, testes e Docker/Railway usam Java 25 — sem override. Requer JDK 25 (`JAVA_HOME` apontando para um JDK 25). Verificado rodando o app e os testes em 25.
 - **Frontend:** HTML5 + CSS modular + JavaScript vanilla (sem framework). 1 SPA (`Frontend/index.html`) com 1 arquivo JS singleton por módulo.
 - **Banco:** PostgreSQL no Supabase (prod) — projeto `sqtttloncpfqysssrvyr` / host `db.sqtttloncpfqysssrvyr.supabase.co`. H2 in-memory em dev (`spring.profiles.active=dev`).
 - **Infra:** Backend no Railway (deploy automático via push para `main`), frontend no Vercel.
@@ -60,8 +60,8 @@ Stack:
 # Backend dev (H2 em memória, porta 8081)
 cd Backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
-# Backend build (override Java 21 localmente)
-cd Backend && ./mvnw clean package -DskipTests -Djava.version=21 -Dmaven.compiler.release=21
+# Backend build (Java 25 — precisa de JAVA_HOME apontando para um JDK 25)
+cd Backend && ./mvnw clean package -DskipTests
 
 # Backend rodando a partir do JAR
 java -jar Backend/target/crm-versatilis-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev --server.port=8081
