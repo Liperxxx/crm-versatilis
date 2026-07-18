@@ -48,6 +48,19 @@
         });
     }
 
+    /**
+     * Ajusta as cores padrão do Chart.js ao tema atual (texto de legendas/eixos
+     * e linhas de grade). Deve ser chamado ANTES de criar cada gráfico, pois o
+     * Chart.js copia os defaults no momento da criação. Seguro chamar mesmo se
+     * o Chart.js ainda não carregou.
+     */
+    function applyChartTheme() {
+        if (!window.Chart) return;
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        window.Chart.defaults.color = dark ? '#cbd5e1' : '#475569';
+        window.Chart.defaults.borderColor = dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+    }
+
     // Exposto para configuracoes.js reaplicar ao vivo quando o usuário muda uma opção.
-    window.Appearance = { apply, readConfig, resolveTheme };
+    window.Appearance = { apply, readConfig, resolveTheme, applyChartTheme };
 })();

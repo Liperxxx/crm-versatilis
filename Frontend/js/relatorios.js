@@ -102,6 +102,8 @@ class RelatoriosModule {
 
     // ── Charts ───────────────────────────────────────────────────────────
     renderCharts() {
+        // Cores de texto/grade dos gráficos seguem o tema (claro/escuro).
+        if (window.Appearance) window.Appearance.applyChartTheme();
         this.renderLeadsChart();
         this.renderOportChart();
         this.renderOrcChart();

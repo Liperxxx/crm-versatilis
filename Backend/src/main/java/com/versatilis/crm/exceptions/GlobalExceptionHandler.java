@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -145,23 +144,33 @@ public class GlobalExceptionHandler {
             .body(ResponseDTO.erro("Erro interno do servidor", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
+    /**
+     * True apenas quando o banco está genuinamente inacessível (pool esgotado,
+     * conexão recusada/caída) — casos em que faz sentido responder 503 "tente
+     * de novo". Deliberadamente ESTREITO: matches genéricos por "connection"/
+     * "pool"/"timed out" mascaravam bugs reais (ex.: violação de constraint,
+     * NPE com "connection" na mensagem) como 503, escondendo o 500 verdadeiro.
+     */
     private boolean isDatabaseConnectionError(Exception ex) {
         Throwable cause = ex;
         while (cause != null) {
-            String name = cause.getClass().getName().toLowerCase();
+            String name = cause.getClass().getName();
             String msg = cause.getMessage() != null ? cause.getMessage().toLowerCase() : "";
-            if (cause instanceof SQLException
-                || name.contains("hikari") || name.contains("jdbc")
-                || name.contains("connection") || name.contains("pool")
-                || msg.contains("connection is not available")
-                || msg.contains("cannot acquire")
-                || msg.contains("connection timeout")
-                || msg.contains("pool") || msg.contains("timed out")
-                || msg.contains("temporariamente indisponível")) {
+            if (cause instanceof java.sql.SQLTransientConnectionException       // Hikari: pool esgotado / sem conexão
+                || cause instanceof java.sql.SQLNonTransientConnectionException // conexão caiu/recusada no nível SQL
+                || cause instanceof java.net.ConnectException                   // TCP recusado (host do BD fora)
+                || name.contains("CannotGetJdbcConnection")                     // Spring: não conseguiu conexão
+                || msg.contains("connection is not available")                  // Hikari
+                || msg.contains("unable to acquire jdbc connection")            // Hibernate
+                || msg.contains("connection refused")) {
                 return true;
             }
             cause = cause.getCause();
         }
-        return false;
+        // Sinal explícito da própria app: AuthenticationService marca "BD
+        // indisponível" após esgotar os retries. Mantido de propósito — é um
+        // sentinela nosso no nível superior, não um match genérico.
+        return ex.getMessage() != null
+            && ex.getMessage().toLowerCase().contains("temporariamente indisponível");
     }
 }

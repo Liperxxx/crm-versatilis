@@ -96,6 +96,8 @@ class DashboardManager {
         const d = this.data;
         if (!d) return;
         this.renderKpis(d);
+        // Cores de texto/grade dos gráficos seguem o tema (claro/escuro).
+        if (window.Appearance) window.Appearance.applyChartTheme();
         this.renderChartEtapa(d.oportunidadesPorEtapa);
         this.renderChartStatus(d.orcamentosPorStatus);
         this.renderTaxaConversao(d);
