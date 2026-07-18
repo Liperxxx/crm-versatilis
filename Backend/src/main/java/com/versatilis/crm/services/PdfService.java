@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import com.versatilis.crm.dto.OrcamentoDTO;
 import com.versatilis.crm.dto.OrcamentoItemDTO;
+import com.versatilis.crm.model.ConfiguracaoEmpresa;
+import com.versatilis.crm.repositories.ConfiguracaoEmpresaRepository;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -27,7 +30,10 @@ import java.util.stream.Collectors;
  * Usado como anexo no email de envio.
  */
 @Service
+@RequiredArgsConstructor
 public class PdfService {
+
+    private final ConfiguracaoEmpresaRepository configRepo;
 
     // -- Paleta --
     private static final Color C_PRIMARY = new Color(30, 58, 95);   // #1E3A5F
@@ -66,6 +72,7 @@ public class PdfService {
             JsonNode rod = parseJson(o.getRodapeInstitucional());
 
             buildHeader(doc, o);
+            buildEmpresaSection(doc);
             buildClientSection(doc, o);
             buildDescricaoServicos(doc, o, obs);  // descrição + especificações ANTES dos itens
             buildItemsTable(doc, o, nf);
@@ -117,6 +124,58 @@ public class PdfService {
         t.addCell(right);
 
         doc.add(t);
+    }
+
+    /**
+     * Bloco "Dados da Empresa" — dados cadastrados em Configurações
+     * (configuracao_empresa, chaves empresa_*). Só renderiza se houver ao menos
+     * um campo preenchido, para não poluir o PDF de quem não cadastrou.
+     */
+    private void buildEmpresaSection(Document doc) throws DocumentException {
+        String nome     = cfg("empresa_nome");
+        String cnpj     = cfg("empresa_cnpj");
+        String email    = cfg("empresa_email");
+        String telefone = cfg("empresa_telefone");
+        String endereco = cfg("empresa_endereco");
+
+        if (nome.isBlank() && cnpj.isBlank() && email.isBlank() && telefone.isBlank() && endereco.isBlank()) {
+            return;
+        }
+
+        Paragraph title = new Paragraph("Dados da Empresa", font(10, Font.BOLD, C_PRIMARY));
+        title.setSpacingAfter(6);
+        doc.add(title);
+
+        PdfPTable t = new PdfPTable(new float[]{1f, 2f, 1f, 2f});
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(18);
+
+        addLabelValue(t, "Empresa",  safe(nome), true);
+        addLabelValue(t, "CNPJ",     safe(cnpj), false);
+        addLabelValue(t, "Email",    safe(email), true);
+        addLabelValue(t, "Telefone", safe(telefone), false);
+
+        // Endereço ocupa a linha inteira (label + valor com colspan 3).
+        PdfPCell lc = new PdfPCell(new Phrase("Endereço", font(8, Font.BOLD, C_MUTED)));
+        lc.setBackgroundColor(C_LIGHT);
+        lc.setBorderColor(C_BORDER);
+        lc.setPadding(6);
+        t.addCell(lc);
+        PdfPCell vc = new PdfPCell(new Phrase(safe(endereco), font(9, Font.NORMAL, C_TEXT)));
+        vc.setColspan(3);
+        vc.setBorderColor(C_BORDER);
+        vc.setPadding(6);
+        t.addCell(vc);
+
+        doc.add(t);
+    }
+
+    /** Valor de uma chave de configuracao_empresa, ou string vazia. */
+    private String cfg(String chave) {
+        return configRepo.findByChave(chave)
+                .map(ConfiguracaoEmpresa::getValor)
+                .map(v -> v != null ? v : "")
+                .orElse("");
     }
 
     private void buildClientSection(Document doc, OrcamentoDTO o) throws DocumentException {
@@ -418,7 +477,11 @@ public class PdfService {
     /** Bloco de assinaturas: responsável comercial (empresa) e cliente. */
     private void buildAssinaturas(Document doc, OrcamentoDTO o, JsonNode rod) throws DocumentException {
         String empresa = jsonText(rod, "empresa");
-        if (empresa == null) empresa = "Versatilis";
+        if (empresa == null || empresa.isBlank()) {
+            // Sem empresa no orçamento: usa o nome cadastrado em Configurações.
+            String cfgNome = cfg("empresa_nome");
+            empresa = !cfgNome.isBlank() ? cfgNome : "Versatilis";
+        }
         String respComercial = jsonText(rod, "responsavelComercial");
 
         PdfPTable t = new PdfPTable(new float[]{1f, 0.2f, 1f});

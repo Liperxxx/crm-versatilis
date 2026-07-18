@@ -1214,8 +1214,17 @@ class OrcamentosModule {
         return await window.CRMAuth.handleApi(res);
     }
 
+    /** Dados da empresa cadastrados em Configurações (cache localStorage). */
+    getEmpresaConfig() {
+        try {
+            const c = JSON.parse(localStorage.getItem('crm_config') || '{}');
+            return (c && c.empresa) ? c.empresa : {};
+        } catch { return {}; }
+    }
+
     renderDocument(o) {
         const emp = OrcamentosModule.EMPRESA;
+        const empCfg = this.getEmpresaConfig();
 
         // --- Parse structured fields ---
         const obs    = this.parseFieldData(o.observacoesComerciais);
@@ -1229,7 +1238,7 @@ class OrcamentosModule {
         const condicao1          = obs.v === 2 ? obs.condicao1          : null;
         const condicao2          = obs.v === 2 ? obs.condicao2          : null;
 
-        const empresa             = rodape.v === 2 ? (rodape.empresa              || emp.nome) : emp.nome;
+        const empresa             = rodape.v === 2 ? (rodape.empresa || empCfg.nome || emp.nome) : (empCfg.nome || emp.nome);
         const responsavelComercial= rodape.v === 2 ? (rodape.responsavelComercial || '')       : '';
         const textoJuridico       = rodape.v === 2 ? (rodape.textoJuridico        || '')       : (o.rodapeInstitucional || '');
 
@@ -1283,6 +1292,17 @@ class OrcamentosModule {
                     <span>Válido até: <strong>${this.formatDate(o.dataValidade)}</strong></span>
                 </div>
             </div>
+
+            ${((empCfg.nome && empCfg.nome.trim()) || [empCfg.cnpj, empCfg.endereco, empCfg.telefone, empCfg.email].some(v => v && v.trim())) ? `
+            <!-- DADOS DA EMPRESA (cadastrados em Configurações) -->
+            <div class="orc-doc-client orc-doc-company">
+                <h3>Dados da Empresa</h3>
+                ${empCfg.nome     ? `<p><strong>${this.esc(empCfg.nome)}</strong></p>` : ''}
+                ${empCfg.cnpj     ? `<p>CNPJ: ${this.esc(empCfg.cnpj)}</p>` : ''}
+                ${empCfg.endereco ? `<p>${this.esc(empCfg.endereco)}</p>` : ''}
+                ${empCfg.telefone ? `<p>Tel.: ${this.esc(empCfg.telefone)}</p>` : ''}
+                ${empCfg.email    ? `<p>Email: ${this.esc(empCfg.email)}</p>` : ''}
+            </div>` : ''}
 
             <!-- DADOS DO CLIENTE -->
             <div class="orc-doc-client">
