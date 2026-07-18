@@ -36,6 +36,77 @@ class ConfiguracoesManager {
         this.setupHeaderConfigBtn();
         this.setupLogoUpload();
         this.loadLogo();
+        this.loadEmpresa();
+    }
+
+    // ── Dados da Empresa (persistidos no backend) ──
+
+    authHeaders() {
+        const token = localStorage.getItem('crm_token') || localStorage.getItem('token');
+        return token
+            ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            : { 'Content-Type': 'application/json' };
+    }
+
+    /**
+     * Carrega os dados da empresa do backend (fonte de verdade) e preenche o
+     * form. O localStorage já preencheu antes (cache instantâneo/offline); aqui
+     * sobrescrevemos com o que está salvo no servidor, se houver.
+     */
+    async loadEmpresa() {
+        try {
+            const res = await fetch(`${API_BASE_URL}/config/empresa`, { headers: this.authHeaders() });
+            if (!res.ok) return; // sem backend/sessão: mantém o cache local
+            const dados = (await res.json()).dados;
+            if (!dados) return;
+            // Só sobrescreve se o servidor tiver algo cadastrado (evita apagar o
+            // cache local com campos vazios na primeira vez).
+            const temAlgo = ['nome', 'cnpj', 'email', 'telefone', 'endereco'].some(k => (dados[k] || '').trim());
+            if (!temAlgo) return;
+            this.config.empresa = {
+                nome:     dados.nome     || '',
+                cnpj:     dados.cnpj     || '',
+                email:    dados.email    || '',
+                telefone: dados.telefone || '',
+                endereco: dados.endereco || ''
+            };
+            this.saveConfig();
+            this.fillForm();
+        } catch (e) {
+            console.warn('Configurações: falha ao carregar dados da empresa do backend', e);
+        }
+    }
+
+    /** Salva no backend (fonte de verdade) e cacheia no localStorage. */
+    async saveEmpresa(btn) {
+        this.config.empresa = {
+            nome:     document.getElementById('cfgEmpresaNome')?.value || '',
+            cnpj:     document.getElementById('cfgEmpresaCnpj')?.value || '',
+            email:    document.getElementById('cfgEmpresaEmail')?.value || '',
+            telefone: document.getElementById('cfgEmpresaTel')?.value || '',
+            endereco: document.getElementById('cfgEmpresaEndereco')?.value || ''
+        };
+        this.saveConfig(); // cache local imediato
+
+        const original = btn ? btn.innerHTML : null;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...'; }
+        try {
+            const res = await fetch(`${API_BASE_URL}/config/empresa`, {
+                method: 'PUT',
+                headers: this.authHeaders(),
+                body: JSON.stringify(this.config.empresa)
+            });
+            if (res.status === 401 || res.status === 403) {
+                this.toast('danger', 'fas fa-lock', 'Sem permissão para salvar os dados da empresa.');
+                return;
+            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            this.toast('success', 'fas fa-check-circle', 'Dados da empresa salvos!');
+        } catch (e) {
+            this.toast('danger', 'fas fa-exclamation-circle', `Erro ao salvar no servidor: ${e.message}. (Salvo localmente.)`);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+        }
     }
 
     // ── Carregar / Salvar ──
@@ -124,20 +195,10 @@ class ConfiguracoesManager {
     // ── Eventos ──
 
     setupEvents() {
-        // Empresa Save
+        // Empresa Save — persiste no backend (e cacheia no localStorage)
         const empresaSave = document.getElementById('configEmpresaSave');
         if (empresaSave) {
-            empresaSave.addEventListener('click', () => {
-                this.config.empresa = {
-                    nome:     document.getElementById('cfgEmpresaNome')?.value || '',
-                    cnpj:     document.getElementById('cfgEmpresaCnpj')?.value || '',
-                    email:    document.getElementById('cfgEmpresaEmail')?.value || '',
-                    telefone: document.getElementById('cfgEmpresaTel')?.value || '',
-                    endereco: document.getElementById('cfgEmpresaEndereco')?.value || ''
-                };
-                this.saveConfig();
-                this.toast('success', 'fas fa-check-circle', 'Dados da empresa salvos!');
-            });
+            empresaSave.addEventListener('click', () => this.saveEmpresa(empresaSave));
         }
 
         // Aparência — auto-save on change

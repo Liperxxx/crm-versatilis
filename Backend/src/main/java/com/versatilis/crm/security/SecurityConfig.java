@@ -79,6 +79,7 @@ public class SecurityConfig {
 
                 // Configurações da empresa
                 .requestMatchers(HttpMethod.POST, "/config/logo").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/config/empresa").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.PUT, "/config/whatsapp").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/config/whatsapp/test").hasAnyRole("ADMIN", "GERENTE")
                 .requestMatchers(HttpMethod.GET, "/config/**").authenticated()
