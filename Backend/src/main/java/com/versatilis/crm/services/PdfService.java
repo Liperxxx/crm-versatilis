@@ -46,6 +46,13 @@ public class PdfService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    // -- Dados bancários da Versatilis (aparecem em TODO orçamento). Editar aqui se mudar. --
+    private static final String PAG_BANCO    = "Sicoob";
+    private static final String PAG_AGENCIA  = "3008";
+    private static final String PAG_CONTA    = "124664-0";
+    private static final String PAG_PIX_TIPO = "CNPJ";
+    private static final String PAG_PIX      = "31.795.782/0001-26";
+
     // == Entry point ==
 
     public byte[] gerarPdf(OrcamentoDTO o) {
@@ -78,6 +85,7 @@ public class PdfService {
             buildItemsTable(doc, o, nf);
             buildTotals(doc, o, nf);
             buildCondicoesPagamento(doc, obs);
+            buildDadosPagamento(doc);
             buildFotosProjeto(doc, o);
             buildAssinaturas(doc, o, rod);
             buildTextoJuridico(doc, o, rod);
@@ -418,6 +426,31 @@ public class PdfService {
         }
         t.addCell(wrapper);
         doc.add(t);
+    }
+
+    /**
+     * Dados bancários da Versatilis (banco, agência, conta, PIX) — presentes em
+     * TODO orçamento para facilitar o pagamento pelo cliente.
+     */
+    private void buildDadosPagamento(Document doc) throws DocumentException {
+        Paragraph title = new Paragraph("Dados para Pagamento", font(10, Font.BOLD, C_PRIMARY));
+        title.setSpacingAfter(6);
+        doc.add(title);
+
+        PdfPTable t = new PdfPTable(new float[]{1f, 2f, 1f, 2f});
+        t.setWidthPercentage(100);
+        t.setSpacingAfter(6);
+        addLabelValue(t, "Banco",          PAG_BANCO, true);
+        addLabelValue(t, "Agência",        PAG_AGENCIA, false);
+        addLabelValue(t, "Conta Corrente", PAG_CONTA, true);
+        addLabelValue(t, "PIX (" + PAG_PIX_TIPO + ")", PAG_PIX, false);
+        doc.add(t);
+
+        Paragraph nota = new Paragraph(
+            "Após o pagamento, envie o comprovante ao nosso setor financeiro para baixa e conciliação.",
+            font(8, Font.ITALIC, C_MUTED));
+        nota.setSpacingAfter(16);
+        doc.add(nota);
     }
 
     /**

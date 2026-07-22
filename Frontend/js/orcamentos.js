@@ -28,6 +28,15 @@ class OrcamentosModule {
         site:     'www.versatilis.com.br',
     };
 
+    // Dados bancários da Versatilis — aparecem em todo orçamento. Editar aqui se mudar.
+    static PAGAMENTO = {
+        banco:    'Sicoob',
+        agencia:  '3008',
+        conta:    '124664-0',
+        pixTipo:  'CNPJ',
+        pix:      '31.795.782/0001-26',
+    };
+
     constructor() {
         this.orcamentos  = [];
         this.editingId    = null;
@@ -1374,6 +1383,18 @@ class OrcamentosModule {
                     ${condicao1 ? `<p>• 1ª opção: ${this.esc(condicao1)}</p>` : ''}
                     ${condicao2 ? `<p>• 2ª opção: ${this.esc(condicao2)}</p>` : ''}
                 </div>` : ''}
+            </div>
+
+            <!-- DADOS PARA PAGAMENTO (fixos Versatilis) -->
+            <div class="orc-doc-section orc-doc-pagamento">
+                <h3>Dados para Pagamento</h3>
+                <table class="orc-doc-specs">
+                    <tr><td><strong>Banco:</strong></td><td>${OrcamentosModule.PAGAMENTO.banco}</td>
+                        <td><strong>Agência:</strong></td><td>${OrcamentosModule.PAGAMENTO.agencia}</td></tr>
+                    <tr><td><strong>Conta Corrente:</strong></td><td>${OrcamentosModule.PAGAMENTO.conta}</td>
+                        <td><strong>PIX (${OrcamentosModule.PAGAMENTO.pixTipo}):</strong></td><td>${OrcamentosModule.PAGAMENTO.pix}</td></tr>
+                </table>
+                <p class="text-muted text-sm" style="margin-top:6px">Após o pagamento, envie o comprovante ao nosso setor financeiro para baixa e conciliação.</p>
             </div>
 
             ${(o.fotosUrls && o.fotosUrls.length > 0) ? `
