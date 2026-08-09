@@ -26,6 +26,7 @@ public class TarefaService {
     private final LeadRepository leadRepository;
     private final OportunidadeRepository oportunidadeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final com.versatilis.crm.security.UsuarioAtual usuarioAtual;
 
     @Transactional
     public TarefaDTO criar(TarefaDTO dto) {
@@ -40,6 +41,8 @@ public class TarefaService {
         tarefa.setStatus(dto.getStatus() != null ? dto.getStatus() : Tarefa.StatusTarefa.PENDENTE);
 
         resolveRelations(tarefa, dto);
+        // Autoria: registra quem está criando (para o admin acompanhar).
+        tarefa.setCriadoPor(usuarioAtual.get());
 
         tarefa = tarefaRepository.save(tarefa);
         log.info("Tarefa {} criada com sucesso. ID: {}", tarefa.getTitulo(), tarefa.getId());
@@ -165,6 +168,8 @@ public class TarefaService {
             .status(t.getStatus())
             .responsavelId(t.getResponsavel() != null ? t.getResponsavel().getId() : null)
             .responsavelNome(t.getResponsavel() != null ? t.getResponsavel().getNome() : null)
+            .criadoPorId(t.getCriadoPor() != null ? t.getCriadoPor().getId() : null)
+            .criadoPorNome(t.getCriadoPor() != null ? t.getCriadoPor().getNome() : null)
             .clienteId(t.getCliente() != null ? t.getCliente().getId() : null)
             .clienteNome(t.getCliente() != null ? t.getCliente().getNomeEmpresa() : null)
             .leadId(t.getLead() != null ? t.getLead().getId() : null)

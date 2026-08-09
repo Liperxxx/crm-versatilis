@@ -33,6 +33,10 @@ public class SchemaMigrationRunner implements ApplicationRunner {
         // JSON array de strings, ex.: ["https://.../foto1.jpg","..."].
         addColumnIfNotExists("orcamentos", "fotos_urls", "TEXT");
 
+        // Autoria: quem cadastrou o lead / criou a tarefa (para o admin acompanhar).
+        addColumnIfNotExists("leads", "criado_por_id", "BIGINT");
+        addColumnIfNotExists("tarefas", "criado_por_id", "BIGINT");
+
         // ── Marcenaria (calculadora de custos no módulo Orçamentos) ───────
         createMateriaisMarcenariaTable();
         createAcessoriosMarcenariaTable();

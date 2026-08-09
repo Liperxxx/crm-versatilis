@@ -45,6 +45,11 @@ public class Lead extends BaseEntity {
     @JoinColumn(name = "responsavel_id")
     private Usuario responsavel;
 
+    /** Usuário que cadastrou o lead (autoria) — para o admin acompanhar quem criou. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
     @OneToOne(mappedBy = "leadOriginal", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private HistoricoConversao historicoConversao;
 

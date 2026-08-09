@@ -303,6 +303,7 @@ class TarefasModule {
             <td>
                 <div class="client-name">${this.esc(t.titulo)}</div>
                 <div class="client-id">#${t.id.toString().padStart(4,'0')}</div>
+                ${t.criadoPorNome ? `<span class="badge badge-info" style="font-size:9px;padding:1px 6px;margin-top:2px;display:inline-flex;gap:3px;align-items:center" title="Criada por ${this.esc(t.criadoPorNome)}"><i class="fas fa-user-pen"></i> ${this.esc(t.criadoPorNome)}</span>` : ''}
             </td>
             <td>${this.prioridadeBadge(t.prioridade)}</td>
             <td>${this.statusBadge(t.status)}</td>

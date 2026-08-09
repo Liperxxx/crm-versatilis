@@ -43,4 +43,8 @@ public class TarefaDTO {
     @NotNull(message = "Responsável é obrigatório")
     private Long responsavelId;
     private String responsavelNome;
+
+    // Autor do cadastro (somente leitura) — quem criou a tarefa.
+    private Long criadoPorId;
+    private String criadoPorNome;
 }

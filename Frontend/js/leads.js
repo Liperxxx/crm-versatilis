@@ -269,6 +269,7 @@ class LeadsModule {
                     <div>
                         <div class="client-name">${this.esc(l.nomeContato)}</div>
                         <div class="client-id">#${l.id.toString().padStart(4,'0')}</div>
+                        ${l.criadoPorNome ? `<span class="badge badge-info" style="font-size:9px;padding:1px 6px;margin-top:2px;display:inline-flex;gap:3px;align-items:center" title="Cadastrado por ${this.esc(l.criadoPorNome)}"><i class="fas fa-user-pen"></i> ${this.esc(l.criadoPorNome)}</span>` : ''}
                     </div>
                 </div>
             </td>

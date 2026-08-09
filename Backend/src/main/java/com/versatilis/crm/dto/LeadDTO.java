@@ -37,4 +37,8 @@ public class LeadDTO {
     private String observacoes;
     private Long responsavelId;
     private String responsavelNome;
+
+    // Autor do cadastro (somente leitura) — quem criou o lead.
+    private Long criadoPorId;
+    private String criadoPorNome;
 }

@@ -26,6 +26,7 @@ public class LeadService {
     private final LeadRepository leadRepository;
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
+    private final com.versatilis.crm.security.UsuarioAtual usuarioAtual;
 
     @Transactional
     public LeadDTO criar(LeadDTO leadDTO) {
@@ -41,6 +42,8 @@ public class LeadService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário responsável não encontrado"));
             lead.setResponsavel(responsavel);
         }
+        // Autoria: registra quem está criando (para o admin acompanhar).
+        lead.setCriadoPor(usuarioAtual.get());
 
         lead = leadRepository.save(lead);
         log.info("Lead {} criado com sucesso. ID: {}", lead.getNomeContato(), lead.getId());

@@ -53,6 +53,11 @@ public class Tarefa extends BaseEntity {
     @JoinColumn(name = "responsavel_id", nullable = false)
     private Usuario responsavel;
 
+    /** Usuário que criou a tarefa (autoria) — para o admin acompanhar quem preencheu. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
     public enum PrioridadeTarefa {
         BAIXA,
         MEDIA,
