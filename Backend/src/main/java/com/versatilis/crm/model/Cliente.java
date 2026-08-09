@@ -54,6 +54,11 @@ public class Cliente extends BaseEntity {
     @JoinColumn(name = "responsavel_id")
     private Usuario responsavel;
 
+    /** Usuário que cadastrou o cliente (autoria) — para o admin acompanhar. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Oportunidade> oportunidades;
 

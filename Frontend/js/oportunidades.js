@@ -403,6 +403,7 @@ class OportunidadesModule {
             <td>
                 <div class="client-name">${this.esc(o.titulo)}</div>
                 <div class="client-id">#${o.id.toString().padStart(4,'0')}</div>
+                ${o.criadoPorNome ? `<span class="badge badge-info" style="font-size:9px;padding:1px 6px;margin-top:2px;display:inline-flex;gap:3px;align-items:center" title="Cadastrada por ${this.esc(o.criadoPorNome)}"><i class="fas fa-user-pen"></i> ${this.esc(o.criadoPorNome)}</span>` : ''}
             </td>
             <td>${cliente}</td>
             <td>${this.etapaBadge(o.etapa)}</td>

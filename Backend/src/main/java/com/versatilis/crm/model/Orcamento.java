@@ -78,6 +78,11 @@ public class Orcamento extends BaseEntity {
     @JoinColumn(name = "responsavel_id")
     private Usuario responsavel;
 
+    /** Usuário que cadastrou o orçamento (autoria) — para o admin acompanhar. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
     @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrcamentoItem> itens = new ArrayList<>();

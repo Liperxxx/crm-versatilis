@@ -29,6 +29,7 @@ public class OportunidadeService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
+    private final com.versatilis.crm.security.UsuarioAtual usuarioAtual;
 
     @Transactional
     public OportunidadeDTO criar(OportunidadeDTO oportunidadeDTO) {
@@ -45,6 +46,8 @@ public class OportunidadeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário responsável não encontrado"));
             oportunidade.setResponsavel(responsavel);
         }
+        // Autoria: registra quem está criando (para o admin acompanhar).
+        oportunidade.setCriadoPor(usuarioAtual.get());
 
         oportunidade = oportunidadeRepository.save(oportunidade);
         log.info("Oportunidade {} criada com sucesso. ID: {}", oportunidade.getTitulo(), oportunidade.getId());

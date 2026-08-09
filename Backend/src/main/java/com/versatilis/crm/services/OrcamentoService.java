@@ -32,6 +32,7 @@ public class OrcamentoService {
     private final OportunidadeRepository oportunidadeRepository;
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final com.versatilis.crm.security.UsuarioAtual usuarioAtual;
 
     @Transactional
     public OrcamentoDTO criar(OrcamentoDTO dto) {
@@ -70,6 +71,9 @@ public class OrcamentoService {
                 orcamento.addItem(item);
             }
         }
+
+        // Autoria: registra quem está criando (para o admin acompanhar).
+        orcamento.setCriadoPor(usuarioAtual.get());
 
         orcamento.recalcularTotais();
         orcamento = orcamentoRepository.save(orcamento);
@@ -214,6 +218,10 @@ public class OrcamentoService {
         if (o.getResponsavel() != null) {
             dto.setResponsavelId(o.getResponsavel().getId());
             dto.setResponsavelNome(o.getResponsavel().getNome());
+        }
+        if (o.getCriadoPor() != null) {
+            dto.setCriadoPorId(o.getCriadoPor().getId());
+            dto.setCriadoPorNome(o.getCriadoPor().getNome());
         }
 
         List<OrcamentoItemDTO> itensDto = new ArrayList<>();

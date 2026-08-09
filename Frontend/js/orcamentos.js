@@ -489,9 +489,13 @@ class OrcamentosModule {
         const opTitulo = o.oportunidadeTitulo ? this.esc(o.oportunidadeTitulo) : '<span class="text-muted">—</span>';
         const total = o.total != null ? this.formatCurrency(o.total) : '—';
 
+        const autorTag = o.criadoPorNome
+            ? `<div><span class="badge badge-info" style="font-size:9px;padding:1px 6px;margin-top:2px;display:inline-flex;gap:3px;align-items:center" title="Criado por ${this.esc(o.criadoPorNome)}"><i class="fas fa-user-pen"></i> ${this.esc(o.criadoPorNome)}</span></div>`
+            : '';
+
         return `
         <tr data-id="${o.id}">
-            <td><strong>${this.esc(o.numero || '—')}</strong></td>
+            <td><strong>${this.esc(o.numero || '—')}</strong>${autorTag}</td>
             <td>${cliente}</td>
             <td>${opTitulo}</td>
             <td>${this.formatDate(o.dataEmissao)}</td>

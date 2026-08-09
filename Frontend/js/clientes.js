@@ -305,6 +305,7 @@ class ClientesModule {
                     <div>
                         <div class="client-name">${this.esc(c.nome)}</div>
                         <div class="client-id">#${c.id.toString().padStart(4,'0')}</div>
+                        ${c.criadoPorNome ? `<span class="badge badge-info" style="font-size:9px;padding:1px 6px;margin-top:2px;display:inline-flex;gap:3px;align-items:center" title="Cadastrado por ${this.esc(c.criadoPorNome)}"><i class="fas fa-user-pen"></i> ${this.esc(c.criadoPorNome)}</span>` : ''}
                     </div>
                 </div>
             </td>

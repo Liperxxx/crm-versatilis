@@ -44,4 +44,8 @@ public class OportunidadeDTO {
 
     private Long responsavelId;
     private String responsavelNome;
+
+    // Autor do cadastro (somente leitura) — quem criou a oportunidade.
+    private Long criadoPorId;
+    private String criadoPorNome;
 }

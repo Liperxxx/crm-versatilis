@@ -59,5 +59,9 @@ public class OrcamentoDTO {
     private Long responsavelId;
     private String responsavelNome;
 
+    // Autor do cadastro (somente leitura) — quem criou o orçamento.
+    private Long criadoPorId;
+    private String criadoPorNome;
+
     private List<OrcamentoItemDTO> itens;
 }

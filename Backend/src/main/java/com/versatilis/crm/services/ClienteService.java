@@ -26,6 +26,7 @@ public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
+    private final com.versatilis.crm.security.UsuarioAtual usuarioAtual;
 
     @Transactional
     public ClienteDTO criar(ClienteDTO clienteDTO) {
@@ -42,6 +43,8 @@ public class ClienteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário responsável não encontrado"));
             cliente.setResponsavel(responsavel);
         }
+        // Autoria: registra quem está criando (para o admin acompanhar).
+        cliente.setCriadoPor(usuarioAtual.get());
 
         cliente = clienteRepository.save(cliente);
         log.info("Cliente {} criado com sucesso. ID: {}", cliente.getNomeEmpresa(), cliente.getId());

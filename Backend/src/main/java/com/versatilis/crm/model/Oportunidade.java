@@ -50,6 +50,11 @@ public class Oportunidade extends BaseEntity {
     @JoinColumn(name = "responsavel_id")
     private Usuario responsavel;
 
+    /** Usuário que cadastrou a oportunidade (autoria) — para o admin acompanhar. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_id")
+    private Usuario criadoPor;
+
     public enum EtapaOportunidade {
         QUALIFICACAO,
         ANALISE_NECESSIDADES,

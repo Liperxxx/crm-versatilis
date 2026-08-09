@@ -48,4 +48,8 @@ public class ClienteDTO {
 
     private Long responsavelId;
     private String responsavelNome;
+
+    // Autor do cadastro (somente leitura) — quem criou o cliente.
+    private Long criadoPorId;
+    private String criadoPorNome;
 }
