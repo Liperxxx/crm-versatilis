@@ -57,3 +57,8 @@
 - Dados de pagamento da Versatilis em todo PDF de orçamento.
 ## 27/07/2026
 - Adiciona o WORKLOG.md.
+## 10/08/2026
+- Cliente, Oportunidade e Orcamento ganham criadoPor (Usuario), coluna
+  criado_por_id.
+- ClienteService/OportunidadeService/OrcamentoService.criar setam
+  criadoPor = usuário logado (reusando security/UsuarioAtual).
